@@ -36,6 +36,12 @@ En **Consultar datos de la selección**, elige la fuente, busca y ordena las fil
 
 Usa **Ampliar gráfico** para ver una visualización con mayor tamaño. Los botones de leyenda permiten ocultar y restaurar series con el teclado.
 
+### Actualización y ajustes manuales
+
+En Windows, VacunaBI consulta las dos fuentes de Datos Abiertos Bogotá al iniciar. **Actualizar datos** vuelve a consultar la API desde el tablero. Si una consulta falla y existe un tablero previo, la aplicación lo conserva e indica que se están mostrando los últimos datos guardados.
+
+Para ensayar un ajuste sectorial del último corte, abre **Cargar registros manuales**, descarga la plantilla CSV y edita las dosis y el denominador. Usa el corte y los nombres de localidad, sector y biológico de las fuentes oficiales. Cada fila se identifica por corte, localidad, sector y biológico. El archivo se valida antes de aplicar la vista previa y las exportaciones identifican las filas manuales. **Quitar vista previa** restaura los datos oficiales. La vista previa se descarta al cerrar o actualizar el tablero.
+
 ## Arquitectura
 
 ```mermaid
@@ -171,7 +177,7 @@ Las comparaciones deben utilizar periodos, biológicos y denominadores compatibl
 El workflow [`actualizar.yml`](.github/workflows/actualizar.yml) separa dos actividades:
 
 - **En cada push a `main`:** ejecuta las pruebas de la aplicación y del ETL, sin consultar la API externa.
-- **Diariamente a las 11:00 UTC** (06:00 hora de Colombia): ejecuta las pruebas y, si pasan, descarga los datos y regenera el dashboard.
+- **Diariamente a las 11:00 UTC** (06:00 hora de Colombia): ejecuta las pruebas y, si pasan, descarga los datos y guarda el tablero del día como artefacto `VacunaBI-Dashboard` en GitHub Actions.
 - **Manualmente desde Actions:** permite solicitar una actualización completa del dashboard.
 
 Así, una caída o demora de la API pública no marca como fallido un commit cuyo código y pruebas son correctos.
