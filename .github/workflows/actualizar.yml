@@ -25,7 +25,7 @@ jobs:
       - name: Validar transformaciones originales
         run: python test_etl.py
       - name: Ejecutar regresiones y pruebas de interfaz
-        run: python -m unittest -v test_etl_regression test_dashboard_template test_app_export
+        run: python -m unittest -v test_etl_regression test_dashboard_template test_app_export test_release_integrity
       - name: Probar cálculos de decisiones
         run: node --test test_decisiones.cjs test_frontend.cjs
 
