@@ -1,45 +1,39 @@
-# Guía de contribución — VacunaBI
+# Contribución al proyecto VacunaBI
 
-## Integrantes del equipo
+## Equipo
 
-- Valery Michell Herrera Roca — [@Codeforgeettttt](https://github.com/Codeforgeettttt)
-- Julián Andrés Peñuela Alfonso — [@julianpenuelaalfonso-fullstack](https://github.com/julianpenuelaalfonso-fullstack)
-- Daniel Felipe Rojas González — [@Dani2026403](https://github.com/Dani2026403)
+- [Valery Michell Herrera Roca — @Codeforgeettttt](https://github.com/Codeforgeettttt)
+- [Daniel Felipe Rojas González — @Dani2026403](https://github.com/Dani2026403)
+- [Julián Andrés Peñuela Alfonso — @julianpenuelaalfonso-fullstack](https://github.com/julianpenuelaalfonso-fullstack)
 
-Las contribuciones técnicas anteriores al nuevo repositorio están reconocidas en el README de la base original.
+## Desarrollo incremental
 
-## Flujo de trabajo
+Los cambios de la versión en curso pueden registrarse como commits pequeños y descriptivos en `main`, según el flujo acordado por el equipo. Antes de cada commit:
 
-1. Crear una tarea con alcance y criterios de aceptación.
-2. Crear una rama desde `main` cuando esté estable.
-3. Implementar el cambio y agregar las pruebas aplicables.
-4. Publicar commits describiendo el trabajo realmente realizado.
-5. Abrir Pull Request y adjuntar resultados de pruebas y capturas cuando se modifique la interfaz.
-6. Revisar e integrar solamente después de validar el alcance.
+1. Revisar alcance y dependencias del cambio.
+2. Implementar solo la funcionalidad correspondiente a la versión.
+3. Ejecutar pruebas de los módulos modificados y confirmar que los KPIs se conservan.
+4. Actualizar documentación técnica cuando sea necesario.
+5. Registrar el cambio con un mensaje claro.
 
-## Mensajes de commit
-
-Utilizar Conventional Commits:
+Convenciones recomendadas:
 
 ```text
-feat(ui): incorpora navegación lateral
-fix(etl): corrige interpretación de valores numéricos
-test(indicators): valida cálculos de cobertura
-docs(v1.1): registra cambios del rediseño
+feat(ui): incorpora navegación entre módulos
+fix(etl): corrige manejo de datos inválidos
+test(etl): valida agregación de coberturas
+docs(v1.1): documenta criterios de diseño
 ```
 
-## Autoría y coautoría
+## Registro de contribuciones
 
-- Cada integrante debe utilizar su propia cuenta para sus aportes.
-- No se crearán commits simulando la identidad de otra persona.
-- Solo añadir `Co-authored-by` si esa persona participó realmente en el cambio y se dispone de su identidad de Git autorizada.
-- Un colaborador puede estar invitado sin que eso impida a la persona autorizada trabajar en el repositorio.
-- Un Pull Request puede solicitar revisión a quienes tengan acceso y puedan participar.
+Los commits registran las identidades configuradas por GitHub. Si varias personas participaron en un cambio, sus contribuciones pueden reconocerse con `Co-authored-by`, utilizando sus correos vinculados a GitHub. La participación debe corresponder al trabajo registrado.
 
-## Definition of Done
+## Requisitos de cierre
 
-- Requisito implementado y comprobable.
-- Pruebas relevantes aprobadas.
-- Sin regresiones conocidas en indicadores y ETL.
-- Documentación y capturas actualizadas cuando sea necesario.
-- Commits con mensajes claros y atribución honesta.
+- La funcionalidad trabaja según los criterios de aceptación.
+- Las pruebas relevantes pasan.
+- Las cifras del ETL se mantienen correctas.
+- No hay regresiones críticas conocidas.
+- La interfaz sigue el sistema de diseño.
+- El cambio queda descrito en el historial del repositorio.
