@@ -11,9 +11,9 @@ import math
 import sys
 import unicodedata
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pandas as pd
 
@@ -240,7 +240,7 @@ def calcular_kpis(sec, anu):
     }
 
 
-def construir_dashboard(sec, anu, mens, kpis, logs):
+def construir_dashboard(sec, anu, mens, kpis, logs, *, destino=None, auditoria=()):
     anio_actual = int(anu["anio"].max())
     dimensiones = ["fecha_reporte", "localidad", "zona", "institucion", "grupo_biologico", "biologico"]
     medidas = ["dosis_aplicada", "denominador"]
@@ -254,6 +254,7 @@ def construir_dashboard(sec, anu, mens, kpis, logs):
         "limites_localidades": limites_localidades(),
         "generado": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "logs": logs,
+        "auditoria": auditoria,
         "anual": anu.to_dict("records"),
         "mensual_actual": mens[mens["anio"] == anio_actual][["biologico", "mes_num", "cobertura_acum"]].dropna().to_dict("records"),
         "anio_actual": anio_actual,
@@ -269,31 +270,25 @@ def construir_dashboard(sec, anu, mens, kpis, logs):
     plantilla = (RECURSOS / "dashboard_template.html").read_text(encoding="utf-8")
     html = (plantilla.replace("/*__CHARTJS__*/", (RECURSOS / "chart.umd.min.js").read_text(encoding="utf-8"))
             .replace("/*__DATOS__*/null", json.dumps(datos, ensure_ascii=False, default=str).replace("<", "\\u003c")))
-    with NamedTemporaryFile("w", dir=OUT, suffix=".tmp", encoding="utf-8", delete=False) as file:
+    escribir_texto((destino or OUT) / "dashboard.html", html)
+
+
+def escribir_texto(path, contenido):
+    with NamedTemporaryFile("w", dir=path.parent, suffix=".tmp", encoding="utf-8", delete=False) as file:
         temp_path = Path(file.name)
         try:
-            file.write(html)
+            file.write(contenido)
             file.close()
-            temp_path.replace(OUT / "dashboard.html")
+            temp_path.replace(path)
         finally:
             temp_path.unlink(missing_ok=True)
 
 
-def main():
-    OUT.mkdir(exist_ok=True)
-    print("Consultando API de Datos Abiertos Bogotá...")
-    raw_sec, raw_men = consultar_api(RES_SECTORES), consultar_api(RES_MENSUAL)
-    raw_sec.to_csv(OUT / "crudo_sectores.csv", index=False, encoding="utf-8-sig")
-    raw_men.to_csv(OUT / "crudo_mensual.csv", index=False, encoding="utf-8-sig")
-
-    sec, log_sec = limpiar_sectores(raw_sec)
-    mens, log_men = limpiar_mensual(raw_men)
-    anu = anual(mens)
-    kpis = calcular_kpis(sec, anu)
-    logs = {"sectores": log_sec, "mensual": log_men}
-
+def guardar_salidas(destino, raw_sec, raw_men, sec, mens, anu, kpis, logs, auditoria):
+    raw_sec.to_csv(destino / "crudo_sectores.csv", index=False, encoding="utf-8-sig")
+    raw_men.to_csv(destino / "crudo_mensual.csv", index=False, encoding="utf-8-sig")
     dim_loc = pd.DataFrame([{"localidad": l, "zona": z} for l, z in ZONAS.items()])
-    with pd.ExcelWriter(OUT / "base_consolidada.xlsx") as xw:
+    with pd.ExcelWriter(destino / "base_consolidada.xlsx") as xw:
         sec.to_excel(xw, sheet_name="HECHOS_SECTORES", index=False)
         mens.to_excel(xw, sheet_name="HECHOS_MENSUAL", index=False)
         anu.to_excel(xw, sheet_name="COBERTURA_ANUAL", index=False)
@@ -302,10 +297,67 @@ def main():
         pd.DataFrame(kpis.items(), columns=["kpi", "valor"]).to_excel(xw, sheet_name="KPI", index=False)
         pd.DataFrame([(f, k, v) for f, d in logs.items() for k, v in d.items()],
                      columns=["fuente", "paso", "valor"]).to_excel(xw, sheet_name="LOG_LIMPIEZA", index=False)
-    sec.to_csv(OUT / "hechos_sectores.csv", index=False, encoding="utf-8-sig")
-    anu.to_csv(OUT / "cobertura_anual.csv", index=False, encoding="utf-8-sig")
-    (OUT / "kpis.json").write_text(json.dumps({"kpis": kpis, "limpieza": logs}, ensure_ascii=False, indent=2), encoding="utf-8")
-    construir_dashboard(sec, anu, mens, kpis, logs)
+    sec.to_csv(destino / "hechos_sectores.csv", index=False, encoding="utf-8-sig")
+    anu.to_csv(destino / "cobertura_anual.csv", index=False, encoding="utf-8-sig")
+    escribir_texto(destino / "kpis.json", json.dumps({"kpis": kpis, "limpieza": logs}, ensure_ascii=False, indent=2))
+    construir_dashboard(sec, anu, mens, kpis, logs, destino=destino, auditoria=auditoria)
+
+
+def historial_auditoria():
+    try:
+        valor = json.loads((OUT / "auditoria.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return valor[-29:] if isinstance(valor, list) else []
+
+
+def ahora():
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def main():
+    OUT.mkdir(exist_ok=True)
+    historial = historial_auditoria()
+    ejecucion = {"inicio": ahora(), "estado": "En curso", "fase": "Descarga sectorial", "fuentes": {}}
+    fuentes = ejecucion["fuentes"]
+    print("Consultando API de Datos Abiertos Bogotá...")
+    try:
+        raw_sec = consultar_api(RES_SECTORES)
+        fuentes["sectores"] = {"recurso": RES_SECTORES, "originales": len(raw_sec)}
+        ejecucion["fase"] = "Descarga mensual"
+        raw_men = consultar_api(RES_MENSUAL)
+        fuentes["mensual"] = {"recurso": RES_MENSUAL, "originales": len(raw_men)}
+        ejecucion["fase"] = "Validación y transformación"
+        sec, log_sec = limpiar_sectores(raw_sec)
+        mens, log_men = limpiar_mensual(raw_men)
+        if sec.empty or not mens["reportado"].any():
+            raise ValueError("Una fuente quedó sin registros utilizables.")
+        anu = anual(mens)
+        kpis = calcular_kpis(sec, anu)
+        logs = {"sectores": log_sec, "mensual": log_men}
+        ultimo = mens.loc[mens["reportado"], ["anio", "mes_num"]].sort_values(["anio", "mes_num"]).iloc[-1]
+        fuentes["sectores"].update(corte=kpis["fecha_corte_sectores"], aceptados=len(sec),
+                                  descartados=len(raw_sec)-len(sec),
+                                  observados=int((sec["flag_sobre_100"] | sec["flag_inconsistencia"]).sum()))
+        fuentes["mensual"].update(corte=f"{ultimo.anio:04d}-{ultimo.mes_num:02d}", aceptados=len(mens),
+                                 descartados=len(raw_men)-len(mens), observados=log_men["meses_sin_reporte"])
+        ejecucion["fase"] = "Publicación"
+        with TemporaryDirectory(dir=OUT) as temporal:
+            destino = Path(temporal)
+            publicado = {**ejecucion, "fin": ahora(), "estado": "Correcta", "fase": "Completa"}
+            guardar_salidas(destino, raw_sec, raw_men, sec, mens, anu, kpis, logs, [*historial, publicado])
+            escribir_texto(destino / "auditoria.json", json.dumps([*historial, publicado], ensure_ascii=False, indent=2))
+            for archivo in destino.iterdir():
+                if archivo.name != "dashboard.html":
+                    archivo.replace(OUT / archivo.name)
+            (destino / "dashboard.html").replace(OUT / "dashboard.html")
+    except Exception as error:
+        historial.append({**ejecucion, "fin": ahora(), "estado": "Fallida", "detalle": str(error)})
+        try:
+            escribir_texto(OUT / "auditoria.json", json.dumps(historial, ensure_ascii=False, indent=2))
+        except OSError as error_escritura:
+            print(f"No se pudo guardar la auditoría: {error_escritura}", file=sys.stderr)
+        raise
     print(json.dumps(kpis, ensure_ascii=False, indent=2))
     print(f"Listo. Archivos en {OUT}")
 
