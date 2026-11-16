@@ -53,13 +53,19 @@ a:focus-visible,button:focus-visible { outline:3px solid var(--primary);
   border:1px solid var(--border);color:var(--muted);font-size:11px; }
 .sidebar-note strong { color:var(--ink2);display:block;margin-bottom:4px; }
 .main-area { min-width:0; }
-.topbar { border-bottom:1px solid var(--border);padding:24px clamp(20px,3vw,42px) 22px; }
+.topbar { border-bottom:1px solid var(--border);padding:28px clamp(20px,3vw,42px);
+  background:radial-gradient(ellipse at right top,#163d4a 0%,transparent 68%),var(--sidebar); }
 .topbar-row { display:flex;align-items:flex-start;justify-content:space-between;gap:18px; }
+.topbar-actions { display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end; }
+.topbar button { font:inherit;color:var(--ink);background:var(--surface-raised);
+  border:1px solid var(--border);padding:6px 12px;border-radius:8px; }
 .eyebrow { color:var(--primary);text-transform:uppercase;letter-spacing:1.8px;
   font-weight:750;font-size:10px;margin:0 0 6px; }
 h1 { margin:0;font-size:clamp(23px,2.25vw,32px);line-height:1.2;letter-spacing:-.8px; }
 .topbar .meta { margin:12px 0 0;color:var(--ink2);font-size:12px;max-width:850px; }
 .explorer { margin:20px clamp(16px,3vw,42px) 0; }
+.explorer-heading { display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px; }
+.explorer-heading h2 { margin:0;font-size:19px;letter-spacing:-.3px; }
 .controls { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px; }
 .controls label { display:grid;gap:4px;min-width:0;color:var(--ink2); }
 .explorer :is(input,select,button),.chart-dialog button,.chart-actions button {
@@ -73,6 +79,10 @@ button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
 .explorer p,.chart-status { color:var(--ink2);margin:9px 0; }
 .explorer details,.chart-actions { margin-top:12px; }
 .explorer summary { cursor:pointer;color:var(--primary); }
+.explorer details[open] > summary { margin-bottom:10px; }
+.chart-actions button[data-series][aria-pressed="true"] { border-color:var(--primary);background:var(--primary-soft); }
+.chart-actions button[data-series][aria-pressed="false"] { color:var(--muted); }
+#manual-status[data-active] { border-left:3px solid var(--primary);padding-left:10px; }
 .chart-dialog { width:min(94vw,1100px);max-height:88vh;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px; }
 .chart-dialog::backdrop { background:#000a; }
 .chart-dialog .chart { height:min(62vh,620px); }
@@ -176,13 +186,16 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <span class="version">V1.2</span>
+        <div class="topbar-actions"><span class="version">V1.2.1</span>
+          <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
+      <p class="meta" id="refresh-status" role="status" hidden></p>
     </header>
     <main id="main-content" tabindex="-1">
       <section class="card explorer" aria-labelledby="filters-title">
-        <h2 id="filters-title">Explorar datos</h2>
+        <div class="explorer-heading"><h2 id="filters-title">Explorar datos</h2>
+          <button id="fReset" type="button">Restablecer filtros</button></div>
         <div class="controls">
           <label>Región <select id="fRegion"><option>Bogotá D.C.</option></select></label>
           <label>Año <select id="fYear"><option value="">Todos los años</option></select></label>
@@ -195,7 +208,6 @@ tr:last-child td { border-bottom:0; }
           <label id="month-to-label" hidden>Hasta el mes <select id="fMonthTo"><option value="">Último disponible</option></select></label>
         </div>
         <div class="filter-chips" id="filter-chips"></div>
-        <div class="control-actions"><button id="fReset" type="button">Restablecer filtros</button></div>
         <p id="filters-status" role="status"></p>
         <details>
           <summary>Consultar datos de la selección</summary>
@@ -401,6 +413,34 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
+  const refresh = $('refresh-data');
+  const refreshStatus = $('refresh-status');
+  function reportRefresh(message) {
+    refreshStatus.textContent = message;
+    refreshStatus.hidden = false;
+  }
+  if (new URLSearchParams(location.search).has('sin-conexion')) {
+    reportRefresh('La API no respondió. Estás viendo el último tablero guardado.');
+  }
+  function enableRefresh() { refresh.hidden = !window.pywebview?.api?.refresh_data; }
+  window.addEventListener('pywebviewready',enableRefresh);
+  enableRefresh();
+  refresh.addEventListener('click',async () => {
+    refresh.disabled = true;
+    reportRefresh('Consultando Datos Abiertos Bogotá…');
+    try {
+      const result = await window.pywebview.api.refresh_data();
+      if (result.ok) {
+        const url = new URL(location.href);
+        url.search = '?actualizado=' + Date.now();
+        location.replace(url.href);
+      } else reportRefresh(result.message);
+    } catch {
+      reportRefresh('Falló la consulta. Se conserva el tablero anterior.');
+    } finally {
+      refresh.disabled = false;
+    }
+  });
   const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
   const sector = D.sectoriales ?? [];
   const monthly = D.mensual ?? [];
