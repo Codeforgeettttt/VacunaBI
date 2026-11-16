@@ -7,6 +7,7 @@ import html
 import os
 import sys
 import traceback
+from threading import Lock
 
 if sys.stdout is None:  # en el .exe sin consola no hay stdout y los print() de etl fallarían
     sys.stdout = sys.stderr = open(os.devnull, "w")
@@ -19,20 +20,49 @@ PANTALLA = """<body style="margin:0;height:100vh;display:grid;place-items:center
 font:16px system-ui,'Segoe UI',sans-serif;text-align:center"><div>{}</div></body>"""
 
 
-def cargar(ventana):
+def abrir_dashboard(ventana, sin_conexion=False):
+    url = (etl.OUT / "dashboard.html").resolve().as_uri()
+    ventana.load_url(url + ("?sin-conexion=1" if sin_conexion else ""))
+
+
+class Actualizacion:
+    def __init__(self):
+        self._lock = Lock()
+
+    def refresh_data(self):
+        if not self._lock.acquire(blocking=False):
+            return {"ok": False, "message": "Ya hay una consulta en curso."}
+        try:
+            etl.main()
+            return {"ok": True}
+        except Exception:
+            traceback.print_exc()
+            return {"ok": False, "message": "No se pudo consultar la API. Se conserva el tablero anterior."}
+        finally:
+            self._lock.release()
+
+
+def cargar(ventana, actualizacion):
     try:
-        etl.main()
-        ventana.load_url((etl.OUT / "dashboard.html").resolve().as_uri())
-    except Exception as e:
+        result = actualizacion.refresh_data()
+        if result["ok"]:
+            abrir_dashboard(ventana)
+            return
+        if (etl.OUT / "dashboard.html").is_file():
+            abrir_dashboard(ventana, sin_conexion=True)
+            return
+        mensaje = result["message"]
+    except Exception:
         traceback.print_exc()
-        ventana.load_html(PANTALLA.format(
-            "<h2>No se pudieron cargar los datos</h2><p>Revise la conexión a internet: el programa consulta la API "
-            f"de Datos Abiertos Bogotá.</p><p style='color:#898781;font-size:13px'>{html.escape(str(e))}</p>"))
+        mensaje = "No se pudo abrir el tablero. Vuelve a iniciar VacunaBI."
+    ventana.load_html(PANTALLA.format(
+        f"<h2>No se pudieron cargar los datos</h2><p>{html.escape(mensaje)}</p>"))
 
 
 if __name__ == "__main__":
     webview.settings["ALLOW_DOWNLOADS"] = True
+    actualizacion = Actualizacion()
     v = webview.create_window("VacunaBI · Cobertura de vacunación", html=PANTALLA.format(
         "<h2>VacunaBI · Bogotá D.C.</h2><p>Consultando la API de Datos Abiertos Bogotá…</p>"),
-        width=1280, height=860, min_size=(800, 600))
-    webview.start(cargar, v)
+        width=1280, height=860, min_size=(800, 600), js_api=actualizacion)
+    webview.start(cargar, (v, actualizacion))
