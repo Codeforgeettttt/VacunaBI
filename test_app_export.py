@@ -39,6 +39,53 @@ class TestEscritorio(unittest.TestCase):
             ventana.load_url.assert_called_once_with(dashboard.resolve().as_uri())
             self.assertTrue(control.usa_copia_local())
 
+    def test_inicio_con_cache_compatible_evitar_descarga_repetida(self):
+        module = cargar_modulo()
+        control = module.Actualizacion()
+        ventana = Mock()
+        with TemporaryDirectory() as raiz:
+            carpeta = Path(raiz)
+            tablero = carpeta / "dashboard.html"
+            tablero.write_text(
+                f'<meta name="vacunabi-version" content="{module.etl.VERSION_TABLERO}">',
+                encoding="utf-8",
+            )
+            with patch.object(module.etl, "OUT", carpeta), patch.object(
+                control, "refresh_data"
+            ) as refresh:
+                module.cargar(ventana, control)
+                self.assertTrue(module.hay_tablero_compatible())
+            refresh.assert_not_called()
+            ventana.load_url.assert_called_once_with(tablero.resolve().as_uri())
+            self.assertTrue(control.inicio_con_copia_guardada())
+            self.assertFalse(control.usa_copia_local())
+
+    def test_inicio_con_cache_viejo_descarga_una_sola_vez(self):
+        module = cargar_modulo()
+        control = module.Actualizacion()
+        ventana = Mock()
+        with TemporaryDirectory() as raiz:
+            carpeta = Path(raiz)
+            tablero = carpeta / "dashboard.html"
+            tablero.write_text("<html>cache de versión anterior</html>", encoding="utf-8")
+            with patch.object(module.etl, "OUT", carpeta), patch.object(
+                control, "refresh_data", return_value={"ok": True}
+            ) as refresh:
+                module.cargar(ventana, control)
+            refresh.assert_called_once_with()
+            ventana.load_url.assert_called_once_with(tablero.resolve().as_uri())
+            self.assertFalse(control.inicio_con_copia_guardada())
+
+    def test_cache_compatible_no_depende_de_un_archivo_incompleto(self):
+        module = cargar_modulo()
+        with TemporaryDirectory() as raiz, patch.object(module.etl, "OUT", Path(raiz)):
+            self.assertFalse(module.hay_tablero_compatible())
+            (Path(raiz) / "dashboard.html").write_text(
+                "<html><meta name='vacunabi-version' content='0.0'></html>",
+                encoding="utf-8",
+            )
+            self.assertFalse(module.hay_tablero_compatible())
+
     def test_recarga_tras_actualizar_usa_uri_local_sin_query(self):
         module = cargar_modulo()
         control = module.Actualizacion()
