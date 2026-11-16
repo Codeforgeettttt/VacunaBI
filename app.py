@@ -35,6 +35,7 @@ class Actualizacion:
         self._export_lock = Lock()
         self._ventana = None
         self._copia_local = False
+        self._aviso_recarga = False
 
     def refresh_data(self):
         if not self._lock.acquire(blocking=False):
@@ -54,6 +55,25 @@ class Actualizacion:
 
     def usa_copia_local(self):
         return self._copia_local
+
+    def recargar_dashboard(self):
+        """Vuelve a abrir el archivo local sin parámetros que WebView2 no resuelve."""
+        if self._ventana is None or not (etl.OUT / "dashboard.html").is_file():
+            return {"ok": False, "message": "No se encontró el tablero actualizado en el equipo."}
+        try:
+            self._aviso_recarga = True
+            abrir_dashboard(self._ventana)
+            return {"ok": True}
+        except Exception:
+            self._aviso_recarga = False
+            traceback.print_exc()
+            return {"ok": False, "message": "No se pudo volver a abrir el tablero actualizado."}
+
+    def consumir_aviso_recarga(self):
+        """El mensaje de éxito se muestra una sola vez en el HTML recién abierto."""
+        aviso = self._aviso_recarga
+        self._aviso_recarga = False
+        return aviso
 
     def guardar_exportacion(self, nombre, contenido):
         if not isinstance(nombre, str) or not re.fullmatch(r"VacunaBI-[a-z-]+\.(csv|xlsx)", nombre):
