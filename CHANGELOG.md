@@ -2,6 +2,8 @@
 
 ## [2.2.3] — Optimización de consultas CKAN
 
+- Amplía la documentación del sistema con manual técnico, 19 casos de uso, diagramas Mermaid, diccionario de datos, linaje de información, especificación ETL e índice navegable. Solo cambia documentación; el ejecutable de la release V2.2.3 permanece intacto.
+
 - Descarga los recursos sectorial y mensual simultáneamente cuando el usuario pulsa **Actualizar datos** o se necesita generar la primera copia.
 - Procesa las páginas siguientes de cada recurso en paralelo con un máximo de dos solicitudes simultáneas por fuente, manteniendo el orden original.
 - Comprueba el total de registros, la integridad de cada página y la ausencia de identificadores duplicados antes de transformar o publicar datos.
