@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b111b">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; base-uri 'none'; form-action 'none'">
 <title>VacunaBI · Cobertura de vacunación Bogotá D.C.</title>
 <script>/*__CHARTJS__*/</script><!-- Chart.js local inyectado por etl.py; sin CDN -->
 <style>
@@ -1020,6 +1021,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       $('manual-clear').disabled = false;
       render();
     } catch (error) {
+      if (manualFile.files[0] !== file) return;
       manualStatus.textContent = error.message + (manualRows.length ? ' La vista previa anterior sigue activa.' : ' Se mantienen los datos oficiales.');
       manualFile.value = '';
     }
