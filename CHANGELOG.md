@@ -1,5 +1,12 @@
 # Registro de cambios — VacunaBI
 
+## [1.5.0]
+
+- Tablas de valores para los cinco gráficos, con navegación por teclado.
+- Tema claro opcional con colores adaptados para texto y gráficos.
+- Consultas indexadas por serie y actualización de los gráficos cuando cambia su contenido.
+- Política de contenido local y protección contra respuestas obsoletas al leer archivos CSV.
+
 ## [1.4.0]
 
 - Validación de esquema y paginación de los recursos CKAN.

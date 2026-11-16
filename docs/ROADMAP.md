@@ -9,7 +9,7 @@ El repositorio está dedicado a la **aplicación VacunaBI**: interfaz, lógica, 
 | V1.2 | Filtros globales, gráficos interactivos y exportaciones desde interfaz | Implementada |
 | V1.3 | Mapa geográfico, fichas y comparación de localidades | Implementada |
 | V1.4 | Calidad de datos, trazabilidad ETL y diccionario | Implementada |
-| V1.5 | Accesibilidad, optimización, seguridad y pruebas | Pendiente |
+| V1.5 | Tablas accesibles, modo claro y optimización de gráficos | Implementada |
 | V2.0 | Escenarios, alertas y priorización territorial explicable | Pendiente |
 
 ## Reglas de evolución
