@@ -233,14 +233,21 @@ El ETL incluye normalización de nombres, conversión numérica, verificación d
 
 **Limitación metodológica:** comparar la cobertura de triple viral al año con la de refuerzo a los cinco años no prueba por sí mismo abandono individual, porque podrían referirse a cohortes distintas. Una cobertura administrativa superior al 100 % tampoco representa automáticamente un error de captura.
 
+### Documentación de implementación
+
+- [Línea base V1.0](docs/V1.0_BASELINE.md)
+- [Especificaciones y avance UI/UX V1.1](docs/V1.1_UI_UX.md)
+- [Roadmap técnico](docs/ROADMAP.md)
+- [Guía de colaboración](docs/CONTRIBUTING.md)
+
 ## 🗺️ Roadmap de evolución
 
-Estas mejoras son **planificadas**, no funciones ya disponibles:
+La V1.0 es la base integrada. **V1.1 está en desarrollo**, con una primera iteración de navegación y sistema visual ya incorporada; las siguientes versiones siguen planificadas:
 
 | Versión | Objetivo | Estado |
 |---|---|---|
-| **V1.0** | ETL, KPI, dashboard, informe y aplicación de escritorio. | Base implementada |
-| **V1.1** | Rediseño UI/UX, componentes y navegación por módulos. | Planificada |
+| **V1.0** | ETL, KPI, dashboard, informe y aplicación de escritorio. | Base integrada |
+| **V1.1** | Rediseño UI/UX, componentes y navegación por módulos. | Primera iteración implementada; validación visual pendiente |
 | **V1.2** | Filtros globales, comparaciones y exportaciones interactivas. | Planificada |
 | **V1.3** | Mapas geográficos y fichas territoriales. | Planificada |
 | **V1.4** | Calidad de datos, historial y auditoría ETL. | Planificada |
