@@ -6,6 +6,8 @@ import math
 import io
 import json
 import unittest
+import threading
+from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -32,6 +34,49 @@ class TestETLRegression(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Descarga incompleta"):
                 etl.consultar_api(etl.RES_SECTORES)
 
+    def test_api_paginas_concurrentes_ordenadas_y_completas(self):
+        barrera = threading.Barrier(2, timeout=3)
+        consultadas = []
+
+        def responder(url, timeout):
+            args = parse_qs(urlparse(url).query)
+            offset = int(args["offset"][0])
+            consultadas.append(offset)
+            # CKAN simulado devuelve 2 filas por página aunque se pidan 1000.
+            if offset in (2, 4):
+                barrera.wait()
+            filas = [{"_id": n, "valor": n * 10} for n in range(offset + 1, min(offset + 3, 6))]
+            return io.BytesIO(json.dumps({"success": True,
+                "result": {"total": 5, "records": filas}}).encode())
+
+        with patch.object(etl, "ESCHEMAS", {etl.RES_SECTORES: {"valor"}}), patch.object(
+            etl.urllib.request, "urlopen", side_effect=responder
+        ):
+            datos = etl.consultar_api(etl.RES_SECTORES)
+        self.assertEqual(datos["valor"].tolist(), [10, 20, 30, 40, 50])
+        self.assertCountEqual(consultadas, [0, 2, 4])
+
+    def test_api_rechaza_registros_duplicados_entre_paginas(self):
+        def responder(url, timeout):
+            offset = int(parse_qs(urlparse(url).query)["offset"][0])
+            return io.BytesIO(json.dumps({"success": True,
+                "result": {"total": 2, "records": [{"_id": 1, "valor": 10}]}}).encode())
+
+        with patch.object(etl.urllib.request, "urlopen", side_effect=responder):
+            with self.assertRaisesRegex(ValueError, "Descarga incompleta"):
+                etl.consultar_api(etl.RES_SECTORES)
+
+    def test_api_rechaza_cambio_de_total_entre_paginas(self):
+        def responder(url, timeout):
+            offset = int(parse_qs(urlparse(url).query)["offset"][0])
+            return io.BytesIO(json.dumps({"success": True,
+                "result": {"total": 2 if offset == 0 else 3,
+                           "records": [{"_id": offset + 1, "valor": 10}]}}).encode())
+
+        with patch.object(etl.urllib.request, "urlopen", side_effect=responder):
+            with self.assertRaisesRegex(ValueError, "Descarga incompleta"):
+                etl.consultar_api(etl.RES_SECTORES)
+
     def test_fallo_de_segunda_fuente_preserva_tablero_y_registra_fase(self):
         with TemporaryDirectory() as directorio:
             salida = Path(directorio)
@@ -39,8 +84,17 @@ class TestETLRegression(unittest.TestCase):
             tablero.write_bytes(b"tablero previo")
             crudo = salida / "crudo_sectores.csv"
             crudo.write_bytes(b"extraccion previa")
+            simultaneas = threading.Barrier(2, timeout=3)
+
+            def consulta(resource_id):
+                # Confirma que las dos fuentes arrancan simultáneamente.
+                simultaneas.wait()
+                if resource_id == etl.RES_SECTORES:
+                    return self.datos_sectores()
+                raise TimeoutError("sin respuesta")
+
             with patch.object(etl, "OUT", salida), patch.object(
-                etl, "consultar_api", side_effect=[self.datos_sectores(), TimeoutError("sin respuesta")]
+                etl, "consultar_api", side_effect=consulta
             ):
                 with self.assertRaises(TimeoutError):
                     etl.main()
