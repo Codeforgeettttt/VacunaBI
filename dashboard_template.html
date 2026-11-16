@@ -191,6 +191,8 @@ tr:last-child td { border-bottom:0; }
           <label>Sector <select id="fSector"><option value="">Todos</option></select></label>
           <label>Modo <select id="fMode"><option value="">Todas las vistas</option><option value="historico">Histórico</option><option value="actual">Actual</option><option value="comparativo">Comparativo</option></select></label>
           <label id="compare-label" hidden>Comparar con <select id="fCompare"></select></label>
+          <label id="month-from-label" hidden>Desde el mes <select id="fMonthFrom"><option value="">Primero disponible</option></select></label>
+          <label id="month-to-label" hidden>Hasta el mes <select id="fMonthTo"><option value="">Último disponible</option></select></label>
         </div>
         <div class="filter-chips" id="filter-chips"></div>
         <div class="control-actions"><button id="fReset" type="button">Restablecer filtros</button></div>
@@ -397,7 +399,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare'];
+  const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
   const sector = D.sectoriales ?? [];
   const monthly = D.mensual ?? [];
   const available = (rows, key) => [...new Set(rows.map(row => row[key]))].sort((a,b) => String(a).localeCompare(String(b), 'es'));
@@ -429,8 +431,48 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   const charts = Object.fromEntries(['cAnual','cActual','cLoc','cInst','cGrupo'].map(id => [id, Chart.getChart(id)]));
   const template = Object.fromEntries(Object.entries(charts).map(([id, chart]) => [id, chart.data.datasets.map(row => ({...row}))]));
   const monthNames = charts.cActual.data.labels.slice();
+  ['fMonthFrom','fMonthTo'].forEach(id => meses.forEach((month, index) => $(id).add(new Option(
+    new Intl.DateTimeFormat('es-CO', {month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2000,index,1))),month))));
+  const dialog = $('chart-dialog');
+  let expanded = null;
+  let opener = null;
+  dialog.addEventListener('close', () => {
+    expanded?.destroy();
+    expanded = null;
+    $('expanded-chart').replaceChildren();
+    opener?.focus();
+  });
   const statusByChart = {};
   for (const id of Object.keys(charts)) {
+    const chart = charts[id];
+    const card = chart.canvas.closest('.card');
+    const actions = document.createElement('div');
+    actions.className = 'chart-actions';
+    const expand = document.createElement('button');
+    expand.type = 'button';
+    expand.textContent = 'Ampliar gráfico';
+    const title = card.querySelector('h3');
+    expand.setAttribute('aria-label', 'Ampliar gráfico: ' + title.textContent);
+    actions.append(expand);
+    chart.canvas.parentElement.after(actions);
+    chart.actions = actions;
+    expand.addEventListener('click', () => {
+      opener = expand;
+      $('chart-dialog-title').textContent = title.textContent;
+      const canvas = document.createElement('canvas');
+      canvas.setAttribute('role','img');
+      canvas.setAttribute('aria-label', title.textContent);
+      $('expanded-chart').append(canvas);
+      dialog.showModal();
+      const data = {labels:[...chart.data.labels],datasets:chart.data.datasets.map((dataset,index) => ({
+        ...dataset, data:[...dataset.data], hidden:!chart.isDatasetVisible(index)
+      }))};
+      expanded = new Chart(canvas,{type:chart.config.type,data,options:{
+        indexAxis:chart.config.options.indexAxis, maintainAspectRatio:false,
+        interaction:chart.config.options.interaction, scales:chart.config.options.scales,
+        plugins:chart.config.options.plugins
+      }});
+    });
     const status = document.createElement('p');
     status.className = 'chart-status';
     status.hidden = true;
@@ -447,6 +489,24 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     statusByChart[id].textContent = message;
     chart.options.plugins.tooltip.callbacks.footer = () => source;
     chart.update('none');
+    const controls = chart.actions;
+    controls.hidden = Boolean(message);
+    for (const button of controls.querySelectorAll('[data-series]')) button.remove();
+    const title = chart.canvas.closest('.card').querySelector('h3').textContent;
+    controls.firstElementChild.setAttribute('aria-label','Ampliar gráfico: ' + title);
+    if (chart.config.type === 'line') datasets.forEach((dataset,index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.series = String(index);
+      button.textContent = dataset.label;
+      button.setAttribute('aria-pressed',String(chart.isDatasetVisible(index)));
+      button.addEventListener('click',() => {
+        chart.setDatasetVisibility(index,!chart.isDatasetVisible(index));
+        button.setAttribute('aria-pressed',String(chart.isDatasetVisible(index)));
+        chart.update('none');
+      });
+      controls.append(button);
+    });
   }
   function bar(id, rows, key, source) {
     const dataset = {...template[id][0], data:rows.map(r => r.cobertura)};
@@ -494,7 +554,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
   }
   function render() {
-    const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other} =
+    const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
       Object.fromEntries(filters.map(id => [id, $(id).value]));
     const [bioSource, biological] = bio ? JSON.parse(bio) : [];
     const sectorCompatible = bioSource !== 'Serie distrital';
@@ -533,7 +593,13 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const annualRows = districtCompatible ? cerr.filter(r => (!biological || r.biologico === biological) &&
       (mode === 'comparativo' ? [primary,compare].includes(r.anio) : !year || r.anio === +year)) : [];
     const actualYear = mode === 'actual' || mode === '' ? +(year || D.anio_actual) : 0;
-    const monthRows = districtCompatible ? monthly.filter(r => r.anio === actualYear &&
+    const applicableRange = mode === 'actual' && districtCompatible;
+    ['month-from-label','month-to-label'].forEach(id => $(id).hidden = !applicableRange);
+    ['fMonthFrom','fMonthTo'].forEach(id => $(id).disabled = !applicableRange);
+    const low = applicableRange ? +(from || 1) : 1;
+    const high = applicableRange ? +(to || 12) : 12;
+    const selectedMonths = meses.filter(month => month >= low && month <= high);
+    const monthRows = districtCompatible ? monthly.filter(r => r.anio === actualYear && selectedMonths.includes(r.mes_num) &&
       (!biological || r.biologico === biological)).map(r => ({...r,cobertura:r.cobertura_acum})) : [];
     const periods = available(annualRows, 'anio').map(Number);
     const annualVisible = mode !== 'actual';
@@ -544,8 +610,9 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const annualMessage = !districtCompatible ? disabledDistrict : pair ? 'Selecciona dos años cerrados con datos comparables.' : annualRows.length ? '' : empty;
     setChart('cAnual', periods, series(annualRows,periods,'anio'), annualMessage, seriesSource);
     $('tActual').textContent = `Avance ${actualYear || D.anio_actual}`;
-    setChart('cActual', monthNames, [...series(monthRows,meses,'mes_num'),template.cActual.at(-1)],
-      !districtCompatible ? disabledDistrict : monthRows.length ? '' : empty, `${seriesSource} · ${actualYear}`);
+    const pace = {...template.cActual.at(-1),data:selectedMonths.map(month => template.cActual.at(-1).data[month-1])};
+    setChart('cActual', selectedMonths.map(month => monthNames[month-1]), [...series(monthRows,selectedMonths,'mes_num'),pace],
+      !districtCompatible ? disabledDistrict : low > high ? 'El mes inicial debe ser anterior o igual al mes final.' : monthRows.length ? '' : empty, `${seriesSource} · ${actualYear}`);
     const tv1 = annualRows.find(r => r.anio === primary && r.biologico === 'Triple viral 1 año');
     const tv5 = annualRows.find(r => r.anio === primary && r.biologico.startsWith('Triple viral R1 o DPT'));
     const difference = tv1 && tv5 ? +(tv1.cobertura-tv5.cobertura).toFixed(1) : null;
@@ -566,7 +633,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         dosis:r.vacunados_acum, denominador:r.poblacion_meta, cobertura:r.cobertura, fuente:seriesSource})) : [])
     ];
     const chips = ['Bogotá D.C.',year,local,biological,inst,mode ? $('fMode').selectedOptions[0].textContent : '',
-      mode === 'comparativo' && compare ? `Comparar con ${compare}` : ''].filter(Boolean);
+      mode === 'comparativo' && compare ? `Comparar con ${compare}` : '',
+      applicableRange && (from || to) ? `Meses ${low}–${high}` : ''].filter(Boolean);
     $('filter-chips').replaceChildren(...chips.map(name => {
       const chip = document.createElement('span');
       chip.textContent = name;
