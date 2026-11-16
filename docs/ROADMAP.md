@@ -11,8 +11,11 @@ El repositorio está dedicado a la **aplicación VacunaBI**: interfaz, lógica, 
 | V1.4 | Calidad de datos, trazabilidad ETL y diccionario | Implementada |
 | V1.5 | Tablas accesibles, modo claro y optimización de gráficos | Implementada |
 | V2.0 | Escenarios, alertas y priorización territorial explicable | Implementada |
+| V2.1 | Claridad de indicadores, filtros y flujo de decisiones | Integrada |
+| V2.2 | Diseño visual, fuentes compatibles y modularización | Integrada |
+| V2.2.1 | Estabilización WebView2: recarga del HTML sin parámetros en `file://` | Corrección integrada; pendiente aceptación manual del ejecutable y publicación de release |
 
-V2.0 usa simulaciones aritméticas de denominador fijo. Las proyecciones estadísticas requieren series adecuadas y una evaluación del error fuera de muestra. Consulta la [metodología de decisiones](DECISIONES.md).
+V2.0 y posteriores utilizan simulaciones aritméticas de denominador fijo. Las proyecciones estadísticas requieren series adecuadas y una evaluación del error fuera de muestra. Consulta la [metodología de decisiones](DECISIONES.md).
 
 ## Reglas de evolución
 
