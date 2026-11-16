@@ -879,6 +879,16 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         '<tr>' + tableFields.map(key => `<td>${esc(format(row[key], key))}</td>`).join('') + '</tr>').join('') +
       '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
   }
+  const model = globalThis.VacunaDecisiones;
+  let decisionContext = {filas:[],anual:[],corte:'',filtros:''};
+  function refreshDecisions() {
+    const ctx = decisionContext;
+    const totals = ctx.filas.reduce((sum,row) => [sum[0]+row.dosis_aplicada,sum[1]+row.denominador],[0,0]);
+    const data = model.medicion(...totals,META);
+    $('decision-summary').textContent = data
+      ? `Corte ${ctx.corte} · ${ctx.filas.length} localidades · cobertura ${fmt(+data.cobertura.toFixed(1))} % · ${fmt(data.faltantes)} dosis para la meta de ${META} % con el denominador actual.`
+      : 'No hay registros sectoriales oficiales compatibles con los filtros.';
+  }
   function render() {
     const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
       Object.fromEntries(filters.map(id => [id, $(id).value]));
@@ -976,6 +986,14 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     }));
     $('filters-status').textContent = [districtCompatible ? '' : disabledDistrict,
       sectorCompatible ? (cut ? `Seguimiento sectorial · corte ${cut}.` : 'Sin registros sectoriales para esta selección.') : disabledSector].filter(Boolean).join(' ');
+    const baseDecisiones = sectorCompatible ? sector.filter(r => r.grupo_biologico === 'Primera infancia'
+      && (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local)
+      && (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
+    const corteDecisiones = baseDecisiones.reduce((date,r) => r.fecha_reporte > date ? r.fecha_reporte : date,'');
+    decisionContext = {corte:corteDecisiones,filas:aggregate(baseDecisiones.filter(r => r.fecha_reporte === corteDecisiones),['localidad']),
+      anual:districtCompatible ? D.anual.filter(r => (!year || r.anio <= +year) && (!biological || r.biologico === biological)) : [],
+      filtros:[year || 'Años disponibles',local || 'Todas las localidades',inst || 'Todos los sectores',biological || 'Primera infancia'].join(' · ')};
+    refreshDecisions();
     page = 0;
     renderTable();
   }
