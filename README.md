@@ -133,6 +133,8 @@ pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.
 
 El ejecutable se genera dentro de `dist/`.
 
+GitHub Actions también compila el ejecutable cuando cambian los archivos de la aplicación en `main`. Para obtenerlo, abre [VacunaBI · ejecutable de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml), selecciona una ejecución exitosa y descarga el artefacto `VacunaBI-Windows`. Extrae el ZIP y ejecuta `VacunaBI.exe` desde una carpeta donde puedas escribir.
+
 ## Fuentes y datos generados
 
 **Endpoint CKAN:** `https://datosabiertos.bogota.gov.co/api/3/action/datastore_search`
