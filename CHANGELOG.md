@@ -1,5 +1,12 @@
 # Registro de cambios — VacunaBI
 
+## [2.0.0]
+
+- Resumen ejecutivo con prioridades territoriales y reglas visibles.
+- Comparación de dos escenarios de dosis sobre el mismo denominador.
+- Alertas de brecha, descensos, periodos parciales y calidad.
+- Reporte ejecutivo CSV con fuentes, filtros y supuestos.
+
 ## [1.5.0]
 
 - Tablas de valores para los cinco gráficos, con navegación por teclado.

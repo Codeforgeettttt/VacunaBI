@@ -144,7 +144,7 @@ python app.py
 
 ```powershell
 python -m pip install pyinstaller pywebview==5.3.2
-pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." --add-data "localidades.json;." app.py
+pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." --add-data "localidades.json;." --add-data "decisiones.js;." app.py
 ```
 
 El ejecutable se genera dentro de `dist/`.
@@ -198,7 +198,9 @@ Así, una caída o demora de la API pública no marca como fallido un commit cuy
 | **V1.3** | Mapa de localidades, comparación territorial y ficha CSV | Implementada |
 | **V1.4** | Trazabilidad y calidad de datos ampliada | Planificada |
 | **V1.5** | Rendimiento, accesibilidad y pruebas | Planificada |
-| **V2.0** | Priorización, simulaciones y alertas explicables | Planificada |
+| **V2.0** | Priorización, simulaciones y alertas explicables | Implementada |
+
+Abre **Decisiones** para revisar el ranking, cambiar el peso de la brecha, comparar dos escenarios de dosis y descargar el reporte. Consulta las [reglas y limitaciones](docs/DECISIONES.md).
 
 Detalles de desarrollo: [V1.0](docs/V1.0_BASELINE.md) · [V1.1](docs/V1.1_UI_UX.md) · [Roadmap técnico](docs/ROADMAP.md) · [Cambios](CHANGELOG.md).
 
