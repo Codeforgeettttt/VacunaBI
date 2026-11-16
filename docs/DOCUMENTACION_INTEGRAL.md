@@ -14,6 +14,18 @@
 
 > **Sobre este documento.** Este manual reúne el funcionamiento del producto, las decisiones técnicas que pueden verificarse en el repositorio, la metodología de análisis y el procedimiento para operarlo y mantenerlo. Explica el estado real de la versión 2.2.3. Las verificaciones manuales que no tienen evidencia registrada se presentan como pendientes; no se declaran aprobadas por el simple hecho de que el ejecutable se haya compilado.
 
+### Documentación técnica complementaria
+
+El manual integral presenta una visión completa del proyecto; los modelos detallados se mantienen en documentos independientes para que sea más fácil consultarlos y actualizarlos:
+
+- [Índice general de documentos](INDICE_DOCUMENTACION.md).
+- [Manual técnico, arquitectura y componentes](DOCUMENTACION_TECNICA.md).
+- [Casos de uso extendidos y diagramas](CASOS_DE_USO_Y_DIAGRAMAS.md).
+- [Diccionario, modelo BI, linaje y gestión de datos](DICCIONARIO_Y_GESTION_DATOS.md).
+- [Especificación completa del proceso ETL](PROCESO_ETL.md).
+
+Los diagramas se ofrecen en Mermaid, con visualización directa en GitHub. Los modelos conceptuales no deben interpretarse como una base SQL implementada ni como autenticación por perfiles.
+
 ---
 
 ## Contenido
