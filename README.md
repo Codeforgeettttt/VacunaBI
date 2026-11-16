@@ -1,92 +1,26 @@
-# VacunaBI 💉
+# VacunaBI
 
-**Dashboard de cobertura de vacunación en Bogotá D.C.**, con procesos de extracción y transformación de datos, indicadores de cobertura y visualizaciones de apoyo al análisis territorial.
+**Proyecto final de Inteligencia de Negocios · Universidad Manuela Beltrán**
 
-![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
-![pandas](https://img.shields.io/badge/pandas-ETL-150458?logo=pandas&logoColor=white)
-![Chart.js](https://img.shields.io/badge/Chart.js-Visualizaci%C3%B3n-FF6384?logo=chartdotjs&logoColor=white)
-![Estado](https://img.shields.io/badge/V1.2-Exploración-0F766E)
+VacunaBI analiza la cobertura de vacunación en Bogotá D.C. a partir de datos abiertos. El proyecto reúne la extracción de las fuentes, la validación de los datos y la visualización de indicadores en un tablero que puede abrirse en el navegador o como aplicación de Windows.
 
-## ¿Qué hace?
+El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta para cerrar esa brecha bajo un denominador fijo. La versión 2.0 reúne estas preguntas en la vista **Decisiones**.
 
-VacunaBI consulta dos recursos públicos de la **API CKAN de Datos Abiertos Bogotá**, procesa la información con Python, calcula indicadores y genera un dashboard de consulta. Puede utilizarse desde un navegador o dentro de una ventana de escritorio mediante pywebview.
+[Descargar VacunaBI para Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/runs/43938529969#artifacts) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
-Su enfoque actual es **Bogotá D.C.**; la compatibilidad con otras regiones aún no está implementada. El proyecto trabaja con datos agregados y está orientado a la exploración y el análisis de información de vacunación.
+## Cómo probar el proyecto
 
-## Funcionalidades disponibles
+### Aplicación para Windows
 
-| Módulo | Funciones |
-| --- | --- |
-| Resumen | Indicadores de cobertura de primera infancia, brecha frente a la meta del 95 %, comparación de triple viral y dosis adicionales estimadas |
-| Histórico | Evolución anual de cobertura por biológico y avance acumulado del año disponible |
-| Localidades | Ranking de primera infancia y matriz de calor localidad × sector |
-| Sectores y biológicos | Comparaciones por sector institucional y grupo de biológico |
-| Calidad de datos | Registro de validaciones y transformaciones del ETL |
-| Metodología | Definiciones y contexto de interpretación de indicadores |
-| Datos | Exportación generada por el ETL en CSV, Excel, JSON y HTML |
-| Escritorio | Ventana de aplicación mediante pywebview y opción de compilación para Windows |
+1. Abre la [compilación de V2.0](https://github.com/Codeforgeettttt/VacunaBI/actions/runs/43938529969#artifacts) en GitHub Actions e inicia sesión si GitHub lo pide.
+2. En **Artifacts**, descarga **VacunaBI-Windows** y extrae el ZIP.
+3. Ejecuta `VacunaBI.exe` desde una carpeta donde puedas escribir. La aplicación consulta las fuentes al abrir y utiliza Microsoft Edge WebView2 para mostrar el tablero.
 
-La **V1.2** permite filtrar la cobertura por año, localidad, sector y biológico en Bogotá D.C. La serie histórica distrital y el seguimiento sectorial conservan sus propias dimensiones y periodos.
+La primera ejecución requiere conexión a Internet. **Actualizar datos** vuelve a consultar la API. Si falla la actualización y existe un tablero válido guardado, la aplicación muestra esa copia.
 
-## Explorar y exportar datos
+### Generar el tablero desde el código fuente
 
-Usa **Explorar datos** para cambiar el año, el biológico y los desgloses desagregados disponibles. **Histórico** muestra años cerrados, **Actual** admite un rango de meses dentro del año y **Comparativo** muestra dos años cerrados de la serie distrital. Las cifras sectoriales corresponden al último corte de la selección. La cobertura se calcula dividiendo la suma de dosis por la suma de denominadores.
-
-En **Consultar datos de la selección**, elige la fuente, busca y ordena las filas. Las exportaciones CSV y XLSX incluyen todas las filas que coinciden con la búsqueda, junto con los filtros, la fuente y la fecha de generación. En Windows, la aplicación abre el diálogo para guardar el archivo.
-
-Usa **Ampliar gráfico** para ver una visualización con mayor tamaño. Los botones de leyenda permiten ocultar y restaurar series con el teclado.
-
-### Actualización y ajustes manuales
-
-En Windows, VacunaBI consulta las dos fuentes de Datos Abiertos Bogotá al iniciar. **Actualizar datos** vuelve a consultar la API desde el tablero. Si una consulta falla y existe un tablero previo, la aplicación lo conserva e indica que se están mostrando los últimos datos guardados.
-
-Para ensayar un ajuste sectorial del último corte, abre **Cargar registros manuales**, descarga la plantilla CSV y edita las dosis y el denominador. Usa el corte y los nombres de localidad, sector y biológico de las fuentes oficiales. Cada fila se identifica por corte, localidad, sector y biológico. El archivo se valida antes de aplicar la vista previa y las exportaciones identifican las filas manuales. **Quitar vista previa** restaura los datos oficiales. La vista previa se descarta al cerrar o actualizar el tablero.
-
-## Arquitectura
-
-Usa **Modo claro** para cambiar el tema y **Consultar tabla del gráfico** para leer sus valores con teclado. La tabla conserva la fuente, los periodos y las series visibles. Los gráficos sectoriales incluyen dosis y denominador.
-
-```mermaid
-flowchart LR
-    API["Datos Abiertos Bogotá · API CKAN"] --> ETL["etl.py · Extracción, validación y KPIs"]
-    ETL --> DATA["salidas/ · CSV, XLSX, JSON"]
-    ETL --> WEB["dashboard.html · Chart.js"]
-    WEB --> BROWSER["Navegador / GitHub Pages"]
-    WEB --> DESKTOP["app.py · pywebview"]
-```
-
-### Tecnologías
-
-- **Python + pandas:** consultas, limpieza, normalización, cálculos y generación del dashboard.
-- **openpyxl:** generación de archivos Excel.
-- **HTML, CSS, JavaScript y Chart.js:** presentación de indicadores y gráficos.
-- **pywebview:** aplicación de escritorio.
-- **PyInstaller:** empaquetado opcional para Windows.
-- **GitHub Actions:** pruebas y actualización automatizada del dashboard.
-
-### Archivos del proyecto
-
-```text
-VacunaBI/
-├── .github/workflows/actualizar.yml  # Pruebas, ETL y publicación opcional
-├── app.py                             # Ventana de aplicación
-├── etl.py                             # Fuentes, procesamiento y KPIs
-├── dashboard_template.html            # Interfaz y gráficos
-├── chart.umd.min.js                   # Chart.js local
-├── requirements.txt                   # Dependencias de procesamiento
-├── test_etl.py                        # Pruebas del ETL
-├── test_etl_regression.py             # Pruebas de regresión
-├── test_dashboard_template.py         # Comprobaciones de interfaz
-├── docs/                              # Especificaciones técnicas por versión
-├── CHANGELOG.md                       # Cambios publicados
-└── salidas/                            # Archivos generados; ignorados por Git
-```
-
-## Instalación y ejecución
-
-**Requisitos:** Python 3.12 recomendado, Git y conexión a Internet para consultar las fuentes.
-
-### 1. Descargar y preparar el entorno
+Requisitos para esta ruta: Git, Python 3.12 recomendado e Internet para consultar las fuentes.
 
 ```bash
 git clone https://github.com/Codeforgeettttt/VacunaBI.git
@@ -94,124 +28,97 @@ cd VacunaBI
 python -m venv .venv
 ```
 
-Activar el entorno virtual:
-
-**Windows (PowerShell):**
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-**Linux / macOS:**
-
-```bash
-source .venv/bin/activate
-```
-
-Instalar dependencias:
+Activa el entorno virtual en PowerShell con `.\.venv\Scripts\Activate.ps1` o en Linux y macOS con `source .venv/bin/activate`. Luego instala las dependencias y genera el tablero.
 
 ```bash
 python -m pip install -r requirements.txt
+python etl.py
 ```
 
-### 2. Ejecutar las pruebas
+Abre `salidas/dashboard.html` en el navegador. El archivo incluye los gráficos y los datos de esa ejecución. Para consultar datos nuevos desde esta modalidad, vuelve a ejecutar el ETL.
+
+## Recorrido del tablero
+
+| Vista | Qué puedes revisar |
+| --- | --- |
+| **Resumen general** | Cobertura de primera infancia, brecha frente a la meta, evolución anual por biológico y avance mensual acumulado. |
+| **Localidades** | Mapa de las 20 localidades de Bogotá, ranking, matriz localidad–sector, comparación entre dos localidades y ficha territorial en CSV. |
+| **Sectores y biológicos** | Cobertura por sector institucional y por grupo de biológicos en la población de seguimiento. |
+| **Calidad de datos** | Corte de cada fuente, registros aceptados, descartados y observados e historial de actualizaciones. |
+| **Decisiones** | Ranking con pesos ajustables, comparación de dos escenarios de dosis, alertas y reporte ejecutivo en CSV. |
+| **Metodología** | Definiciones de los indicadores, procedencia de los datos y criterios de interpretación. |
+
+Para una demostración, abre **Localidades**, selecciona una zona en el mapa y compárala con otra bajo el mismo corte. Luego pasa a **Decisiones**, cambia el peso de la brecha y compara un escenario de cero dosis adicionales con uno que represente una meta operativa. El CSV ejecutivo conserva el contexto de esa selección.
+
+Los filtros por año, localidad, biológico y sector se aplican donde la fuente tiene ese nivel de detalle. **Consultar datos de la selección** permite buscar, ordenar y exportar las filas en CSV o Excel. **Consultar tabla del gráfico** permite leer sus valores con teclado. El tablero también incluye modo claro.
+
+## Fuentes, indicadores y alcance
+
+| Fuente | Uso en el proyecto | Identificador |
+| --- | --- | --- |
+| Seguimiento de cobertura por sectores | Cobertura por localidad, sector y biológico para el corte sectorial. | `e519cce2-9951-41de-afbc-005d1e1d24dd` |
+| Cobertura mensual de vacunación de Bogotá D.C. | Serie distrital, avance mensual y comparación de años cerrados. | `1910589c-2836-41d3-aba4-00488bb5e5f3` |
+| Límites oficiales de localidades | Geometría del mapa territorial. | [Procedencia y preparación](docs/DATOS_TERRITORIALES.md) |
+
+Los dos recursos de vacunación se consultan mediante la API CKAN del [Portal de Datos Abiertos Bogotá](https://datosabiertos.bogota.gov.co/). El tablero trabaja con datos agregados. Cada fuente tiene su propio corte y población de seguimiento, por lo que una comparación territorial y una tendencia distrital pueden corresponder a fechas distintas.
+
+- **Cobertura.** Dosis aplicadas divididas por la población objetivo, multiplicadas por 100. Para agregar grupos se suman las dosis y los denominadores antes de calcular el porcentaje.
+- **Brecha.** Diferencia en puntos porcentuales frente a la meta de referencia del 95 %. Para priorizar se toma la parte de la brecha que queda por debajo de la meta.
+- **Dosis adicionales.** Cantidad entera necesaria para alcanzar la meta con el denominador observado. El ranking pondera la brecha relativa y las dosis faltantes normalizadas respecto al mayor valor de la selección.
+
+Las coberturas superiores al 100 % quedan señaladas para revisión. La diferencia de cobertura entre etapas del esquema no mide por sí sola el abandono individual. Los escenarios A y B estiman qué cobertura resultaría al sumar una cantidad de dosis al mismo indicador con un denominador fijo. El reporte identifica estos resultados como simulaciones aritméticas.
+
+**Cargar registros manuales** permite ensayar ajustes mediante una plantilla CSV del último corte sectorial. La vista previa es temporal, las filas manuales se identifican en las exportaciones de exploración y el análisis de **Decisiones** utiliza los registros oficiales.
+
+## Arquitectura y resultados
+
+```mermaid
+flowchart LR
+    API["Datos Abiertos Bogotá · CKAN"] --> ETL["Python y pandas · extracción, limpieza e indicadores"]
+    MAP["Límites de Bogotá"] --> ETL
+    ETL --> DATA["CSV, Excel y auditoría JSON"]
+    ETL --> HTML["Tablero HTML · Chart.js y motor de decisiones"]
+    HTML --> WEB["Navegador"]
+    HTML --> WIN["Windows · pywebview"]
+```
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| [`etl.py`](etl.py) | Consulta las fuentes, aplica reglas de calidad, calcula indicadores y publica las salidas. |
+| [`dashboard_template.html`](dashboard_template.html) | Interfaz, filtros, mapa, gráficos y exportaciones de la selección. |
+| [`decisiones.js`](decisiones.js) | Cálculos de brecha, prioridades, alertas y escenarios. |
+| [`app.py`](app.py) | Ventana de escritorio y actualización de los datos desde Windows. |
+| [`localidades.json`](localidades.json) | Límites simplificados de las 20 localidades para visualización. |
+
+El ETL guarda las consultas originales (`crudo_sectores.csv` y `crudo_mensual.csv`), los datos tratados (`hechos_sectores.csv`, `cobertura_anual.csv` y `base_consolidada.xlsx`), los indicadores (`kpis.json`), la auditoría (`auditoria.json`) y el tablero (`dashboard.html`). Las salidas se generan en `salidas/` y se excluyen del control de versiones. El proceso valida ambas fuentes antes de publicar y conserva la última publicación válida si falla la actualización. [Diccionario de calidad y trazabilidad](docs/CALIDAD_DATOS.md)
+
+## Pruebas y mantenimiento
+
+Con las dependencias de Python instaladas, ejecuta los siguientes comandos. Las pruebas de decisiones requieren Node.js y las suites se ejecutan sin consultar la API.
 
 ```bash
 python test_etl.py
 python -m unittest -v test_etl_regression test_dashboard_template
+node --test test_decisiones.cjs
 ```
 
-Las pruebas de limpieza e interfaz estructural no requieren conexión a Internet.
-
-### 3. Generar y abrir el dashboard
-
-```bash
-python etl.py
-```
-
-Al terminar, abre **`salidas/dashboard.html`** en un navegador moderno. El archivo incorpora los datos procesados y la librería Chart.js necesaria para presentar los gráficos.
-
-### 4. Ejecutar como aplicación de escritorio
-
-```bash
-python -m pip install pywebview==5.3.2
-python app.py
-```
-
-`app.py` ejecuta el ETL antes de cargar el dashboard. En Windows utiliza el motor web disponible en el sistema (habitualmente WebView2).
-
-### 5. Compilar un ejecutable para Windows (opcional)
+Para compilar la aplicación desde Windows con las mismas versiones de empaquetado de V2.0, usa PowerShell.
 
 ```powershell
-python -m pip install pyinstaller pywebview==5.3.2
-pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." --add-data "localidades.json;." --add-data "decisiones.js;." app.py
+python -m pip install pyinstaller==6.22.3 pywebview==5.3.2
+python -m PyInstaller --onefile --windowed --name VacunaBI `
+  --add-data "dashboard_template.html:." --add-data "chart.umd.min.js:." `
+  --add-data "localidades.json:." --add-data "decisiones.js:." app.py
 ```
 
-El ejecutable se genera dentro de `dist/`.
+El ejecutable queda en `dist/VacunaBI.exe`. Para abrir la aplicación sin compilar, instala `pywebview==5.3.2` y ejecuta `python app.py`.
 
-GitHub Actions también compila el ejecutable cuando cambian los archivos de la aplicación en `main`. Para obtenerlo, abre [VacunaBI · ejecutable de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml), selecciona una ejecución exitosa y descarga el artefacto `VacunaBI-Windows`. Extrae el ZIP y ejecuta `VacunaBI.exe` desde una carpeta donde puedas escribir.
-
-## Fuentes y datos generados
-
-La vista **Calidad de datos** muestra el corte publicado por cada fuente, las filas originales, aceptadas, descartadas y observadas, y el historial reciente de ejecuciones. Consulta el [diccionario de auditoría](docs/CALIDAD_DATOS.md).
-
-**Endpoint CKAN:** `https://datosabiertos.bogota.gov.co/api/3/action/datastore_search`
-
-| Fuente | ID de recurso |
-| --- | --- |
-| Seguimiento de cobertura por sectores | `e519cce2-9951-41de-afbc-005d1e1d24dd` |
-| Cobertura mensual de vacunación de Bogotá D.C. | `1910589c-2836-41d3-aba4-00488bb5e5f3` |
-
-`python etl.py` crea dentro de `salidas/`: `crudo_sectores.csv`, `crudo_mensual.csv`, `hechos_sectores.csv`, `cobertura_anual.csv`, `base_consolidada.xlsx`, `kpis.json` y `dashboard.html`.
-
-La carpeta `salidas/` no se versiona. Los datos generados dependen de la vigencia y disponibilidad de las fuentes.
-
-### Indicadores
-
-```text
-Cobertura (%)       = dosis aplicadas / población objetivo × 100
-Brecha (pp)         = 95 − cobertura
-Variación anual (pp)= cobertura actual − cobertura del año anterior
-```
-
-Las comparaciones deben utilizar periodos, biológicos y denominadores compatibles. Las coberturas superiores al 100 % se identifican para revisión y las diferencias entre etapas del esquema no deben interpretarse automáticamente como abandono individual.
-
-## Automatización
-
-El workflow [`actualizar.yml`](.github/workflows/actualizar.yml) separa dos actividades:
-
-- **En cada push a `main`:** ejecuta las pruebas de la aplicación y del ETL, sin consultar la API externa.
-- **Diariamente a las 11:00 UTC** (06:00 hora de Colombia): ejecuta las pruebas y, si pasan, descarga los datos y guarda el tablero del día como artefacto `VacunaBI-Dashboard` en GitHub Actions.
-- **Manualmente desde Actions:** permite solicitar una actualización completa del dashboard.
-
-Así, una caída o demora de la API pública no marca como fallido un commit cuyo código y pruebas son correctos.
-
-**Publicación opcional en GitHub Pages:** selecciona *Settings → Pages → Source: GitHub Actions* y configura la variable de repositorio `ENABLE_PAGES=true` en *Settings → Secrets and variables → Actions → Variables*. Si no está habilitada, las pruebas y la actualización pueden seguir ejecutándose sin desplegar el sitio.
-
-## Roadmap
-
-| Versión | Objetivo | Estado |
-| --- | --- | --- |
-| **V1.0** | ETL, KPIs, dashboard y aplicación de escritorio | Base integrada |
-| **V1.1** | Rediseño UI/UX y navegación modular | Primera iteración; validación pendiente |
-| **V1.2** | Filtros globales, comparación de años y exportaciones CSV/XLSX | Implementada |
-| **V1.3** | Mapa de localidades, comparación territorial y ficha CSV | Implementada |
-| **V1.4** | Trazabilidad y calidad de datos ampliada | Planificada |
-| **V1.5** | Rendimiento, accesibilidad y pruebas | Planificada |
-| **V2.0** | Priorización, simulaciones y alertas explicables | Implementada |
-
-Abre **Decisiones** para revisar el ranking, cambiar el peso de la brecha, comparar dos escenarios de dosis y descargar el reporte. Consulta las [reglas y limitaciones](docs/DECISIONES.md).
-
-Detalles de desarrollo: [V1.0](docs/V1.0_BASELINE.md) · [V1.1](docs/V1.1_UI_UX.md) · [Roadmap técnico](docs/ROADMAP.md) · [Cambios](CHANGELOG.md).
+GitHub Actions ejecuta las pruebas en cada push a `main`. La actualización del tablero está programada a las 06:00, hora de Colombia, y también se puede lanzar manualmente. Cuando termina correctamente deja el artefacto `VacunaBI-Dashboard`. La publicación en GitHub Pages es opcional y se controla mediante `ENABLE_PAGES`. [Flujo de actualización](.github/workflows/actualizar.yml) · [Compilación de Windows](.github/workflows/windows.yml) · [Roadmap](docs/ROADMAP.md)
 
 ## Equipo
 
-VacunaBI continúa el trabajo de la [versión original del proyecto](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion). En esa primera entrega, Julián desarrolló el ETL, el dashboard y la aplicación de escritorio. Valery y Daniel participaron en las pruebas de la aplicación.
+- [Valery Michell Herrera Roca](https://github.com/Codeforgeettttt)
+- [Daniel Felipe Rojas González](https://github.com/Dani2026403)
+- [Julián Andrés Peñuela Alfonso](https://github.com/julianpenuelaalfonso-fullstack)
 
-- [Valery Michell Herrera Roca · @Codeforgeettttt](https://github.com/Codeforgeettttt)
-- [Daniel Felipe Rojas González · @Dani2026403](https://github.com/Dani2026403)
-- [Julián Andrés Peñuela Alfonso · @julianpenuelaalfonso-fullstack](https://github.com/julianpenuelaalfonso-fullstack)
-
----
-
-**VacunaBI** · Proyecto de análisis y visualización de coberturas de vacunación con datos abiertos de Bogotá.
+VacunaBI continúa el [proyecto original de cobertura de vacunación](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion). En esa primera entrega, Julián desarrolló el ETL, el tablero y la aplicación de escritorio. Valery y Daniel participaron en las pruebas.
