@@ -7,6 +7,7 @@ base consolidada (Excel + CSV), calcula los KPI y construye dashboard.html.
 Uso:  python etl.py          (cada ejecución trae los datos más recientes)
 """
 import json
+import math
 import sys
 import unicodedata
 import urllib.request
@@ -93,6 +94,14 @@ def num_es(valor):
     return float(str(valor).strip().replace(".", "").replace(",", "."))
 
 
+def numero_mensual(valor):
+    try:
+        numero = num_es(valor)
+    except (ValueError, TypeError):
+        return float("nan")
+    return numero if math.isfinite(numero) else float("nan")
+
+
 def sin_tildes(s):
     return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
@@ -115,9 +124,9 @@ def limpiar_sectores(df):
     df = df.rename(columns=str.lower).copy()
     for c in df.columns:
         df[c] = df[c].astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
-    df["fecha_reporte"] = pd.to_datetime(df["fecha_reporte"], format="%d/%m/%Y")
+    df["fecha_reporte"] = pd.to_datetime(df["fecha_reporte"], format="%d/%m/%Y", errors="coerce")
     for c in ("dosis_aplicada", "denominador", "cobertura"):
-        df[c] = pd.to_numeric(df[c], errors="coerce")
+        df[c] = pd.to_numeric(df[c], errors="coerce").replace([float("inf"), -float("inf")], float("nan"))
     # La API publica la cobertura x10 sin separador decimal (708 = 70,8 %).
     df["cobertura_reportada"] = df.pop("cobertura") / 10
     df["cobertura_recalculada"] = (df["dosis_aplicada"] / df["denominador"].where(df["denominador"] > 0) * 100).round(1)
@@ -132,6 +141,11 @@ def limpiar_sectores(df):
     validas = df["localidad"].isin(ZONAS)
     log["filas_localidad_no_valida"] = int((~validas).sum())  # 'NO ACTUALIZADO' y 'Localidad Desconocida'
     df = df[validas].copy()
+    completos = (df["fecha_reporte"].notna() & df["dosis_aplicada"].ge(0) & df["denominador"].gt(0)
+                 & ~df["biologico_edad"].str.lower().isin({"", "none", "nan", "<na>"})
+                 & ~df["institucion"].str.lower().isin({"", "none", "nan", "<na>"}))
+    log["filas_invalidas"] = int((~completos).sum())
+    df = df[completos].copy()
     df["zona"] = df["localidad"].map(ZONAS)
 
     df["institucion"] = df["institucion"].replace({"INTERACIÓN VEJÉZ": "INTEGRACIÓN VEJEZ"}).str.title()
@@ -155,13 +169,23 @@ def limpiar_mensual(df):
     df = df.rename(columns={"Biologico": "biologico", "Ano": "anio", "Orden mes": "mes_num", "Mes": "mes",
                             "Meta": "poblacion_meta", "Vacunados": "vacunados_mes"})
     df["biologico"] = df["biologico"].str.strip().str.replace(r"\s+", " ", regex=True)
-    df["anio"] = df["anio"].astype(int)
-    df["mes_num"] = df["mes_num"].astype(int)
+    for c in ("anio", "mes_num"):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
     totales = df["mes_num"] == 13
     log["filas_total_eliminadas"] = int(totales.sum())  # la fila 'Total' se recalcula, en 2026 viene errada
     df = df[~totales].copy()
-    for c in ("poblacion_meta", "vacunados_mes", "Cobertura", "Column7"):
-        df[c] = df[c].map(num_es)
+    sin_reporte = df["vacunados_mes"].isna() | df["vacunados_mes"].astype(str).str.strip().eq("")
+    for c in ("poblacion_meta", "vacunados_mes"):
+        df[c] = df[c].map(numero_mensual)
+    validas = (df["anio"].between(1900, 2200) & df["anio"].mod(1).eq(0)
+               & df["mes_num"].isin(range(1, 13)) & df["biologico"].fillna("").ne("")
+               & df["poblacion_meta"].gt(0) & (sin_reporte | df["vacunados_mes"].ge(0)))
+    log["filas_invalidas"] = int((~validas).sum())
+    df = df[validas].copy()
+    df[["anio", "mes_num"]] = df[["anio", "mes_num"]].astype(int)
+    antes = len(df)
+    df = df.drop_duplicates(["biologico", "anio", "mes_num"])
+    log["duplicados_eliminados"] = antes - len(df)
     log["meses_sin_reporte"] = int(df["vacunados_mes"].isna().sum())
     df = df.drop(columns=["Column7", "Cobertura"])  # acumulado y % se recalculan a partir de los datos base
     df = df.sort_values(["biologico", "anio", "mes_num"])
