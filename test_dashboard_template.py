@@ -1,0 +1,84 @@
+"""Pruebas sin red para verificar la estructura UI/UX de VacunaBI V1.1.
+
+Uso: python -m unittest -v test_dashboard_template
+"""
+import re
+import unittest
+from html.parser import HTMLParser
+from pathlib import Path
+
+TEMPLATE = Path(__file__).with_name("dashboard_template.html")
+PAGES = {"resumen", "localidades", "sectores", "calidad", "metodologia"}
+CHARTS = {"cAnual", "cActual", "cLoc", "cInst", "cGrupo"}
+KPIS = {"k1", "k2", "k3", "k4"}
+
+
+class DashboardParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.ids = []
+        self.canvas_ids = set()
+        self.pages = set()
+        self.navigation = set()
+        self.links = []
+        self.languages = []
+        self.landmarks = set()
+
+    def handle_starttag(self, tag, attributes):
+        props = dict(attributes)
+        if "id" in props:
+            self.ids.append(props["id"])
+            if tag == "canvas":
+                self.canvas_ids.add(props["id"])
+        if "data-page" in props:
+            self.pages.add(props["data-page"])
+        if "data-nav" in props:
+            self.navigation.add(props["data-nav"])
+        if tag == "a":
+            self.links.append(props.get("href", ""))
+        if tag == "html":
+            self.languages.append(props.get("lang"))
+        if tag in ("main", "nav", "header"):
+            self.landmarks.add(tag)
+
+
+class TestDashboardV11(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.content = TEMPLATE.read_text(encoding="utf-8")
+        cls.document = DashboardParser()
+        cls.document.feed(cls.content)
+
+    def test_vistas_y_navegacion_coinciden(self):
+        self.assertEqual(self.document.pages, PAGES)
+        self.assertEqual(self.document.navigation, PAGES)
+        for name in PAGES:
+            self.assertIn(f"#{name}", self.document.links)
+
+    def test_conserva_graficos_e_indicadores(self):
+        self.assertEqual(self.document.canvas_ids, CHARTS)
+        self.assertTrue(KPIS.issubset(self.document.ids))
+        self.assertTrue({"heat", "log", "meta-info"}.issubset(self.document.ids))
+
+    def test_no_hay_identificadores_duplicados(self):
+        self.assertEqual(len(self.document.ids), len(set(self.document.ids)))
+
+    def test_marcadores_de_inyeccion_etl(self):
+        self.assertIn("/*__CHARTJS__*/", self.content)
+        self.assertIn("/*__DATOS__*/null", self.content)
+        self.assertIn("const D =", self.content)
+
+    def test_accesibilidad_basica_y_rutas(self):
+        self.assertIn("es", self.document.languages)
+        self.assertTrue({"main", "nav", "header"}.issubset(self.document.landmarks))
+        self.assertIn("#main-content", self.document.links)
+        self.assertIn("aria-current", self.content)
+        self.assertIn("aria-label", self.content)
+
+    def test_graficos_se_redimensionan_al_cambiar_de_vista(self):
+        self.assertIn("hashchange", self.content)
+        self.assertRegex(self.content, r"chart\.resize\(\)")
+
+
+if __name__ == "__main__":
+    unittest.main()
