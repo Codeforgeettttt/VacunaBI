@@ -142,7 +142,7 @@ python app.py
 
 ```powershell
 python -m pip install pyinstaller pywebview==5.3.2
-pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." app.py
+pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." --add-data "localidades.json;." app.py
 ```
 
 El ejecutable se genera dentro de `dist/`.
