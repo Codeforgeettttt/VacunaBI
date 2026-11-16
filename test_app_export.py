@@ -39,6 +39,46 @@ class TestEscritorio(unittest.TestCase):
             ventana.load_url.assert_called_once_with(dashboard.resolve().as_uri())
             self.assertTrue(control.usa_copia_local())
 
+    def test_recarga_tras_actualizar_usa_uri_local_sin_query(self):
+        module = cargar_modulo()
+        control = module.Actualizacion()
+        ventana = Mock()
+        control._ventana = ventana
+        with TemporaryDirectory() as raiz:
+            carpeta = Path(raiz)
+            dashboard = carpeta / "dashboard.html"
+            dashboard.write_text("<html>Datos actualizados</html>", encoding="utf-8")
+            with patch.object(module.etl, "OUT", carpeta):
+                result = control.recargar_dashboard()
+            self.assertEqual(result, {"ok": True})
+            ventana.load_url.assert_called_once_with(dashboard.resolve().as_uri())
+            self.assertNotIn("?", ventana.load_url.call_args.args[0])
+            self.assertTrue(control.consumir_aviso_recarga())
+            self.assertFalse(control.consumir_aviso_recarga())
+
+    def test_recarga_sin_copia_no_navega(self):
+        module = cargar_modulo()
+        control = module.Actualizacion()
+        control._ventana = Mock()
+        with TemporaryDirectory() as raiz, patch.object(module.etl, "OUT", Path(raiz)):
+            result = control.recargar_dashboard()
+        self.assertFalse(result["ok"])
+        control._ventana.load_url.assert_not_called()
+        self.assertFalse(control.consumir_aviso_recarga())
+
+    def test_recarga_fallida_no_anuncia_exito(self):
+        module = cargar_modulo()
+        control = module.Actualizacion()
+        control._ventana = Mock()
+        control._ventana.load_url.side_effect = RuntimeError("Error de navegación")
+        with TemporaryDirectory() as raiz:
+            carpeta = Path(raiz)
+            (carpeta / "dashboard.html").touch()
+            with patch.object(module.etl, "OUT", carpeta):
+                result = control.recargar_dashboard()
+        self.assertFalse(result["ok"])
+        self.assertFalse(control.consumir_aviso_recarga())
+
     def test_guardado_y_cancelacion(self):
         control = escritorio()
         payload = base64.b64encode(b"Localidad;Cobertura\nUsme;84.6").decode()
