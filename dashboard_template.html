@@ -420,6 +420,10 @@ tr:last-child td { border-bottom:0; }
             <div class="scroll" id="decision-alerts" tabindex="0" role="region" aria-label="Alertas de cobertura"></div>
             <a class="link-action" href="#calidad">Consultar calidad de las fuentes</a>
           </section>
+          <section class="card w12"><h3>Reporte ejecutivo</h3>
+            <p class="sub">Incluye filtros, pesos, fuente, corte y supuestos de simulación.</p>
+            <div class="chart-actions"><button id="decision-export" type="button" disabled>Descargar reporte CSV</button></div>
+          </section>
         </div>
       </section>
     </main>
@@ -928,6 +932,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       row.tipo,row.detalle,row.valor == null ? '—' : `${fmt(+row.valor.toFixed(1))} ${row.tipo === 'Descenso distrital' ? 'pp' : '%'}`
     ]));
     else $('decision-alerts').textContent = 'No hay alertas para los datos comparables de esta selección.';
+    $('decision-export').disabled = !(data || ctx.alertas.length);
   }
   $('priority-weight').addEventListener('input',refreshDecisions);
   ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
@@ -1155,6 +1160,25 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   $('territory-export').addEventListener('click',() => {
     const headings = ['Tipo','Territorio','Corte','Biológico','Sector','Dosis','Denominador','Cobertura (%)','Fuente'];
     download(csv([headings,...fichaTerritorial]),'text/csv;charset=utf-8','csv','VacunaBI-ficha-territorial.csv');
+  });
+  $('decision-export').addEventListener('click',() => {
+    const ctx = decisionContext;
+    const weight = $('priority-weight').valueAsNumber;
+    const history = [
+      ['Bloque','Elemento','Dosis','Denominador','Cobertura (%)','Brecha (pp)','Dosis faltantes','Puntaje o alerta'],
+      ['Metadatos','Corte sectorial: '+(ctx.corte || 'sin datos')],
+      ['Metadatos','Filtros: '+ctx.filtros],
+      ['Metadatos','Fuente sectorial: '+sectorSource],
+      ['Metadatos','Fuente distrital: '+seriesSource],
+      ['Metadatos','Generado: '+D.generado],
+      ['Metadatos','Meta '+META+' % · peso brecha '+(Number.isFinite(weight) ? weight+' %' : 'inválido')],
+      ['Metadatos','Simulación con denominador fijo, sin proyección estadística; registros manuales excluidos.'],
+      ['Metadatos','Escenario territorial: '+($('scenario-local').value || 'total de la selección')],
+      ...ctx.prioridades.map(({localidad,dato,puntaje}) => ['Prioridad',localidad,dato.dosis,dato.denominador,+dato.cobertura.toFixed(1),+dato.brecha.toFixed(1),dato.faltantes,+puntaje.toFixed(1)]),
+      ...ctx.escenarios.filter(([,dato]) => dato).map(([label,dato]) => ['Escenario',label,dato.dosis,dato.denominador,+dato.cobertura.toFixed(1),+dato.brecha.toFixed(1),dato.faltantes]),
+      ...ctx.alertas.map(row => ['Alerta',row.detalle,'','','','','',row.tipo+(row.valor == null ? '' : ' · '+fmt(+row.valor.toFixed(1))+' '+(row.tipo === 'Descenso distrital' ? 'pp' : '%'))])
+    ];
+    download(csv(history),'text/csv;charset=utf-8','csv','VacunaBI-reporte-ejecutivo.csv');
   });
   // Open XML necesita un contenedor ZIP. Las cinco entradas se guardan sin compresión.
   function zipXml(parts) {
