@@ -92,7 +92,7 @@ jobs:
   promote:
     name: Promover V2.2.3 existente a release estable
     needs: build
-    if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'release(promote-v2.2.3): publicar version estable' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release(promote-v2.2.3)') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
