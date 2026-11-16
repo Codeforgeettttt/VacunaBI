@@ -4,7 +4,7 @@
 
 VacunaBI analiza la cobertura de vacunación en Bogotá D.C. a partir de datos abiertos. El proyecto reúne la extracción de las fuentes, la validación de los datos y la visualización de indicadores en un tablero que puede abrirse en el navegador o como aplicación de Windows.
 
-El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. La versión 2.1 reúne estas preguntas en un resumen y guía el análisis en la vista **Decisiones**.
+El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. En V2.2 puedes recorrer los módulos desde la barra lateral y consultar el corte y la procedencia de los datos en cada vista.
 
 [Compilaciones de VacunaBI para Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
@@ -48,7 +48,7 @@ Abre `salidas/dashboard.html` en el navegador. El archivo incluye los gráficos 
 | **Decisiones** | Ranking con pesos ajustables, comparación de dos escenarios de dosis, alertas y reporte ejecutivo en CSV. |
 | **Metodología** | Definiciones de los indicadores, procedencia de los datos y criterios de interpretación. |
 
-Para una demostración, abre **Localidades**, selecciona una zona en el mapa y compárala con otra bajo el mismo corte. Luego pasa a **Decisiones**, cambia el peso de la brecha y compara un escenario de cero dosis adicionales con uno que represente una meta operativa. El CSV ejecutivo conserva el contexto de esa selección.
+Para una demostración, abre **Localidades**, selecciona una zona en el mapa y compárala con otra bajo el mismo corte. La ficha indica las dosis, el denominador y si hay observaciones de calidad. Luego pasa a **Decisiones**, cambia el peso de la brecha y compara un escenario de cero dosis adicionales con uno que represente una meta operativa. Puedes regresar a un paso anterior sin perder los valores. El CSV ejecutivo conserva el contexto de esa selección.
 
 Selecciona año y localidad en la barra principal. **Más filtros** reúne biológico y sector. Las opciones Histórico, Actual y Comparativo están en **Evolución de cobertura**, dentro de Resumen. **Consultar datos de la selección** permite buscar, ordenar y exportar filas en CSV o Excel. **Consultar tabla del gráfico** permite leer los valores con teclado.
 
@@ -98,8 +98,8 @@ Con las dependencias de Python instaladas, ejecuta los siguientes comandos. Las 
 
 ```bash
 python test_etl.py
-python -m unittest -v test_etl_regression test_dashboard_template
-node --test test_decisiones.cjs
+python -m unittest -v test_etl_regression test_dashboard_template test_app_export
+node --test test_decisiones.cjs test_frontend.cjs
 ```
 
 Para compilar la aplicación desde Windows con las mismas versiones de empaquetado de GitHub Actions, usa PowerShell.
@@ -113,6 +113,8 @@ python -m PyInstaller --onefile --windowed --name VacunaBI `
 ```
 
 El ejecutable queda en `dist/VacunaBI.exe`. Para abrir la aplicación sin compilar, instala `pywebview==5.3.2` y ejecuta `python app.py`.
+
+Al exportar desde Windows, VacunaBI abre un selector de guardado y anuncia si el archivo se guardó, se canceló o no pudo escribirse. En el navegador se usa la descarga habitual. [Verificación de V2.2](docs/V2.2_VALIDACION.md)
 
 GitHub Actions ejecuta las pruebas en cada push a `main`. La actualización del tablero está programada a las 06:00, hora de Colombia, y también se puede lanzar manualmente. Cuando termina correctamente deja el artefacto `VacunaBI-Dashboard`. La publicación en GitHub Pages es opcional y se controla mediante `ENABLE_PAGES`. [Flujo de actualización](.github/workflows/actualizar.yml) · [Compilación de Windows](.github/workflows/windows.yml) · [Roadmap](docs/ROADMAP.md)
 
