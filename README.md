@@ -6,6 +6,12 @@ VacunaBI analiza la cobertura de vacunación en Bogotá D.C. a partir de datos a
 
 El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. En V2.2.3 puedes recorrer los módulos desde la barra lateral y consultar el corte y la procedencia de los datos en cada vista.
 
+## Descargar VacunaBI para Windows
+
+**Última versión estable: V2.2.3** · [⬇ Descargar directamente VacunaBI-Windows.zip](https://github.com/Codeforgeettttt/VacunaBI/releases/download/v2.2.3/VacunaBI-Windows.zip) · [Ver todas las versiones](https://github.com/Codeforgeettttt/VacunaBI/releases/latest)
+
+Descarga el ZIP, extráelo y ejecuta `VacunaBI.exe` desde una carpeta con permisos de escritura. El archivo contiene la versión publicada; no es necesario buscar artefactos en GitHub Actions.
+
 **[Índice de documentación de VacunaBI](docs/INDICE_DOCUMENTACION.md)** — Acceso organizado a los manuales del proyecto.
 
 | Documento | Contenido |
@@ -17,15 +23,15 @@ El análisis responde tres preguntas: qué tan lejos está la cobertura de la me
 | [Proceso ETL](docs/PROCESO_ETL.md) | Extracción CKAN, transformación, publicación y recuperación |
 | [Requisitos y plan de pruebas](docs/REQUISITOS_Y_PLAN_PRUEBAS.md) | Requisitos funcionales/no funcionales, aceptación y trazabilidad |
 
-[Descargar V2.2.3](https://github.com/Codeforgeettttt/VacunaBI/releases/tag/v2.2.3) · [Compilaciones de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
+[Descarga directa de V2.2.3](https://github.com/Codeforgeettttt/VacunaBI/releases/download/v2.2.3/VacunaBI-Windows.zip) · [Compilaciones de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
 ## Cómo probar el proyecto
 
 ### Aplicación para Windows
 
-1. Abre la última ejecución exitosa del [flujo de compilación de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) en GitHub Actions e inicia sesión si GitHub lo pide.
-2. En **Artifacts**, descarga **VacunaBI-Windows** y extrae el ZIP.
-3. Ejecuta `VacunaBI.exe` desde una carpeta donde puedas escribir. La aplicación consulta las fuentes al abrir y utiliza Microsoft Edge WebView2 para mostrar el tablero.
+1. Descarga [**VacunaBI-Windows.zip — versión estable V2.2.3**](https://github.com/Codeforgeettttt/VacunaBI/releases/download/v2.2.3/VacunaBI-Windows.zip) directamente desde GitHub Releases.
+2. Extrae el archivo ZIP en una carpeta con permisos de escritura.
+3. Ejecuta `VacunaBI.exe`. La primera carga sin un tablero compatible consulta las fuentes y necesita Internet; para mostrar la interfaz se utiliza Microsoft Edge WebView2.
 
 La **primera ejecución** necesita Internet para descargar ambas fuentes y preparar el tablero. En aperturas posteriores de la **misma versión**, VacunaBI abre de inmediato el tablero guardado **sin repetir la descarga**. El botón **Actualizar datos** es la acción explícita para volver a consultar las dos fuentes y generar cifras nuevas. Desde V2.2.3 ambas fuentes se descargan en paralelo y las páginas CKAN adicionales se solicitan con un límite de dos peticiones simultáneas por fuente. Se preservan los controles de integridad de los registros. La mejora de tiempo depende del servidor y la red; no se afirma una aceleración medida sin una prueba real. Si cambias de versión, el programa necesita generar una copia compatible una vez. Si falla la consulta y existe un tablero válido, conserva esa copia. Desde V2.2.1, la recarga utiliza pywebview sin parámetros en la ruta local.
 
