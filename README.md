@@ -85,7 +85,10 @@ flowchart LR
 | Archivo | Responsabilidad |
 | --- | --- |
 | [`etl.py`](etl.py) | Consulta las fuentes, aplica reglas de calidad, calcula indicadores y publica las salidas. |
-| [`dashboard_template.html`](dashboard_template.html) | Interfaz, filtros, mapa, gráficos y exportaciones de la selección. |
+| [`dashboard_template.html`](dashboard_template.html) | Estructura HTML y puntos de integración del dashboard autónomo. |
+| [`frontend/charts.js`](frontend/charts.js) | Gráficos iniciales e indicadores de visualización. |
+| [`frontend/dashboard.js`](frontend/dashboard.js) | Interacciones, filtros, mapa y exportaciones del tablero. |
+| [`frontend/`](frontend/) | CSS, navegación y componentes reutilizables; se integran en el HTML generado. |
 | [`decisiones.js`](decisiones.js) | Cálculos de brecha, prioridades, alertas y escenarios. |
 | [`app.py`](app.py) | Ventana de escritorio y actualización de los datos desde Windows. |
 | [`localidades.json`](localidades.json) | Límites simplificados de las 20 localidades para visualización. |
