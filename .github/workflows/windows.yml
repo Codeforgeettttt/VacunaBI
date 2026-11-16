@@ -35,7 +35,7 @@ jobs:
         run: |
           python test_etl.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -m unittest -v test_etl_regression test_dashboard_template test_app_export
+          python -m unittest -v test_etl_regression test_dashboard_template test_app_export test_release_integrity
       - name: Probar cálculos de decisiones
         run: node --test test_decisiones.cjs test_frontend.cjs
       - name: Compilar VacunaBI.exe
