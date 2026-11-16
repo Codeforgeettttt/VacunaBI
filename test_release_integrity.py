@@ -62,6 +62,14 @@ class TestReleaseIntegrity(unittest.TestCase):
         for component in COMPONENTS:
             self.assertIn('"' + Path(component).name + '"', self.etl)
 
+    def test_version_del_tablero_coincide_con_el_cache_de_escritorio(self):
+        import re
+        match = re.search(r'VERSION_TABLERO = "([^"]+)"', self.etl)
+        self.assertIsNotNone(match)
+        version = match.group(1)
+        self.assertIn(f'<meta name="vacunabi-version" content="{version}">', self.template)
+        self.assertIn(f'<span class="version">V{version}</span>', self.template)
+
     def test_empaquetado_incluye_todos_los_recursos(self):
         for asset in ("dashboard_template.html", "chart.umd.min.js",
                       "decisiones.js", "localidades.json", "frontend"):
