@@ -10,6 +10,7 @@ on:
       - 'etl.py'
       - 'dashboard_template.html'
       - 'localidades.json'
+      - 'decisiones.js'
       - 'chart.umd.min.js'
       - 'requirements.txt'
       - 'test_*.py'
@@ -38,6 +39,7 @@ jobs:
           python -m PyInstaller --onefile --windowed --name VacunaBI
           --add-data "dashboard_template.html:."
           --add-data "localidades.json:."
+          --add-data "decisiones.js:."
           --add-data "chart.umd.min.js:."
           app.py
       - name: Guardar ejecutable
