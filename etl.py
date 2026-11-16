@@ -282,7 +282,7 @@ def construir_dashboard(sec, anu, mens, kpis, logs, *, destino=None, auditoria=(
     decisiones = (RECURSOS / "decisiones.js").read_text(encoding="utf-8")
     frontend = RECURSOS / "frontend"
     componentes = "\n".join((frontend / nombre).read_text(encoding="utf-8")
-                            for nombre in ("data.js", "tables.js", "stages.js"))
+                            for nombre in ("data.js", "tables.js", "stages.js", "availability.js"))
     html = (plantilla.replace("/*__CHARTJS__*/", (RECURSOS / "chart.umd.min.js").read_text(encoding="utf-8"))
             .replace("/*__DECISIONES__*/", decisiones)
             .replace("/*__ESTILOS__*/", (frontend / "dashboard.css").read_text(encoding="utf-8"))
