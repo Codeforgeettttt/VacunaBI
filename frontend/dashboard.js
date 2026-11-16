@@ -43,9 +43,6 @@
     refreshStatus.hidden = false;
     if (state === 'error') $('data-freshness').textContent = `Extracción: ${D.generado} · última copia válida`;
   }
-  if (new URLSearchParams(location.search).has('actualizado')) {
-    reportRefresh('Actualización completada.');
-  }
   async function syncAudit() {
     try {
       const runs = await window.pywebview?.api?.get_audit?.();
@@ -59,7 +56,9 @@
     if (refresh.hidden) return;
     await syncAudit();
     try {
-      if (await window.pywebview.api.usa_copia_local?.() && refreshStatus.hidden) {
+      if (await window.pywebview.api.consumir_aviso_recarga?.()) {
+        reportRefresh('Actualización completada. Se cargó el tablero actualizado.');
+      } else if (await window.pywebview.api.usa_copia_local?.() && refreshStatus.hidden) {
         reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
       }
     } catch {
@@ -75,9 +74,9 @@
     try {
       const result = await window.pywebview.api.refresh_data();
       if (result.ok) {
-        const url = new URL(location.href);
-        url.search = '?actualizado=' + Date.now();
-        location.replace(url.href);
+        // El archivo se abre desde Python: WebView2 no admite query strings en file://.
+        const loaded = await window.pywebview.api.recargar_dashboard();
+        if (!loaded?.ok) reportRefresh(loaded?.message || 'No se pudo abrir el tablero actualizado.','error');
       } else {
         reportRefresh(result.message,'error');
         await syncAudit();
