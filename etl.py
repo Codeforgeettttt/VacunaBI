@@ -32,6 +32,20 @@ ZONAS = {  # agrupación geográfica usada en DIM_LOCALIDAD
     "Ciudad Bolívar": "Sur", "Sumapaz": "Rural",
     "Bosa": "Occidente", "Kennedy": "Occidente", "Fontibón": "Occidente", "Engativá": "Occidente",
 }
+LOCALIDADES = (
+    "Usaquén", "Chapinero", "Santa Fe", "San Cristóbal", "Usme", "Tunjuelito",
+    "Bosa", "Kennedy", "Fontibón", "Engativá", "Suba", "Barrios Unidos", "Teusaquillo",
+    "Los Mártires", "Antonio Nariño", "Puente Aranda", "La Candelaria", "Rafael Uribe Uribe",
+    "Ciudad Bolívar", "Sumapaz",
+)
+
+
+def limites_localidades():
+    limites = json.loads((RECURSOS / "localidades.json").read_text(encoding="utf-8"))
+    return [
+        {"codigo": f"{codigo:02}", "localidad": nombre, "anillos": limites[f"{codigo:02}"]}
+        for codigo, nombre in enumerate(LOCALIDADES, 1)
+    ]
 
 
 def consultar_api(resource_id):
@@ -191,6 +205,7 @@ def construir_dashboard(sec, anu, mens, kpis, logs):
     datos = {
         "kpis": kpis,
         "meta": META,
+        "limites_localidades": limites_localidades(),
         "generado": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "logs": logs,
         "anual": anu.to_dict("records"),
