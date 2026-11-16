@@ -52,6 +52,7 @@
       <p class="meta" id="meta-info">Preparando indicadores…</p>
       <p class="meta" id="data-freshness" role="status">Cargando contexto de datos…</p>
       <p class="meta" id="refresh-status" role="status" hidden></p>
+      <p class="meta" id="export-status" role="status" hidden></p>
     </header>
     <main id="main-content" tabindex="-1">
       <section class="card explorer" id="global-filters" aria-labelledby="filters-title">
@@ -942,8 +943,31 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     return [[...tableNames,'Fuente','Selección','Actualizado'], ...tableRows().map(row =>
       [...tableFields.map(key => row[key]),row.fuente,selection,D.generado])];
   }
-  function download(parts, type, extension, filename = `VacunaBI-${$('table-source').value}.${extension}`) {
-    const url = URL.createObjectURL(new Blob(parts,{type}));
+  async function download(parts, type, extension, filename = `VacunaBI-${$('table-source').value}.${extension}`) {
+    const file = new Blob(parts,{type});
+    const guardar = window.pywebview?.api?.guardar_exportacion;
+    if (guardar) {
+      const status = $('export-status');
+      status.hidden = false;
+      status.textContent = 'Preparando exportación…';
+      status.dataset.status = '';
+      try {
+        const data = await new Promise((resolve,reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const result = await guardar(filename,data);
+        status.textContent = result.mensaje || 'Exportación cancelada.';
+        status.dataset.status = result.estado === 'error' ? 'error' : '';
+      } catch {
+        status.textContent = 'No se pudo iniciar el guardado.';
+        status.dataset.status = 'error';
+      }
+      return;
+    }
+    const url = URL.createObjectURL(file);
     const link = document.createElement('a');
     link.download = filename;
     link.href = url;
