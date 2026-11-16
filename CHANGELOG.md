@@ -2,6 +2,11 @@
 
 ## [2.2.0]
 
+- Mejora la selección de fuente, año y granularidad: cada año indica si incluye serie distrital, seguimiento sectorial o ambas.
+- Diferencia datos ausentes, filtros incompatibles y años no disponibles, con acciones guiadas para corregir la selección.
+- Los paneles y tablas explican que la falta de registros no equivale a cobertura cero; se mantienen las fórmulas y fuentes originales.
+- Añade pruebas de compatibilidad por fuente y documentación de filtros en `docs/FILTROS_FUENTES.md`.
+
 - El ejecutable vuelve a abrir la última copia válida si falla la API al iniciar y muestra su estado en el tablero.
 - La estabilización posterior separa además el código de gráficos y dashboard en `frontend/charts.js` y `frontend/dashboard.js`, integrados por ETL en un único HTML autónomo.
 - Añade pruebas offline del ensamblado y una lista de aceptación manual de Windows y accesibilidad.
