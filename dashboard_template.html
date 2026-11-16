@@ -163,7 +163,7 @@ tr:last-child td { border-bottom:0; }
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
     </header>
-    <main id="main-content">
+    <main id="main-content" tabindex="-1">
       <section class="page" id="resumen" data-page="resumen" aria-labelledby="title-resumen">
         <div class="page-lead">
           <div><p class="eyebrow">Visión general</p><h2 id="title-resumen">Panorama de vacunación</h2>
@@ -340,6 +340,11 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   const views = new Set(['resumen','localidades','sectores','calidad','metodologia']);
   const links = [...document.querySelectorAll('[data-nav]')];
   const pages = [...document.querySelectorAll('[data-page]')];
+  const main = document.getElementById('main-content');
+  document.querySelector('.skip-link').addEventListener('click', event => {
+    event.preventDefault();
+    main.focus();
+  });
   function renderNavigation() {
     const requested = location.hash.slice(1);
     const active = views.has(requested) ? requested : 'resumen';
