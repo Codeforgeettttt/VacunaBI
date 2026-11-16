@@ -203,7 +203,7 @@ El archivo resultante se ubica en `dist/CoberturaVacunacion.exe`. Actualmente `d
 
 ## 🔄 Automatización y publicación
 
-El workflow [`.github/workflows/actualizar.yml`](.github/workflows/actualizar.yml) ejecuta las pruebas y el ETL con Python 3.12, prepara `index.html` y despliega `salidas/` a GitHub Pages.
+El workflow [`.github/workflows/actualizar.yml`](.github/workflows/actualizar.yml) ejecuta las pruebas y el ETL con Python 3.12 y prepara `index.html`. El despliegue de `salidas/` en GitHub Pages es **opcional** y se ejecuta cuando la variable de repositorio `ENABLE_PAGES` tiene el valor `true`.
 
 **Disparadores configurados:**
 
@@ -211,7 +211,7 @@ El workflow [`.github/workflows/actualizar.yml`](.github/workflows/actualizar.ym
 - En cada push a `main`.
 - Manualmente mediante **Run workflow**.
 
-Para usar Pages, configurar en GitHub **Settings → Pages → Source: GitHub Actions**. La publicación depende de la configuración y del resultado del workflow; no se presume que esté habilitada.
+Para publicar el dashboard, configura **Settings → Pages → Source: GitHub Actions** y crea en **Settings → Secrets and variables → Actions → Variables** una variable de repositorio `ENABLE_PAGES` con el valor `true`. Sin esa configuración, la actualización y las pruebas pueden completarse sin intentar publicar; no se presume que Pages ya esté habilitado.
 
 ## 📐 Indicadores y calidad
 
