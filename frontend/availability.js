@@ -57,13 +57,22 @@ globalThis.VacunaDisponibilidad = (() => {
       reason = 'granularity';
       message = 'Este biológico pertenece al seguimiento sectorial y no está disponible en la fuente distrital.';
       buttons.push({id:'clear-biological',label:'Quitar biológico incompatible'});
+    } else if (year && source === 'district' && !districtYear) {
+      reason = 'no-district-year';
+      message = `La serie distrital no tiene registros para ${year} en los datos cargados. Puedes elegir un año que indique «Serie distrital» o cambiar la fuente.`;
+      if (sectorYear) buttons.push({id:'sector',label:'Ver seguimiento sectorial'});
+    } else if (year && source === 'sector' && !sectorYear) {
+      reason = 'no-sector-year';
+      message = `El seguimiento sectorial no tiene registros para ${year}. Esto no equivale a cobertura cero. Consulta otro año con seguimiento sectorial.`;
+      if (latestCut) buttons.push({id:'latest-sector',label:`Ver corte sectorial ${latestCut}`});
+      if (districtYear) buttons.push({id:'district',label:'Ver serie distrital'});
     } else if (year && districtYear && !sectorYear && source !== 'district') {
       reason = 'no-sector-year';
       message = `En ${year} hay información distrital, pero no hay registros de seguimiento sectorial para ese año en los datos cargados. Los mapas, indicadores por localidad y prioridades necesitan esa fuente. No significa que la cobertura haya sido cero.`;
       if (latestCut) buttons.push({id:'latest-sector',label:`Ver corte sectorial ${latestCut}`});
       if (!local && !inst && bioSource !== 'Seguimiento sectorial')
         buttons.push({id:'district',label:'Consultar serie distrital'});
-    } else if (year && sectorYear && !districtYear && source !== 'sector') {
+    } else if (year && sectorYear && !districtYear && source !== 'sector' && hasSector) {
       reason = 'no-district-year';
       message = `En ${year} hay seguimiento sectorial, pero no hay serie distrital para ese año en los datos cargados. Las tendencias históricas pueden no estar disponibles.`;
       buttons.push({id:'sector',label:'Consultar seguimiento sectorial'});
@@ -92,13 +101,6 @@ globalThis.VacunaDisponibilidad = (() => {
       reason = 'empty';
       message = 'No hay registros compatibles con esta selección en las fuentes cargadas. No se interpreta la ausencia como cobertura cero.';
       buttons.push({id:'reset-selection',label:'Restablecer filtros'});
-    }
-    if (source === 'district' && year && !districtYear && reason === 'ok') {
-      reason = 'no-district-year';
-      message = `No hay registros de serie distrital en ${year}. Selecciona un año marcado como «serie distrital».`;
-    }
-    if (source === 'sector' && year && !sectorYear && reason === 'no-sector-year') {
-      message = `No hay registros de seguimiento sectorial en ${year}. Elige un año con seguimiento sectorial para consultar localidades e instituciones.`;
     }
     return {inventory,yearInfo,districtYear,sectorYear,districtAllowed,sectorAllowed,
       district,territorial,latestCut,sectorYears,reason,message,buttons};
