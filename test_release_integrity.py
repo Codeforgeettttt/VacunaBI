@@ -18,6 +18,8 @@ ASSETS = (
     "localidades.json",
     "frontend/dashboard.css",
     "frontend/navigation.js",
+    "frontend/charts.js",
+    "frontend/dashboard.js",
     *COMPONENTS,
 )
 PLACEHOLDERS = (
@@ -26,7 +28,8 @@ PLACEHOLDERS = (
     "/*__ESTILOS__*/",
     "/*__COMPONENTES__*/",
     "/*__NAVEGACION__*/",
-    "/*__DATOS__*/null",
+    "/*__GRAFICOS__*/",
+    "/*__DASHBOARD__*/",
 )
 
 
@@ -50,6 +53,11 @@ class TestReleaseIntegrity(unittest.TestCase):
             with self.subTest(marcador=marker):
                 self.assertIn(marker, self.template)
                 self.assertIn(marker, self.etl)
+        charts = (ROOT / "frontend/charts.js").read_text(encoding="utf-8")
+        self.assertIn("/*__DATOS__*/null", charts)
+        self.assertIn("/*__DATOS__*/null", self.etl)
+        for filename in ("charts.js", "dashboard.js"):
+            self.assertIn(filename, self.etl)
         for component in COMPONENTS:
             self.assertIn('"' + Path(component).name + '"', self.etl)
 
