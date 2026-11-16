@@ -143,5 +143,3 @@ GitHub Actions ejecuta las pruebas en cada push a `main`. La actualización del 
 - [Valery Michell Herrera Roca](https://github.com/Codeforgeettttt)
 - [Daniel Felipe Rojas González](https://github.com/Dani2026403)
 - [Julián Andrés Peñuela Alfonso](https://github.com/julianpenuelaalfonso-fullstack)
-
-VacunaBI continúa el [proyecto original de cobertura de vacunación](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion). En esa primera entrega, Julián desarrolló el ETL, el tablero y la aplicación de escritorio. Valery y Daniel participaron en las pruebas.
