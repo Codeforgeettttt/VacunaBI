@@ -44,6 +44,8 @@ Para ensayar un ajuste sectorial del último corte, abre **Cargar registros manu
 
 ## Arquitectura
 
+Usa **Modo claro** para cambiar el tema y **Consultar tabla del gráfico** para leer sus valores con teclado. La tabla conserva la fuente, los periodos y las series visibles. Los gráficos sectoriales incluyen dosis y denominador.
+
 ```mermaid
 flowchart LR
     API["Datos Abiertos Bogotá · API CKAN"] --> ETL["etl.py · Extracción, validación y KPIs"]

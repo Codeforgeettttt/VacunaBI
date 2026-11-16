@@ -793,9 +793,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     chart.tableSource = source;
     chart.tableCounts = counts;
     chart.values.hidden = Boolean(message);
-    chart.update('none');
     datasets.forEach((dataset,index) => chart.setDatasetVisibility(index,prior.get(dataset.label) ?? true));
-    if (datasets.some((_,index) => !chart.isDatasetVisible(index))) chart.update('none');
+    chart.update('none');
     if (chart.values.open) renderChartValues(chart);
     const controls = chart.actions;
     controls.hidden = Boolean(message);
