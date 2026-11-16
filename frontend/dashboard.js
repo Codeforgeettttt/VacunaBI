@@ -60,6 +60,8 @@
         reportRefresh('Actualización completada. Se cargó el tablero actualizado.');
       } else if (await window.pywebview.api.usa_copia_local?.() && refreshStatus.hidden) {
         reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
+      } else if (await window.pywebview.api.inicio_con_copia_guardada?.() && refreshStatus.hidden) {
+        reportRefresh('Tablero guardado listo. Pulsa «Actualizar datos» solo cuando quieras consultar de nuevo las fuentes.');
       }
     } catch {
       // El tablero y la actualización siguen disponibles aunque falle esta consulta de estado.
