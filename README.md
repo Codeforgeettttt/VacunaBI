@@ -158,11 +158,13 @@ Las comparaciones deben utilizar periodos, biológicos y denominadores compatibl
 
 ## Automatización
 
-El workflow [`actualizar.yml`](.github/workflows/actualizar.yml) ejecuta las pruebas y procesa las fuentes:
+El workflow [`actualizar.yml`](.github/workflows/actualizar.yml) separa dos actividades:
 
-- Diariamente a las **11:00 UTC** (06:00 hora de Colombia).
-- En cada push a `main`.
-- Manualmente desde la sección **Actions**.
+- **En cada push a `main`:** ejecuta las pruebas de la aplicación y del ETL, sin consultar la API externa.
+- **Diariamente a las 11:00 UTC** (06:00 hora de Colombia): ejecuta las pruebas y, si pasan, descarga los datos y regenera el dashboard.
+- **Manualmente desde Actions:** permite solicitar una actualización completa del dashboard.
+
+Así, una caída o demora de la API pública no marca como fallido un commit cuyo código y pruebas son correctos.
 
 **Publicación opcional en GitHub Pages:** selecciona *Settings → Pages → Source: GitHub Actions* y configura la variable de repositorio `ENABLE_PAGES=true` en *Settings → Secrets and variables → Actions → Variables*. Si no está habilitada, las pruebas y la actualización pueden seguir ejecutándose sin desplegar el sitio.
 
