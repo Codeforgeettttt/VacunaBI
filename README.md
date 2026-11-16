@@ -15,6 +15,7 @@ El análisis responde tres preguntas: qué tan lejos está la cobertura de la me
 | [Casos de uso y diagramas](docs/CASOS_DE_USO_Y_DIAGRAMAS.md) | Catálogo funcional y diagramas Mermaid del sistema |
 | [Diccionario y gestión de datos](docs/DICCIONARIO_Y_GESTION_DATOS.md) | Modelo analítico, campos, KPI, linaje y calidad |
 | [Proceso ETL](docs/PROCESO_ETL.md) | Extracción CKAN, transformación, publicación y recuperación |
+| [Requisitos y plan de pruebas](docs/REQUISITOS_Y_PLAN_PRUEBAS.md) | Requisitos funcionales/no funcionales, aceptación y trazabilidad |
 
 [Descargar V2.2.3](https://github.com/Codeforgeettttt/VacunaBI/releases/tag/v2.2.3) · [Compilaciones de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
