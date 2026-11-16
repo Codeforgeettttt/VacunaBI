@@ -1,5 +1,13 @@
 # Registro de cambios — VacunaBI
 
+## [2.2.3] — Optimización de consultas CKAN
+
+- Descarga los recursos sectorial y mensual simultáneamente cuando el usuario pulsa **Actualizar datos** o se necesita generar la primera copia.
+- Procesa las páginas siguientes de cada recurso en paralelo con un máximo de dos solicitudes simultáneas por fuente, manteniendo el orden original.
+- Comprueba el total de registros, la integridad de cada página y la ausencia de identificadores duplicados antes de transformar o publicar datos.
+- Registra la duración de descarga en el historial interno de auditoría y añade regresiones de concurrencia, duplicados y cambios del total.
+- Mantiene la copia anterior si la actualización no supera validaciones. La mejora de rendimiento se verificará con la API real y no se presupone un tiempo fijo.
+
 ## [2.2.2] — Inicio rápido y actualización bajo demanda
 
 - Reutiliza el `dashboard.html` ya generado en aperturas posteriores de la misma versión y evita descargar las dos fuentes de nuevo al iniciar.
