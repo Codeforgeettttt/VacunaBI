@@ -8,6 +8,10 @@ El mapa y el ranking muestran la cobertura de primera infancia del mismo corte y
 
 Con **Comparar con otra localidad**, la ficha muestra la segunda cobertura y la diferencia en puntos porcentuales. Ambas cifras usan el mismo corte, biológico y sector. Si falta un dato compatible, el tablero indica que la comparación no está disponible.
 
+La referencia distrital agrega las dosis y los denominadores del seguimiento sectorial para el mismo corte y filtros. La evolución territorial aparece cuando la fuente contiene al menos dos cortes comparables. La serie mensual distrital tiene otra granularidad y permanece en la vista Resumen.
+
+**Descargar ficha territorial CSV** exporta la localidad, la referencia distrital y, si tiene datos compatibles, la segunda localidad. El archivo conserva el corte, el sector, el biológico, las cantidades y la fuente.
+
 Regenera el archivo desde [la descarga oficial](https://datosabiertos.bogota.gov.co/dataset/856cb657-8ca3-4ee8-857f-37211173b1f8/resource/497b8756-0927-4aee-8da9-ca4e32ca3a8a/download/loca.json):
 
 ```bash

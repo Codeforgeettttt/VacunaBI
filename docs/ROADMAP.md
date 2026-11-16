@@ -7,7 +7,7 @@ El repositorio está dedicado a la **aplicación VacunaBI**: interfaz, lógica, 
 | V1.0 | Base funcional con API CKAN, ETL, KPIs, dashboard y escritorio | Integrada |
 | V1.1 | Rediseño UI/UX, navegación y componentes consistentes | Cinco vistas verificadas con datos reales en Chromium y Windows |
 | V1.2 | Filtros globales, gráficos interactivos y exportaciones desde interfaz | Implementada |
-| V1.3 | Mapa geográfico y fichas de localidades | Pendiente |
+| V1.3 | Mapa geográfico, fichas y comparación de localidades | Implementada |
 | V1.4 | Calidad de datos, trazabilidad ETL y diccionario | Pendiente |
 | V1.5 | Accesibilidad, optimización, seguridad y pruebas | Pendiente |
 | V2.0 | Escenarios, alertas y priorización territorial explicable | Pendiente |

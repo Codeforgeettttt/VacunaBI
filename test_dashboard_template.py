@@ -92,6 +92,7 @@ class TestDashboardV11(unittest.TestCase):
         controls = {
             "territory-map", "territory-detail", "territory-legend",
             "territory-compare", "territory-comparison",
+            "territory-district", "territory-history", "territory-periods", "territory-export",
         }
         self.assertTrue(controls.issubset(self.document.ids))
 
