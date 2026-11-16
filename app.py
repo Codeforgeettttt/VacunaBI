@@ -31,6 +31,7 @@ def cargar(ventana):
 
 
 if __name__ == "__main__":
+    webview.settings["ALLOW_DOWNLOADS"] = True
     v = webview.create_window("VacunaBI · Cobertura de vacunación", html=PANTALLA.format(
         "<h2>VacunaBI · Bogotá D.C.</h2><p>Consultando la API de Datos Abiertos Bogotá…</p>"),
         width=1280, height=860, min_size=(800, 600))
