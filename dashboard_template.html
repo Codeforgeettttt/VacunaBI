@@ -401,6 +401,11 @@ tr:last-child td { border-bottom:0; }
         <div class="dashboard-grid" id="decision-panels">
           <section class="card w12"><h3>Resumen ejecutivo</h3><p id="decision-summary" role="status"></p>
             <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
+          <section class="card w12"><h3>Prioridades territoriales</h3>
+            <label>Peso de la brecha (%) <input id="priority-weight" type="number" min="0" max="100" value="60" step="1"></label>
+            <p class="sub">El peso restante se asigna a las dosis faltantes. Las dos medidas se normalizan antes de sumarlas.</p>
+            <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
+          </section>
         </div>
       </section>
     </main>
@@ -888,7 +893,12 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     $('decision-summary').textContent = data
       ? `Corte ${ctx.corte} · ${ctx.filas.length} localidades · cobertura ${fmt(+data.cobertura.toFixed(1))} % · ${fmt(data.faltantes)} dosis para la meta de ${META} % con el denominador actual.`
       : 'No hay registros sectoriales oficiales compatibles con los filtros.';
+    const weight = $('priority-weight').valueAsNumber;
+    ctx.prioridades = model.priorizar(ctx.filas,META,weight);
+    auditTable('priority-table',['Localidad','Cobertura (%)','Brecha (pp)','Dosis faltantes','Puntaje'],
+      ctx.prioridades.map(row => [row.localidad,fmt(+row.dato.cobertura.toFixed(1)),fmt(+row.dato.brecha.toFixed(1)),fmt(row.dato.faltantes),fmt(+row.puntaje.toFixed(1))]));
   }
+  $('priority-weight').addEventListener('input',refreshDecisions);
   function render() {
     const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
       Object.fromEntries(filters.map(id => [id, $(id).value]));
