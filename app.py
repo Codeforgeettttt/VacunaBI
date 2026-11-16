@@ -25,9 +25,8 @@ PANTALLA = """<body style="margin:0;height:100vh;display:grid;place-items:center
 font:16px system-ui,'Segoe UI',sans-serif;text-align:center"><div>{}</div></body>"""
 
 
-def abrir_dashboard(ventana, sin_conexion=False):
-    url = (etl.OUT / "dashboard.html").resolve().as_uri()
-    ventana.load_url(url + ("?sin-conexion=1" if sin_conexion else ""))
+def abrir_dashboard(ventana):
+    ventana.load_url((etl.OUT / "dashboard.html").resolve().as_uri())
 
 
 class Actualizacion:
@@ -35,12 +34,14 @@ class Actualizacion:
         self._lock = Lock()
         self._export_lock = Lock()
         self._ventana = None
+        self._copia_local = False
 
     def refresh_data(self):
         if not self._lock.acquire(blocking=False):
             return {"ok": False, "message": "Ya hay una consulta en curso."}
         try:
             etl.main()
+            self._copia_local = False
             return {"ok": True}
         except Exception:
             traceback.print_exc()
@@ -50,6 +51,9 @@ class Actualizacion:
 
     def get_audit(self):
         return etl.historial_auditoria()
+
+    def usa_copia_local(self):
+        return self._copia_local
 
     def guardar_exportacion(self, nombre, contenido):
         if not isinstance(nombre, str) or not re.fullmatch(r"VacunaBI-[a-z-]+\.(csv|xlsx)", nombre):
@@ -88,7 +92,8 @@ def cargar(ventana, actualizacion):
             abrir_dashboard(ventana)
             return
         if (etl.OUT / "dashboard.html").is_file():
-            abrir_dashboard(ventana, sin_conexion=True)
+            actualizacion._copia_local = True
+            abrir_dashboard(ventana)
             return
         mensaje = result["message"]
     except Exception:

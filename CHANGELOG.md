@@ -2,6 +2,7 @@
 
 ## [2.2.0]
 
+- El ejecutable vuelve a abrir la última copia válida si falla la API al iniciar y muestra su estado en el tablero.
 - La estabilización posterior separa además el código de gráficos y dashboard en `frontend/charts.js` y `frontend/dashboard.js`, integrados por ETL en un único HTML autónomo.
 - Añade pruebas offline del ensamblado y una lista de aceptación manual de Windows y accesibilidad.
 
