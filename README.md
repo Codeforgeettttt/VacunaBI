@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![pandas](https://img.shields.io/badge/pandas-ETL-150458?logo=pandas&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Chart.js-Visualizaci%C3%B3n-FF6384?logo=chartdotjs&logoColor=white)
-![Estado](https://img.shields.io/badge/V1.1-Desarrollo_UI%2FUX-0F766E)
+![Estado](https://img.shields.io/badge/V1.2-Exploración-0F766E)
 
 ## ¿Qué hace?
 
@@ -26,7 +26,15 @@ Su enfoque actual es **Bogotá D.C.**; la compatibilidad con otras regiones aún
 | Datos | Exportación generada por el ETL en CSV, Excel, JSON y HTML |
 | Escritorio | Ventana de aplicación mediante pywebview y opción de compilación para Windows |
 
-La **V1.1** introduce navegación modular y un sistema visual renovado; todavía está en validación visual. Los filtros globales, mapas geográficos, escenarios y alertas avanzadas son funcionalidades futuras.
+La **V1.2** permite filtrar la cobertura por año, localidad, sector y biológico en Bogotá D.C. La serie histórica distrital y el seguimiento sectorial conservan sus propias dimensiones y periodos.
+
+## Explorar y exportar datos
+
+Usa **Explorar datos** para cambiar el año, el biológico y los desgloses desagregados disponibles. **Histórico** muestra años cerrados, **Actual** admite un rango de meses dentro del año y **Comparativo** muestra dos años cerrados de la serie distrital. Las cifras sectoriales corresponden al último corte de la selección. La cobertura se calcula dividiendo la suma de dosis por la suma de denominadores.
+
+En **Consultar datos de la selección**, elige la fuente, busca y ordena las filas. Las exportaciones CSV y XLSX incluyen todas las filas que coinciden con la búsqueda, junto con los filtros, la fuente y la fecha de generación. En Windows, la aplicación abre el diálogo para guardar el archivo.
+
+Usa **Ampliar gráfico** para ver una visualización con mayor tamaño. Los botones de leyenda permiten ocultar y restaurar series con el teclado.
 
 ## Arquitectura
 
@@ -176,7 +184,7 @@ Así, una caída o demora de la API pública no marca como fallido un commit cuy
 | --- | --- | --- |
 | **V1.0** | ETL, KPIs, dashboard y aplicación de escritorio | Base integrada |
 | **V1.1** | Rediseño UI/UX y navegación modular | Primera iteración; validación pendiente |
-| **V1.2** | Filtros globales, comparaciones y exportaciones desde la interfaz | Planificada |
+| **V1.2** | Filtros globales, comparación de años y exportaciones CSV/XLSX | Implementada |
 | **V1.3** | Mapa geográfico y fichas territoriales | Planificada |
 | **V1.4** | Trazabilidad y calidad de datos ampliada | Planificada |
 | **V1.5** | Rendimiento, accesibilidad y pruebas | Planificada |
