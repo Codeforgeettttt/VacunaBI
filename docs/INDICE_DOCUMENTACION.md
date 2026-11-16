@@ -13,6 +13,7 @@ Esta carpeta separa la documentación de **producto**, **análisis funcional**, 
 | [Casos de uso y diagramas](CASOS_DE_USO_Y_DIAGRAMAS.md) | Catálogo de 19 casos, casos extendidos, diagramas de uso, secuencias, actividades y estados | Análisis y diseño del sistema |
 | [Diccionario y gestión de datos](DICCIONARIO_Y_GESTION_DATOS.md) | Recursos, estructura de entradas y salidas, modelo dimensional conceptual, campos, KPI, calidad y linaje | Analistas de datos y mantenedores del ETL |
 | [Proceso ETL](PROCESO_ETL.md) | Extracción CKAN, concurrencia, validación, limpieza, cálculo, generación, publicación, auditoría y errores | Equipo técnico, sustentación del flujo de datos |
+| [Requisitos y plan de pruebas](REQUISITOS_Y_PLAN_PRUEBAS.md) | Requisitos funcionales/no funcionales, pruebas de aceptación y matriz de trazabilidad | Calidad, sustentación y cierre de versiones |
 
 ## Documentos especializados que ya existían
 
@@ -57,7 +58,7 @@ Todos los diagramas de los documentos nuevos están escritos en **Mermaid** para
 3. **Explicar arquitectura:** contexto, componentes, despliegue y puente pywebview.
 4. **Sustentar la información:** dos recursos CKAN, diccionario, granularidades y calidad.
 5. **Demostrar el ETL:** extracción en paralelo, reglas de limpieza, KPIs y publicación segura.
-6. **Mostrar evidencia:** pruebas automatizadas, release V2.2.3 y registros de validación realmente ejecutados.
+6. **Mostrar evidencia:** requisitos, plan de pruebas, automatizaciones, release V2.2.3 y registros de validación realmente ejecutados.
 7. **Cerrar con limitaciones y mejoras futuras:** no hay predicción estadística, base SQL, cuentas de usuario ni prueba manual completa de Windows documentada.
 
 ## Criterios de mantenimiento documental
