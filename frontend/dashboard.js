@@ -474,10 +474,10 @@
     const badges = [
       {text:'Serie distrital',present:info.district,
         detail:sourceMode === 'sector' ? 'fuera de la consulta' : !info.districtYear ? 'sin datos en el año' :
-          info.districtAllowed ? 'disponible' : 'sin el desglose solicitado'},
+          info.districtAllowed ? 'sin registros compatibles' : 'sin el desglose solicitado'},
       {text:'Seguimiento sectorial',present:info.territorial,
         detail:sourceMode === 'district' ? 'fuera de la consulta' : !info.sectorYear ? 'sin datos en el año' :
-          info.sectorAllowed ? 'compatible con filtros' : 'sin el desglose solicitado'}
+          info.sectorAllowed ? 'sin registros compatibles' : 'sin el desglose solicitado'}
     ];
     $('source-availability').replaceChildren(...badges.map(item => {
       const el = document.createElement('span');
