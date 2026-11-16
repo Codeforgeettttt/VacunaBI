@@ -227,6 +227,10 @@ summary:focus-visible,button:focus-visible,select:focus-visible,input:focus-visi
 .map-legend { grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr));gap:6px 12px; }
 .notice { color:var(--ink2);background:var(--surface-raised);padding:10px 12px;border-radius:8px; }
 .muted { color:var(--muted); }
+.comparison-cards { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:8px;margin-bottom:12px; }
+.comparison-cards div { display:grid;gap:3px;background:var(--surface);padding:10px;border-radius:8px;border:1px solid var(--border); }
+.comparison-cards span { color:var(--primary);font-size:19px;font-weight:700; }
+.comparison-cards small { color:var(--ink2);font-size:12px; }
 .nav-group { display:flex;flex-direction:column;gap:3px; }
 .nav-group + .nav-group { margin-top:10px; }
 .nav-group .nav-title { margin-bottom:2px; }

@@ -156,6 +156,7 @@
           <section class="card w6"><h3>Cobertura por localidad</h3>
             <div class="territory-sheet">
                 <p id="territory-detail" role="status"></p>
+                <p class="notice" id="territory-quality" hidden></p>
                 <p id="territory-district"></p>
                 <label class="territory-compare">Comparar con otra localidad
                   <select id="territory-compare" disabled>
@@ -163,6 +164,7 @@
                   </select>
                 </label>
                 <p id="territory-comparison" role="status"></p>
+                <div id="territory-comparison-cards" class="comparison-cards" hidden></div>
                 <div class="chart-actions"><button id="territory-export" type="button" disabled>Descargar ficha territorial CSV</button></div>
                 <details id="territory-history" hidden>
                   <summary>Evolución por corte</summary>
@@ -568,10 +570,15 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       path.setAttribute('fill',row ? levels.find(([max]) => row.cobertura < max)[1] : missing);
     }
     const row = lookup.get(selected);
+    const main = row ? model.medicion(row.dosis_aplicada,row.denominador,META) : null;
     $('territory-detail').textContent = selected
-      ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}. ${fmt(+model.medicion(row.dosis_aplicada,row.denominador,META).brecha.toFixed(1))} pp de brecha y ${fmt(model.medicion(row.dosis_aplicada,row.denominador,META).faltantes)} dosis adicionales estimadas. Fuente: ${context.source}.`
+      ? main ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}. Meta: ${META} %. ${fmt(+main.brecha.toFixed(1))} pp de brecha y ${fmt(main.faltantes)} dosis adicionales estimadas. Fuente: ${context.source}.`
         : `${selected} · sin datos para estos filtros.`
       : `${rows.length} de ${territory.length} localidades con cobertura para estos filtros.`;
+    $('territory-quality').hidden = !row;
+    $('territory-quality').textContent = context.manual ? 'Vista previa manual incluida.'
+      : context.observed ? 'Hay registros marcados para revisión en esta selección.'
+      : 'Datos oficiales incluidos en la última validación.';
     $('territory-district').textContent = row && district
       ? `Referencia distrital del seguimiento sectorial: ${fmt(district.cobertura)} % (${fmt(district.dosis_aplicada)} dosis / ${fmt(district.denominador)}). Diferencia local: ${fmt(+(row.cobertura-district.cobertura).toFixed(1))} pp.` : '';
     $('territory-history').hidden = !selected;
@@ -592,6 +599,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     ].map(([tipo,nombre,dato]) => [tipo,nombre,cut,context.biological,context.inst,dato.dosis_aplicada,dato.denominador,dato.cobertura,context.source]) : [];
     $('territory-export').disabled = !fichaTerritorial.length;
     const comparison = $('territory-comparison');
+    const cards = $('territory-comparison-cards');
+    cards.hidden = !(row && other);
+    cards.innerHTML = row && other ? [row,other].map(dato =>
+      `<div><strong>${esc(dato.localidad)}</strong><span>${fmt(dato.cobertura)} %</span><small>${fmt(dato.dosis_aplicada)} dosis / ${fmt(dato.denominador)}</small></div>`).join('') : '';
     if (!picker.value) {
       comparison.textContent = selected ? '' : 'Selecciona primero una localidad en el mapa o en el filtro.';
       return;
@@ -712,8 +723,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       controls.append(button);
     });
   }
-  function bar(id, rows, key, source) {
-    const dataset = {...template[id][0], backgroundColor:S[0], data:rows.map(r => r.cobertura)};
+  function bar(id, rows, key, source, active = '') {
+    const dataset = {...template[id][0], backgroundColor:active ? rows.map(row => row[key] === active ? css('--primary') : S[0]) : S[0], data:rows.map(r => r.cobertura)};
     charts[id].options.plugins.tooltip.callbacks.label = ({dataIndex}) => {
       const row = rows[dataIndex];
       return `${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} de ${fmt(row.denominador)}`;
@@ -891,13 +902,15 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const difference = tv1 && tv5 ? +(tv1.cobertura-tv5.cobertura).toFixed(1) : null;
     set('k2',difference == null || !annualVisible ? '—' : `${fmt(difference)} pts`,
       difference == null || !annualVisible ? 'Requiere las dos etapas para el mismo año cerrado.' : `${fmt(tv1.cobertura)} % → ${fmt(tv5.cobertura)} % (${primary})`,difference != null && difference <= 0);
-    bar('cLoc',locations,'localidad',source);
     const comparisonRows = local ? comparable.filter(r => r.fecha_reporte === cut && r.grupo_biologico === 'Primera infancia') : [];
+    const territorialRows = local ? aggregate(comparisonRows,['localidad']) : locations;
+    bar('cLoc',territorialRows,'localidad',source,local);
     const history = local ? aggregate(selected.filter(r => r.grupo_biologico === 'Primera infancia'),['fecha_reporte'])
       .sort((a,b) => a.fecha_reporte.localeCompare(b.fecha_reporte)) : [];
     const territorySource = sectorSource + (comparisonRows.some(r => r.manual) ? ' · incluye vista previa manual' : '');
-    renderTerritory(locations,local,cut,aggregate(comparisonRows,['localidad']),aggregate(comparisonRows,[])[0],history,
-      {biological:biological || 'Primera infancia',inst:inst || 'Todos los sectores',source:territorySource});
+    renderTerritory(territorialRows,local,cut,territorialRows,aggregate(comparisonRows,[])[0],history,
+      {biological:biological || 'Primera infancia',inst:inst || 'Todos los sectores',source:territorySource,
+       manual:infancy.some(r => r.manual),observed:infancy.some(r => r.flag_sobre_100 || r.flag_inconsistencia)});
     bar('cInst',aggregate(rows,['institucion']),'institucion',source);
     bar('cGrupo',aggregate(rows,['grupo_biologico']),'grupo_biologico',source);
     renderHeat(aggregate(rows,['localidad','institucion']));

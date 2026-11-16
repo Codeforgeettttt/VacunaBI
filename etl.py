@@ -254,7 +254,7 @@ def calcular_kpis(sec, anu):
 def construir_dashboard(sec, anu, mens, kpis, logs, *, destino=None, auditoria=()):
     anio_actual = int(anu["anio"].max())
     dimensiones = ["fecha_reporte", "localidad", "zona", "institucion", "grupo_biologico", "biologico"]
-    medidas = ["dosis_aplicada", "denominador"]
+    medidas = ["dosis_aplicada", "denominador", "flag_inconsistencia", "flag_sobre_100"]
     sectoriales = sec.loc[sec["denominador"].gt(0) & sec["dosis_aplicada"].ge(0), dimensiones + medidas].copy()
     sectoriales["fecha_reporte"] = sectoriales["fecha_reporte"].dt.strftime("%Y-%m-%d")
     columnas_mensuales = ["anio", "biologico", "mes_num", "vacunados_acum", "poblacion_meta", "cobertura_acum"]
