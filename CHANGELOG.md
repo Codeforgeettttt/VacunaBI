@@ -2,6 +2,8 @@
 
 ## [2.2.0]
 
+- Las tareas de aceptación manual de Windows y accesibilidad se mantienen documentadas como pendientes hasta obtener evidencia real.
+
 - Refina la tipografía, las acciones y la navegación agrupada por tipo de análisis.
 - Añade contexto de fuente y periodo a los indicadores y gráficos.
 - Mantiene mapa y ranking en el mismo corte y mejora la ficha y la comparación territorial.
@@ -51,7 +53,7 @@
 - Leyendas accesibles, ampliación de gráficos y tabla de resultados con búsqueda, orden y paginación.
 - Descarga de la selección en CSV y XLSX con metadatos de fuente y periodo.
 
-## [1.1.0] — En desarrollo (2026-11-16)
+## [1.1.0] — Línea base de interfaz (2026-11-16)
 
 ### Añadido
 - Identidad visual VacunaBI y navegación en cinco módulos.
@@ -70,10 +72,9 @@
 - `informe.py`, dedicado a generar documentos académicos y gráficos fuera de la aplicación.
 - Referencias al archivo Word y a entregas académicas en la documentación de producto.
 
-### Pendiente
-- Verificar visualmente la V1.1 en navegador y pywebview.
-- Validar las vistas con datos reales.
-- Habilitar GitHub Pages solo cuando se necesite publicar el dashboard web.
+### Evolución posterior
+- La validación de la navegación y las vistas con datos reales se abordó en las versiones siguientes.
+- GitHub Pages permanece como opción de publicación, no como requisito del ejecutable de Windows.
 
 ## [1.0.0] — Base integrada (2026-11-16)
 
