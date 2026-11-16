@@ -1,35 +1,33 @@
-# Roadmap de producto — VacunaBI
+# Roadmap de desarrollo — VacunaBI
 
-Este documento describe **funcionalidades previstas**. No debe confundirse con el estado de implementación actual.
+El repositorio está dedicado a la **aplicación VacunaBI**: interfaz, lógica, ETL, pruebas, automatización y documentación técnica.
 
-| Versión | Enfoque | Entrega verificable |
+| Versión | Evolución del producto | Estado |
 | --- | --- | --- |
-| V1.0 | Base, ETL, KPIs, dashboard y escritorio | Código fuente e indicadores preservados, pruebas y documentación |
-| V1.1 | Rediseño UI/UX | Navegación modular, tarjetas y gráficos reutilizables, sistema de diseño |
-| V1.2 | Interactividad | Filtros por dimensiones disponibles, comparaciones, tablas y exportación |
-| V1.3 | Territorial | Mapa oficial de localidades, ranking, fichas y brechas |
-| V1.4 | Calidad de datos | Historial ETL, validaciones, diccionario y trazabilidad |
-| V1.5 | Consolidación | Accesibilidad, rendimiento, pruebas, seguridad y documentación |
-| V2.0 | Apoyo a decisiones | Alertas explicables, simulaciones, escenarios y prioridades sustentadas |
+| V1.0 | Base funcional con API CKAN, ETL, KPIs, dashboard y escritorio | Integrada |
+| V1.1 | Rediseño UI/UX, navegación y componentes consistentes | Primera iteración implementada; pendiente validación visual |
+| V1.2 | Filtros globales, gráficos interactivos y exportaciones desde interfaz | Pendiente |
+| V1.3 | Mapa geográfico y fichas de localidades | Pendiente |
+| V1.4 | Calidad de datos, trazabilidad ETL y diccionario | Pendiente |
+| V1.5 | Accesibilidad, optimización, seguridad y pruebas | Pendiente |
+| V2.0 | Escenarios, alertas y priorización territorial explicable | Pendiente |
 
-## Criterios transversales
+## Reglas de evolución
 
-- No reemplazar datos oficiales por datos simulados en visualizaciones productivas.
-- Conservar numeradores, denominadores, unidades, periodos y fuentes.
-- Tratar coberturas superiores al 100 % como anomalías que requieren contextualización.
-- No confundir diferencias entre etapas con abandono individual.
-- Verificar comparabilidad antes de cruzar localidades, sectores, biológicos o periodos.
-- Registrar resultados de las pruebas ejecutadas, no resultados supuestos.
-- Mantener una rama `main` estable; desarrollar mediante ramas y Pull Requests.
-- Registrar contribuciones reales sin atribuir commits a personas que no participaron.
+- Conservar la funcionalidad del ETL y sus indicadores cuando se modifique la interfaz.
+- Mantener numeradores, denominadores, fuentes, periodos y unidades identificables.
+- Diferenciar datos faltantes de valores cero y datos observados de escenarios.
+- Evitar agregados incorrectos y comparaciones de periodos incompatibles.
+- Ejecutar pruebas de regresión antes de continuar a la siguiente versión.
+- Registrar cambios mediante commits progresivos por funcionalidad.
+- Publicar documentación de producto, instalación, arquitectura y cambios; excluir materiales ajenos a la aplicación.
 
-## V1.1 — Primer alcance de diseño
+## V1.1 — Criterios para cerrar la iteración
 
-- Layout con navegación lateral y encabezado.
-- Módulos: resumen, localidades, sectores, calidad de datos y metodología.
-- Tokens visuales de colores, tipografía, espaciado y estados.
-- Componentes KPI, gráficos y tablas consistentes.
-- Estados de carga, fallo y falta de datos.
-- Pruebas de regresión para conservar los mismos resultados del ETL.
-
-Los cambios se dividirán en commits pequeños con explicaciones y evidencia visual.
+- [x] Interfaz modular con cinco vistas.
+- [x] Identidad visual y componentes comunes.
+- [x] Conservación de marcadores ETL e identificadores de gráficos.
+- [x] Pruebas estructurales de interfaz en CI.
+- [ ] Revisión visual y de navegación en navegador.
+- [ ] Revisión funcional en pywebview.
+- [ ] Verificación con datos reales y capturas actuales.
