@@ -211,13 +211,14 @@ tr:last-child td { border-bottom:0; }
   <div class="main-area">
     <header class="topbar">
       <div class="topbar-row">
-        <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
-          <h1>Cobertura de vacunación</h1></div>
+        <div><p class="eyebrow">VacunaBI · Bogotá D.C.</p>
+          <h1 id="module-title">Resumen general</h1></div>
         <div class="topbar-actions"><span class="version">V2.0</span>
           <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
+      <p class="meta" id="data-freshness">Cargando contexto de datos…</p>
       <p class="meta" id="refresh-status" role="status" hidden></p>
     </header>
     <main id="main-content" tabindex="-1">
@@ -269,11 +270,12 @@ tr:last-child td { border-bottom:0; }
           <a class="link-action" href="#localidades">Explorar localidades <span aria-hidden="true">→</span></a>
         </div>
         <div class="dashboard-grid">
-          <div class="card kpi"><div class="l">Cobertura primera infancia (sectores)</div><div class="v" id="k1"></div><div class="st" id="k1s"></div></div>
-          <div class="card kpi"><div class="l">Diferencia triple viral 1 año y refuerzo 5 años</div><div class="v" id="k2"></div><div class="st" id="k2s"></div></div>
-          <div class="card kpi"><div class="l">Localidades bajo la meta (primera infancia)</div><div class="v" id="k3"></div><div class="st" id="k3s"></div></div>
-          <div class="card kpi"><div class="l">Dosis adicionales estimadas para la meta</div><div class="v" id="k4"></div><div class="st" id="k4s"></div></div>
+          <div class="card kpi"><div class="l">Cobertura de primera infancia</div><div class="v" id="k1"></div><div class="st" id="k1s"></div><details><summary>Cómo se calcula</summary>Dosis aplicadas divididas por la población objetivo del seguimiento sectorial.</details></div>
+          <div class="card kpi"><div class="l">Brecha frente a la meta</div><div class="v" id="kGap"></div><div class="st" id="kGaps"></div><details><summary>Cómo se calcula</summary>Diferencia positiva entre la meta del 95 % y la cobertura observada, en puntos porcentuales.</details></div>
+          <div class="card kpi"><div class="l">Localidades bajo la meta</div><div class="v" id="k3"></div><div class="st" id="k3s"></div><details><summary>Cómo se calcula</summary>Localidades con cobertura de primera infancia por debajo de la meta entre las que tienen datos compatibles.</details></div>
+          <div class="card kpi"><div class="l">Dosis adicionales estimadas</div><div class="v" id="k4"></div><div class="st" id="k4s"></div><details><summary>Cómo se calcula</summary>Dosis enteras que faltan para alcanzar el 95 % con la población objetivo observada.</details></div>
         </div>
+        <div class="data-note"><strong>Hallazgo de la selección</strong><p id="summary-finding" role="status"></p></div>
         <div class="dashboard-grid">
           <section class="card w12 temporal-controls" aria-labelledby="evolution-title">
             <h3 id="evolution-title">Evolución de cobertura</h3>
@@ -295,9 +297,11 @@ tr:last-child td { border-bottom:0; }
             <div class="chart"><canvas id="cActual" role="img" aria-label="Gráfico de avance mensual acumulado por biológico"></canvas></div>
           </section>
         </div>
-        <div class="data-note"><strong>Lectura del tablero</strong>
+        <div class="summary-links"><a class="link-action" href="#localidades">Explorar localidades</a><a class="link-action" href="#decisiones">Evaluar escenarios</a></div>
+        <details class="data-note"><summary>Comparación de etapas de triple viral</summary>
+          <p><strong id="k2"></strong> <span id="k2s"></span></p>
           <p>Los datos se actualizan desde fuentes oficiales; el último año puede estar incompleto. La diferencia de cobertura entre etapas del esquema no equivale necesariamente al abandono individual.</p>
-        </div>
+        </details>
       </section>
 
       <section class="page" id="localidades" data-page="localidades" aria-labelledby="title-localidades" hidden>
@@ -458,7 +462,8 @@ const metaLine = {id:'meta', afterDatasetsDraw(ch, a, o){ if(!o.on) return; cons
   ctx.beginPath(); o.axis === 'x' ? (ctx.moveTo(p, A.top), ctx.lineTo(p, A.bottom)) : (ctx.moveTo(A.left, p), ctx.lineTo(A.right, p)); ctx.stroke(); ctx.restore(); }};
 Chart.register(metaLine);
 
-document.getElementById('meta-info').textContent = `Actualizado ${D.generado} desde la API de Datos Abiertos Bogotá · corte sectores ${K.fecha_corte_sectores} · meta PAI ${META} %`;
+document.getElementById('meta-info').textContent = `Fuente: Datos Abiertos Bogotá · corte sectorial: ${K.fecha_corte_sectores}`;
+document.getElementById('data-freshness').textContent = `Extracción: ${D.generado} · tablero disponible`;
 const set = (id, v, s, ok) => { document.getElementById(id).textContent = v; const e = document.getElementById(id + 's'); e.textContent = s; e.className = 'st ' + (ok ? 'ok' : 'bad'); };
 set('k1', K.cobertura_primera_infancia_sectores + ' %', `${(META - K.cobertura_primera_infancia_sectores).toFixed(1)} pts bajo la meta`, K.cobertura_primera_infancia_sectores >= META);
 set('k2', K.caida_esquema_1a5 + ' pts', `${K.tv_1anio_ult} % → ${K.tv_5anios_ult} % (${K.ultimo_anio_cerrado})`, K.caida_esquema_1a5 <= 0);
@@ -967,18 +972,16 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const infancy = rows.filter(r => r.grupo_biologico === 'Primera infancia');
     const locations = aggregate(infancy, ['localidad']);
     const total = aggregate(infancy, [])[0];
-    if (year || local || inst || biological || mode || manualRows.length) {
-      const lower = locations.filter(r => r.cobertura < META).length;
-      const gap = total ? Math.max(0, META-total.cobertura) : 0;
-      const extra = total ? model.medicion(total.dosis_aplicada,total.denominador,META)?.faltantes : null;
-      set('k1',total ? `${fmt(total.cobertura)} %` : '—',total ? `${fmt(+gap.toFixed(1))} pp de brecha · ${cut}` : empty,gap === 0 && Boolean(total));
-      set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `Menor: ${locations[0].localidad} (${fmt(locations[0].cobertura)} %)` : empty,locations.length > 0 && lower === 0);
-      set('k4',extra == null ? '—' : fmt(extra),extra == null ? empty : `Primera infancia · corte ${cut}`,extra === 0);
-    } else {
-      set('k1', K.cobertura_primera_infancia_sectores + ' %', `${(META-K.cobertura_primera_infancia_sectores).toFixed(1)} pts bajo la meta`, K.cobertura_primera_infancia_sectores >= META);
-      set('k3', `${K.localidades_bajo_meta_infancia} de ${locations.length}`, `Menor: ${K.localidad_menor_cobertura} (${K.localidad_menor_cobertura_valor} %)`, K.localidades_bajo_meta_infancia === 0);
-      set('k4', fmt(K.dosis_faltantes_meta_infancia), 'en primera infancia, población de los sectores', K.dosis_faltantes_meta_infancia === 0);
-    }
+    const medida = total ? model.medicion(total.dosis_aplicada,total.denominador,META) : null;
+    const lower = locations.filter(r => model.medicion(r.dosis_aplicada,r.denominador,META)?.brecha > 0).length;
+    const periodo = `Corte ${cut}${infancy.some(r => r.manual) ? ' · vista previa manual' : ''}`;
+    set('k1',medida ? `${fmt(+medida.cobertura.toFixed(1))} %` : '—',medida ? `${periodo} · ${medida.brecha ? 'bajo la meta' : 'en la meta o superior'}` : empty,medida?.brecha === 0);
+    set('kGap',medida ? `${fmt(+medida.brecha.toFixed(1))} pp` : '—',medida ? `Meta ${META} % · ${periodo}` : empty,medida?.brecha === 0);
+    set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `${periodo} · con datos compatibles` : empty,locations.length > 0 && lower === 0);
+    set('k4',medida ? fmt(medida.faltantes) : '—',medida ? `Dosis · ${periodo}` : empty,medida?.faltantes === 0);
+    $('summary-finding').textContent = locations.length
+      ? `${locations[0].localidad} registra la menor cobertura de la selección (${fmt(locations[0].cobertura)} %). ${lower} de ${locations.length} localidades con datos están por debajo del ${META} %.`
+      : 'No hay datos de primera infancia compatibles con los filtros.';
     const primary = year ? +year : historicalYears.at(-1);
     $('compare-label').hidden = mode !== 'comparativo';
     $('fCompare').disabled = mode !== 'comparativo';
@@ -1273,6 +1276,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       else link.removeAttribute('aria-current');
     });
     document.title = 'VacunaBI · ' + (links.find(link => link.dataset.nav === active)?.textContent.trim() || 'Resumen');
+    document.getElementById('module-title').textContent = links.find(link => link.dataset.nav === active)?.lastChild.textContent.trim() || 'Resumen general';
     requestAnimationFrame(() => {
       if(typeof Chart !== 'undefined' && Chart.instances) {
         Object.values(Chart.instances).forEach(chart => chart.resize());
