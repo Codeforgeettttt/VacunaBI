@@ -748,6 +748,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   }
   function setChart(id, labels, datasets, message, source, counts = null) {
     const chart = charts[id];
+    const signature = JSON.stringify([labels,datasets,message,source,counts]);
+    if (chart.dataSignature === signature) return;
+    chart.dataSignature = signature;
+    const prior = new Map(chart.data.datasets.map((dataset,index) => [dataset.label,chart.isDatasetVisible(index)]));
     chart.data.labels = labels;
     chart.data.datasets = datasets;
     chart.canvas.parentElement.hidden = Boolean(message);
@@ -757,8 +761,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     chart.tableSource = source;
     chart.tableCounts = counts;
     chart.values.hidden = Boolean(message);
-    if (chart.values.open) renderChartValues(chart);
     chart.update('none');
+    datasets.forEach((dataset,index) => chart.setDatasetVisibility(index,prior.get(dataset.label) ?? true));
+    if (datasets.some((_,index) => !chart.isDatasetVisible(index))) chart.update('none');
+    if (chart.values.open) renderChartValues(chart);
     const controls = chart.actions;
     controls.hidden = Boolean(message);
     for (const button of controls.querySelectorAll('[data-series]')) button.remove();
@@ -789,9 +795,15 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   }
   const color = name => S[(Math.max(0,bios.indexOf(name))) % S.length];
   function series(rows, periods, key) {
-    return available(rows, 'biologico').map(name => ({
+    const seriesByName = new Map();
+    for (const row of rows) {
+      if (!seriesByName.has(row.biologico)) seriesByName.set(row.biologico,new Map());
+      const values = seriesByName.get(row.biologico);
+      if (!values.has(row[key])) values.set(row[key],row.cobertura);
+    }
+    return [...seriesByName].sort(([a],[b]) => a.localeCompare(b,'es')).map(([name,values]) => ({
       label:name, borderColor:color(name), backgroundColor:color(name), borderWidth:2, pointRadius:4,
-      data:periods.map(period => rows.find(r => r.biologico === name && r[key] === period)?.cobertura ?? null)
+      data:periods.map(period => values.get(period) ?? null)
     }));
   }
   const sectorSource = 'Seguimiento de cobertura por sectores · Datos Abiertos Bogotá';
@@ -806,7 +818,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const rows = $('table-source').value === 'sector' ? sectorRows : seriesRows;
     const query = $('table-search').value.trim().toLocaleLowerCase('es');
     const sort = $('table-sort').value;
-    const filtered = rows.filter(row => tableFields.some(key => String(row[key] ?? '').toLocaleLowerCase('es').includes(query)));
+    const filtered = query ? rows.filter(row => tableFields.some(key =>
+      String(row[key] ?? '').toLocaleLowerCase('es').includes(query))) : rows.slice();
     return filtered.sort((a,b) => sort === 'asc' ? a.cobertura-b.cobertura :
       sort === 'desc' ? b.cobertura-a.cobertura : b.periodo.localeCompare(a.periodo));
   }
