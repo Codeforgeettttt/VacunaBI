@@ -209,6 +209,8 @@ tr:last-child td { border-bottom:0; }
             <button id="table-prev" type="button">Anterior</button>
             <button id="table-next" type="button">Siguiente</button>
             <span id="table-page" role="status"></span>
+            <button id="export-csv" type="button">Descargar CSV</button>
+            <button id="export-xlsx" type="button">Descargar Excel</button>
           </div>
         </details>
       </section>
@@ -545,6 +547,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     page = Math.max(0, Math.min(page, pages-1));
     $('table-prev').disabled = page === 0;
     $('table-next').disabled = page + 1 >= pages;
+    ['export-csv','export-xlsx'].forEach(id => $(id).disabled = !rows.length);
     $('table-page').textContent = rows.length ? `Página ${page+1} de ${pages} · ${rows.length} resultados` : 'Sin resultados';
     const format = (value, key) => value == null ? '—' : key === 'cobertura' ? `${fmt(value)} %` : typeof value === 'number' ? fmt(value) : value;
     $('selection-table').innerHTML = rows.length ? '<table><thead><tr>' +
@@ -653,6 +656,90 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   ['table-source','table-search','table-sort'].forEach(id => $(id).addEventListener('input',() => { page=0; renderTable(); }));
   $('table-prev').addEventListener('click',() => { page--; renderTable(); });
   $('table-next').addEventListener('click',() => { page++; renderTable(); });
+
+  function exportValues() {
+    const selection = [...$('filter-chips').children].map(chip => chip.textContent).join(' · ');
+    return [[...tableNames,'Fuente','Selección','Actualizado'], ...tableRows().map(row =>
+      [...tableFields.map(key => row[key]),row.fuente,selection,D.generado])];
+  }
+  function download(parts, type, extension) {
+    const url = URL.createObjectURL(new Blob(parts,{type}));
+    const link = document.createElement('a');
+    link.download = `VacunaBI-${$('table-source').value}.${extension}`;
+    link.href = url;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url),30000);
+  }
+  $('export-csv').addEventListener('click',() => {
+    const csvCell = value => {
+      if (typeof value === 'number') return String(value).replace('.',',');
+      const text = String(value ?? '');
+      const safe = /^[\s]*[=+\-@]|^[\t\r\n]/.test(text) ? "'" + text : text;
+      return '"' + safe.replaceAll('"','""') + '"';
+    };
+    download(['\uFEFF',exportValues().map(row => row.map(csvCell).join(';')).join('\r\n')], 'text/csv;charset=utf-8','csv');
+  });
+  // Open XML necesita un contenedor ZIP. Las cinco entradas se guardan sin compresión.
+  function zipXml(parts) {
+    const encoder = new TextEncoder();
+    const output = [];
+    const directory = [];
+    let offset = 0;
+    const header = size => {
+      const bytes = new Uint8Array(size);
+      const view = new DataView(bytes.buffer);
+      return {bytes,u16:(p,v) => view.setUint16(p,v,true),u32:(p,v) => view.setUint32(p,v,true)};
+    };
+    const crc32 = bytes => {
+      let crc = -1;
+      for (const byte of bytes) {
+        crc ^= byte;
+        for (let bit=0;bit<8;bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+      }
+      return (crc ^ -1) >>> 0;
+    };
+    for (const [path,xml] of Object.entries(parts)) {
+      const name = encoder.encode(path);
+      const data = encoder.encode(xml);
+      const crc = crc32(data);
+      const local = header(30);
+      local.u32(0,0x04034b50); local.u16(4,20); local.u16(12,33); local.u32(14,crc);
+      local.u32(18,data.length); local.u32(22,data.length); local.u16(26,name.length);
+      const central = header(46);
+      central.u32(0,0x02014b50); central.u16(4,20); central.u16(6,20);
+      central.u16(14,33); central.u32(16,crc); central.u32(20,data.length);
+      central.u32(24,data.length); central.u16(28,name.length); central.u32(42,offset);
+      output.push(local.bytes,name,data);
+      directory.push(central.bytes,name);
+      offset += local.bytes.length + name.length + data.length;
+    }
+    const end = header(22);
+    end.u32(0,0x06054b50);
+    end.u16(8,directory.length/2); end.u16(10,directory.length/2);
+    end.u32(12,directory.reduce((sum,entry) => sum+entry.length,0)); end.u32(16,offset);
+    return [...output,...directory,end.bytes];
+  }
+  $('export-xlsx').addEventListener('click',() => {
+    const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const packageRel = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    const rows = exportValues().map((row,index) => `<row r="${index+1}">` + row.map((value,column) => {
+      const address = String.fromCharCode(65+column) + (index+1);
+      return typeof value === 'number' ? `<c r="${address}"><v>${value}</v></c>` :
+        `<c r="${address}" t="inlineStr"><is><t xml:space="preserve">${esc(String(value ?? '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,''))}</t></is></c>`;
+    }).join('') + '</row>').join('');
+    const parts = {
+      '[Content_Types].xml': `${xml}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`,
+      '_rels/.rels': `${xml}<Relationships xmlns="${packageRel}"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+      'xl/workbook.xml': `${xml}<workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="Selección" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      'xl/_rels/workbook.xml.rels': `${xml}<Relationships xmlns="${packageRel}"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`,
+      'xl/worksheets/sheet1.xml': `${xml}<worksheet xmlns="${main}"><sheetData>${rows}</sheetData></worksheet>`
+    };
+    download(zipXml(parts),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','xlsx');
+  });
   render();
 })();
 </script>
