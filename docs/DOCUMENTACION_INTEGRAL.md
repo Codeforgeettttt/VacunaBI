@@ -23,6 +23,7 @@ El manual integral presenta una visión completa del proyecto; los modelos detal
 - [Casos de uso extendidos y diagramas](CASOS_DE_USO_Y_DIAGRAMAS.md).
 - [Diccionario, modelo BI, linaje y gestión de datos](DICCIONARIO_Y_GESTION_DATOS.md).
 - [Especificación completa del proceso ETL](PROCESO_ETL.md).
+- [Requisitos, criterios de aceptación y plan de pruebas](REQUISITOS_Y_PLAN_PRUEBAS.md).
 
 Los diagramas se ofrecen en Mermaid, con visualización directa en GitHub. Los modelos conceptuales no deben interpretarse como una base SQL implementada ni como autenticación por perfiles.
 
