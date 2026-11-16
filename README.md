@@ -6,7 +6,15 @@ VacunaBI analiza la cobertura de vacunación en Bogotá D.C. a partir de datos a
 
 El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. En V2.2.3 puedes recorrer los módulos desde la barra lateral y consultar el corte y la procedencia de los datos en cada vista.
 
-**[Leer la documentación integral de VacunaBI V2.2.3](docs/DOCUMENTACION_INTEGRAL.md)** — Manual de usuario, documentación técnica, arquitectura, ETL, metodología BI, fuentes, indicadores, filtros, pruebas, instalación y mantenimiento.
+**[Índice de documentación de VacunaBI](docs/INDICE_DOCUMENTACION.md)** — Acceso organizado a los manuales del proyecto.
+
+| Documento | Contenido |
+| --- | --- |
+| [Manual integral](docs/DOCUMENTACION_INTEGRAL.md) | Problema, objetivos, funcionalidades, metodología y guía de uso |
+| [Manual técnico](docs/DOCUMENTACION_TECNICA.md) | Arquitectura, componentes, interfaces, despliegue y pruebas |
+| [Casos de uso y diagramas](docs/CASOS_DE_USO_Y_DIAGRAMAS.md) | Catálogo funcional y diagramas Mermaid del sistema |
+| [Diccionario y gestión de datos](docs/DICCIONARIO_Y_GESTION_DATOS.md) | Modelo analítico, campos, KPI, linaje y calidad |
+| [Proceso ETL](docs/PROCESO_ETL.md) | Extracción CKAN, transformación, publicación y recuperación |
 
 [Descargar V2.2.3](https://github.com/Codeforgeettttt/VacunaBI/releases/tag/v2.2.3) · [Compilaciones de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
