@@ -269,7 +269,9 @@ def construir_dashboard(sec, anu, mens, kpis, logs, *, destino=None, auditoria=(
         "heat": cobertura(sec, ["localidad", "institucion"]).to_dict("records"),
     }
     plantilla = (RECURSOS / "dashboard_template.html").read_text(encoding="utf-8")
+    decisiones = (RECURSOS / "decisiones.js").read_text(encoding="utf-8")
     html = (plantilla.replace("/*__CHARTJS__*/", (RECURSOS / "chart.umd.min.js").read_text(encoding="utf-8"))
+            .replace("/*__DECISIONES__*/", decisiones)
             .replace("/*__DATOS__*/null", json.dumps(datos, ensure_ascii=False, default=str).replace("<", "\\u003c")))
     escribir_texto((destino or OUT) / "dashboard.html", html)
 
