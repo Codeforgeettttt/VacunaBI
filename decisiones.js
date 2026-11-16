@@ -18,5 +18,23 @@ globalThis.VacunaDecisiones = (() => {
     return datos.map(fila => ({...fila,puntaje:peso*fila.dato.brecha/meta+(100-peso)*fila.dato.faltantes/maximo}))
       .sort((a,b) => b.puntaje-a.puntaje || a.localidad.localeCompare(b.localidad,'es'));
   }
-  return {medicion, escenario, priorizar};
+  function alertas(prioridades, anual, meta, logs) {
+    const lista = [];
+    for (const fila of prioridades) {
+      if (fila.dato.brecha) lista.push({tipo:'Bajo la meta',detalle:fila.localidad,valor:fila.dato.cobertura});
+      if (fila.dato.cobertura > 100) lista.push({tipo:'Revisión de calidad',detalle:fila.localidad+' · superior a 100 %',valor:fila.dato.cobertura});
+    }
+    const series = new Map(anual.filter(r => r.anio_completo).map(r => [JSON.stringify([r.biologico,r.anio]),r]));
+    const ultimo = Math.max(...anual.filter(r => r.anio_completo).map(r => r.anio));
+    for (const r of series.values()) {
+      if (r.anio !== ultimo) continue;
+      const anterior = series.get(JSON.stringify([r.biologico,r.anio-1]));
+      if (anterior && r.cobertura < anterior.cobertura) lista.push({tipo:'Descenso distrital',detalle:r.biologico+' · '+(r.anio-1)+'–'+r.anio,valor:r.cobertura-anterior.cobertura});
+    }
+    if (anual.some(r => !r.anio_completo && r.anio > ultimo)) lista.push({tipo:'Periodo parcial',detalle:'La serie distrital tiene meses sin cerrar.'});
+    const invalidas = (logs.sectores?.filas_invalidas ?? 0) +(logs.mensual?.filas_invalidas ?? 0);
+    if (invalidas) lista.push({tipo:'Revisión de calidad',detalle:invalidas+' filas inválidas descartadas por el ETL.'});
+    return lista;
+  }
+  return {medicion, escenario, priorizar, alertas};
 })();
