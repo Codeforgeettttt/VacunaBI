@@ -27,6 +27,7 @@ ESCHEMAS = {
     RES_MENSUAL: {"biologico", "ano", "orden mes", "mes", "meta", "vacunados", "cobertura", "column7"},
 }
 META = 95.0  # meta PAI - Ministerio de Salud
+VERSION_TABLERO = "2.2.2"  # cache de interfaz compatible con este ejecutable
 EXE = getattr(sys, "frozen", False)  # True cuando corre como .exe (PyInstaller)
 RECURSOS = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))  # plantilla y Chart.js empaquetados
 OUT = (Path(sys.executable).parent if EXE else Path(__file__).parent) / "salidas"
