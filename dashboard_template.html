@@ -210,6 +210,17 @@ tr:last-child td { border-bottom:0; }
         <div class="filter-chips" id="filter-chips"></div>
         <p id="filters-status" role="status"></p>
         <details>
+          <summary>Cargar registros manuales</summary>
+          <p>Prueba adiciones o ajustes del último corte sectorial. La vista previa se pierde al cerrar o actualizar el tablero.</p>
+          <div class="control-actions">
+            <label for="manual-file">Archivo CSV separado por punto y coma</label>
+            <input id="manual-file" type="file" accept=".csv,text/csv">
+            <button id="manual-template" type="button">Descargar plantilla</button>
+            <button id="manual-clear" type="button" disabled>Quitar vista previa</button>
+          </div>
+          <p id="manual-status" role="status">Viendo datos oficiales.</p>
+        </details>
+        <details>
           <summary>Consultar datos de la selección</summary>
           <div class="controls">
             <label>Fuente <select id="table-source"><option value="sector">Seguimiento sectorial</option><option value="serie">Serie distrital</option></select></label>
@@ -443,6 +454,16 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   });
   const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
   const sector = D.sectoriales ?? [];
+  let manualRows = [];
+  const manualSource = 'Registro manual · vista previa';
+  const manualFields = ['fecha_reporte','localidad','institucion','biologico','dosis_aplicada','denominador'];
+  const manualKey = row => JSON.stringify(manualFields.slice(0,4).map(field => row[field]));
+  function currentSector() {
+    if (!manualRows.length) return sector;
+    const preview = new Map(sector.map(row => [manualKey(row),row]));
+    manualRows.forEach(row => preview.set(manualKey(row),row));
+    return [...preview.values()];
+  }
   const monthly = D.mensual ?? [];
   const available = (rows, key) => [...new Set(rows.map(row => row[key]))].sort((a,b) => String(a).localeCompare(String(b), 'es'));
   const append = (select, values) => values.forEach(value => select.add(new Option(value, value)));
@@ -605,17 +626,17 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const empty = 'Sin datos para esta selección.';
     const disabledDistrict = 'La serie distrital no se desagrega por localidad, sector ni biológico sectorial.';
     const disabledSector = 'El biológico seleccionado pertenece a la serie distrital.';
-    const selected = sectorCompatible ? sector.filter(r =>
+    const selected = sectorCompatible ? currentSector().filter(r =>
       (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local) &&
       (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
     // Cada corte es una foto de cobertura. Agregar solo el corte más reciente de la selección.
     const cut = selected.reduce((date, r) => r.fecha_reporte > date ? r.fecha_reporte : date, '');
     const rows = selected.filter(r => r.fecha_reporte === cut);
-    const source = cut ? `${sectorSource} · Corte ${cut}` : sectorSource;
+    const source = cut ? `${sectorSource} · Corte ${cut}${rows.some(r => r.manual) ? ' · incluye vista previa manual' : ''}` : sectorSource;
     const infancy = rows.filter(r => r.grupo_biologico === 'Primera infancia');
     const locations = aggregate(infancy, ['localidad']);
     const total = aggregate(infancy, [])[0];
-    if (year || local || inst || biological || mode) {
+    if (year || local || inst || biological || mode || manualRows.length) {
       const lower = locations.filter(r => r.cobertura < META).length;
       const gap = total ? Math.max(0, META-total.cobertura) : 0;
       const extra = total ? Math.max(0, Math.trunc(total.denominador*META/100-total.dosis_aplicada)) : null;
@@ -667,7 +688,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     renderHeat(aggregate(rows,['localidad','institucion']));
     sectorRows = rows.map(r => ({
       periodo:r.fecha_reporte, localidad:r.localidad, sector:r.institucion, biologico:r.biologico,
-      dosis:r.dosis_aplicada, denominador:r.denominador, cobertura:rate(r.dosis_aplicada,r.denominador), fuente:sectorSource
+      dosis:r.dosis_aplicada, denominador:r.denominador, cobertura:rate(r.dosis_aplicada,r.denominador), fuente:r.manual ? manualSource : sectorSource
     }));
     seriesRows = [
       ...(annualVisible && !annualMessage ? annualRows.map(r => ({periodo:String(r.anio), biologico:r.biologico,
@@ -677,7 +698,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     ];
     const chips = ['Bogotá D.C.',year,local,biological,inst,mode ? $('fMode').selectedOptions[0].textContent : '',
       mode === 'comparativo' && compare ? `Comparar con ${compare}` : '',
-      applicableRange && (from || to) ? `Meses ${low}–${high}` : ''].filter(Boolean);
+      applicableRange && (from || to) ? `Meses ${low}–${high}` : '',
+      manualRows.length ? 'Vista previa manual' : ''].filter(Boolean);
     $('filter-chips').replaceChildren(...chips.map(name => {
       const chip = document.createElement('span');
       chip.textContent = name;
@@ -702,16 +724,91 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     return [[...tableNames,'Fuente','Selección','Actualizado'], ...tableRows().map(row =>
       [...tableFields.map(key => row[key]),row.fuente,selection,D.generado])];
   }
-  function download(parts, type, extension) {
+  function download(parts, type, extension, filename = `VacunaBI-${$('table-source').value}.${extension}`) {
     const url = URL.createObjectURL(new Blob(parts,{type}));
     const link = document.createElement('a');
-    link.download = `VacunaBI-${$('table-source').value}.${extension}`;
+    link.download = filename;
     link.href = url;
     document.body.append(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url),30000);
   }
+  const manualFile = $('manual-file');
+  const manualStatus = $('manual-status');
+  const officialCut = K.fecha_corte_sectores;
+  const municipalities = new Map(sector.map(row => [row.localidad,row.zona]));
+  const biologicals = new Map(sector.map(row => [row.biologico,row.grupo_biologico]));
+  const institutions = new Set(sector.map(row => row.institucion));
+  function parsePreview(text) {
+    const records = [];
+    const pattern = /(?:^|;|\r?\n)(?:"((?:[^"]|"")*)"|([^;"\r\n]*))(?=;|\r?\n|$)/gy;
+    const content = text.replace(/^\uFEFF/,'').trim();
+    let row = [];
+    let cursor = 0;
+    while (cursor < content.length) {
+      const match = pattern.exec(content);
+      if (!match || !match[0].length) throw new Error('El CSV tiene comillas o separadores inválidos.');
+      if (match[0].startsWith('\n') || match[0].startsWith('\r')) {
+        records.push(row);
+        row = [];
+      }
+      row.push((match[1]?.replaceAll('""','"') ?? match[2]).trim());
+      cursor = pattern.lastIndex;
+    }
+    records.push(row);
+    if (records.shift().join(';') !== manualFields.join(';') || !records.length) {
+      throw new Error('Usa las columnas de la plantilla y agrega al menos un registro.');
+    }
+    const seen = new Set();
+    return records.map((fields,index) => {
+      const [fecha_reporte,localidad,institucion,biologico,dosis,target] = fields;
+      const dosis_aplicada = Number(dosis), denominador = Number(target);
+      if (fields.length !== manualFields.length || fecha_reporte !== officialCut ||
+          !municipalities.has(localidad) || !institutions.has(institucion) || !biologicals.has(biologico) ||
+          !/^\d+$/.test(dosis ?? '') || !/^\d+$/.test(target ?? '') ||
+          !Number.isSafeInteger(dosis_aplicada) || !Number.isSafeInteger(denominador) || denominador <= 0) {
+        throw new Error(`Registro ${index+1}: verifica corte, localidad, sector, biológico y cantidades enteras con denominador mayor que cero.`);
+      }
+      const item = {fecha_reporte,localidad,institucion,biologico,dosis_aplicada,denominador,
+        zona:municipalities.get(localidad),grupo_biologico:biologicals.get(biologico),manual:true};
+      const key = manualKey(item);
+      if (seen.has(key)) throw new Error(`Registro ${index+1}: la combinación aparece más de una vez en el CSV.`);
+      seen.add(key);
+      return item;
+    });
+  }
+  manualFile.addEventListener('change',async () => {
+    const file = manualFile.files[0];
+    if (!file) return;
+    try {
+      if (file.size > 1024*1024) throw new Error('El archivo supera 1 MB.');
+      const content = await file.text();
+      if (manualFile.files[0] !== file) return;
+      manualRows = parsePreview(content);
+      manualStatus.setAttribute('data-active','');
+      manualStatus.textContent = `Vista previa activa · ${manualRows.length} registros del corte ${officialCut}.`;
+      $('manual-clear').disabled = false;
+      render();
+    } catch (error) {
+      manualStatus.textContent = error.message + (manualRows.length ? ' La vista previa anterior sigue activa.' : ' Se mantienen los datos oficiales.');
+      manualFile.value = '';
+    }
+  });
+  $('manual-clear').addEventListener('click',() => {
+    manualRows = [];
+    manualFile.value = '';
+    manualStatus.removeAttribute('data-active');
+    manualStatus.textContent = 'Viendo datos oficiales.';
+    $('manual-clear').disabled = true;
+    render();
+  });
+  $('manual-template').addEventListener('click',() => {
+    const example = sector.find(row => row.fecha_reporte === officialCut);
+    const lines = [manualFields.join(';')];
+    if (example) lines.push(manualFields.map(key => '"' + String(example[key]).replaceAll('"','""') + '"').join(';'));
+    download(['\uFEFF',lines.join('\r\n')],'text/csv;charset=utf-8','csv','VacunaBI-plantilla-manual.csv');
+  });
   $('export-csv').addEventListener('click',() => {
     const csvCell = value => {
       if (typeof value === 'number') return String(value).replace('.',',');
