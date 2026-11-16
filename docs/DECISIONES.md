@@ -1,5 +1,7 @@
 # Apoyo a decisiones
 
+En V2.1, el análisis se divide en Selección, Priorización, Simulación y Resultados. Cambia los filtros del tablero para delimitar el contexto, elige el territorio del escenario y ajusta los pesos con el control deslizante. Los resultados muestran las alertas y permiten exportar el análisis en CSV.
+
 La vista Decisiones utiliza el último corte oficial compatible con los filtros de año, localidad, biológico y sector. El análisis principal usa primera infancia y excluye las cargas manuales. La referencia distrital de alertas utiliza la fuente mensual y se oculta si se elige un desglose territorial o sectorial incompatible.
 
 La cobertura divide las dosis por el denominador observado. La brecha es la diferencia positiva frente a la meta del 95 %. Las dosis faltantes son las dosis enteras necesarias para alcanzar esa meta con el denominador fijo. La prioridad combina la brecha dividida por la meta y las dosis faltantes divididas por el máximo de la selección, con los pesos indicados en el tablero. Se desempata por nombre de localidad.

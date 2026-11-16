@@ -4,15 +4,15 @@
 
 VacunaBI analiza la cobertura de vacunación en Bogotá D.C. a partir de datos abiertos. El proyecto reúne la extracción de las fuentes, la validación de los datos y la visualización de indicadores en un tablero que puede abrirse en el navegador o como aplicación de Windows.
 
-El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta para cerrar esa brecha bajo un denominador fijo. La versión 2.0 reúne estas preguntas en la vista **Decisiones**.
+El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. La versión 2.1 reúne estas preguntas en un resumen y guía el análisis en la vista **Decisiones**.
 
-[Descargar VacunaBI para Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/runs/43938529969#artifacts) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
+[Compilaciones de VacunaBI para Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
 ## Cómo probar el proyecto
 
 ### Aplicación para Windows
 
-1. Abre la [compilación de V2.0](https://github.com/Codeforgeettttt/VacunaBI/actions/runs/43938529969#artifacts) en GitHub Actions e inicia sesión si GitHub lo pide.
+1. Abre la última ejecución exitosa del [flujo de compilación de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) en GitHub Actions e inicia sesión si GitHub lo pide.
 2. En **Artifacts**, descarga **VacunaBI-Windows** y extrae el ZIP.
 3. Ejecuta `VacunaBI.exe` desde una carpeta donde puedas escribir. La aplicación consulta las fuentes al abrir y utiliza Microsoft Edge WebView2 para mostrar el tablero.
 
@@ -50,7 +50,7 @@ Abre `salidas/dashboard.html` en el navegador. El archivo incluye los gráficos 
 
 Para una demostración, abre **Localidades**, selecciona una zona en el mapa y compárala con otra bajo el mismo corte. Luego pasa a **Decisiones**, cambia el peso de la brecha y compara un escenario de cero dosis adicionales con uno que represente una meta operativa. El CSV ejecutivo conserva el contexto de esa selección.
 
-Los filtros por año, localidad, biológico y sector se aplican donde la fuente tiene ese nivel de detalle. **Consultar datos de la selección** permite buscar, ordenar y exportar las filas en CSV o Excel. **Consultar tabla del gráfico** permite leer sus valores con teclado. El tablero también incluye modo claro.
+Selecciona año y localidad en la barra principal. **Más filtros** reúne biológico y sector. Las opciones Histórico, Actual y Comparativo están en **Evolución de cobertura**, dentro de Resumen. **Consultar datos de la selección** permite buscar, ordenar y exportar filas en CSV o Excel. **Consultar tabla del gráfico** permite leer los valores con teclado.
 
 ## Fuentes, indicadores y alcance
 
@@ -102,12 +102,13 @@ python -m unittest -v test_etl_regression test_dashboard_template
 node --test test_decisiones.cjs
 ```
 
-Para compilar la aplicación desde Windows con las mismas versiones de empaquetado de V2.0, usa PowerShell.
+Para compilar la aplicación desde Windows con las mismas versiones de empaquetado de GitHub Actions, usa PowerShell.
 
 ```powershell
 python -m pip install pyinstaller==6.22.3 pywebview==5.3.2
 python -m PyInstaller --onefile --windowed --name VacunaBI `
   --add-data "dashboard_template.html:." --add-data "chart.umd.min.js:." `
+  --add-data "frontend:frontend" `
   --add-data "localidades.json:." --add-data "decisiones.js:." app.py
 ```
 
