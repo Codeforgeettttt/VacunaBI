@@ -59,6 +59,7 @@
         <div class="explorer-heading"><h2 id="filters-title">Explorar datos</h2>
           <button id="fReset" type="button">Restablecer filtros</button></div>
         <div class="controls">
+          <label>Fuente <select id="fSource"><option value="auto">Según la vista (ambas)</option><option value="district">Serie distrital</option><option value="sector">Seguimiento sectorial</option></select></label>
           <label>Año <select id="fYear"><option value="">Todos los años</option></select></label>
           <label>Localidad <select id="fLocal"><option value="">Todas</option></select></label>
         </div>
@@ -67,7 +68,9 @@
           <label>Sector <select id="fSector"><option value="">Todos</option></select></label>
         </div></details>
         <div class="filter-chips" id="filter-chips" aria-label="Filtros activos"></div>
-        <p id="filters-status" role="status"></p>
+        <div id="source-availability" class="source-availability" aria-label="Disponibilidad de fuentes"></div>
+        <p id="filters-status" class="filter-explanation" role="status"></p>
+        <div id="filter-suggestions" class="filter-suggestions" aria-label="Opciones para ajustar la consulta"></div>
         <details>
           <summary>Cargar registros manuales</summary>
           <p>Prueba adiciones o ajustes del último corte sectorial. La vista previa se pierde al cerrar o actualizar el tablero.</p>
