@@ -114,7 +114,7 @@ python -m PyInstaller --onefile --windowed --name VacunaBI `
 
 El ejecutable queda en `dist/VacunaBI.exe`. Para abrir la aplicación sin compilar, instala `pywebview==5.3.2` y ejecuta `python app.py`.
 
-Al exportar desde Windows, VacunaBI abre un selector de guardado y anuncia si el archivo se guardó, se canceló o no pudo escribirse. En el navegador se usa la descarga habitual. [Verificación de V2.2](docs/V2.2_VALIDACION.md)
+Al exportar desde Windows, VacunaBI abre un selector de guardado y anuncia si el archivo se guardó, se canceló o no pudo escribirse. En el navegador se usa la descarga habitual. [Verificación de V2.2](docs/V2.2_VALIDACION.md) · [Validación manual y accesibilidad de Windows](docs/VALIDACION_WINDOWS.md)
 
 GitHub Actions ejecuta las pruebas en cada push a `main`. La actualización del tablero está programada a las 06:00, hora de Colombia, y también se puede lanzar manualmente. Cuando termina correctamente deja el artefacto `VacunaBI-Dashboard`. La publicación en GitHub Pages es opcional y se controla mediante `ENABLE_PAGES`. [Flujo de actualización](.github/workflows/actualizar.yml) · [Compilación de Windows](.github/workflows/windows.yml) · [Roadmap](docs/ROADMAP.md)
 
