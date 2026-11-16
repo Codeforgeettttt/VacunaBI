@@ -19,6 +19,12 @@ from etl import anual, cobertura, limpiar_mensual, limpiar_sectores, num_es
 class TestETLRegression(unittest.TestCase):
     """Comprueba limpieza, agregación y manejo de periodos parciales."""
 
+    def test_dosis_adicionales_redondea_el_objetivo_hacia_arriba(self):
+        self.assertEqual(etl.dosis_adicionales(18, 21, 95), 2)
+        self.assertEqual(etl.dosis_adicionales(95, 100, 95), 0)
+        self.assertIsNone(etl.dosis_adicionales(0, 0, 95))
+        self.assertIsNone(etl.dosis_adicionales(float("nan"), 100, 95))
+
     def test_api_rechaza_una_pagina_incompleta(self):
         def respuesta(rows):
             return io.BytesIO(json.dumps({"success": True, "result": {"total": 2, "records": rows}}).encode())

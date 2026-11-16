@@ -8,186 +8,7 @@
 <title>VacunaBI · Cobertura de vacunación Bogotá D.C.</title>
 <script>/*__CHARTJS__*/</script><!-- Chart.js local inyectado por etl.py; sin CDN -->
 <script>/*__DECISIONES__*/</script>
-<style>
-:root {
-  color-scheme: dark;
-  --page:#0b111b;--surface:#151e2b;--surface-raised:#1c2939;
-  --sidebar:#101a28;--ink:#f5f7fa;--ink2:#b8c5d5;
-  --muted:#9caec3;--grid:#304052;--axis:#344052;
-  --border:#344052;--primary:#19c8c1;--primary-soft:rgba(25,200,193,.11);
-  --s1:#4285e9;--s2:#ef7847;--s3:#26ba98;--s4:#e4b446;--s5:#e35f91;
-  --good:#2fc48d;--goodtxt:#5adfb1;--crit:#f36b75;
-  --radius:14px;--shadow:0 12px 30px rgba(0,0,0,.12);
-}
-* { box-sizing:border-box; }
-:root[data-theme="light"] {
-  color-scheme:light;--page:#f2f7fb;--surface:#fff;--surface-raised:#edf4fa;--sidebar:#e7f0f8;
-  --ink:#10243b;--ink2:#28435d;--muted:#405c74;--grid:#c9d7e3;--axis:#7990a6;
-  --border:#afc3d5;--primary:#006b68;--primary-soft:#daf0ee;--goodtxt:#126040;--crit:#a52a3a;
-  --s1:#1768ba;--s2:#a64515;--s3:#087867;--s4:#846300;--s5:#a13066;
-}
-[data-theme="light"] .topbar { background:var(--sidebar); }
-[data-theme="light"] .territory-map svg { background:#dde9f2; }
-[data-theme="light"] .territory-map path:is(:focus-visible,[aria-pressed="true"]) { stroke:#152b41; }
-html { scroll-behavior:smooth; }
-body { margin:0;background:var(--page);color:var(--ink);
-  font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
-a { color:inherit; }
-a:focus-visible,button:focus-visible { outline:3px solid var(--primary);
-  outline-offset:3px; }
-[hidden] { display:none!important; }
-.skip-link { position:absolute;left:12px;top:-60px;z-index:50;
-  background:var(--primary);color:var(--page);font-weight:700;
-  padding:10px 14px;border-radius:8px;text-decoration:none; }
-.skip-link:focus { top:12px; }
-.app-shell { min-height:100vh;display:grid;grid-template-columns:232px minmax(0,1fr); }
-.sidebar { background:var(--sidebar);border-right:1px solid var(--border);
-  position:sticky;top:0;align-self:start;height:100vh;padding:26px 15px;
-  display:flex;flex-direction:column;gap:31px; }
-.brand { display:flex;align-items:center;gap:12px;padding:4px 9px; }
-.brand-mark { width:42px;height:42px;border-radius:13px;display:grid;
-  place-items:center;font-size:24px;font-weight:800;color:#061c23;
-  background:linear-gradient(135deg,#4ce4d3,#4a92e8); }
-.brand strong { display:block;font-size:18px;letter-spacing:-.6px; }
-.brand small { display:block;color:var(--muted);font-size:11px; }
-.nav-title { margin:0 13px 10px;text-transform:uppercase;letter-spacing:1.5px;
-  font-size:10px;font-weight:700;color:var(--muted); }
-.nav-links { display:flex;flex-direction:column;gap:5px; }
-.nav-link { display:flex;align-items:center;gap:12px;min-height:44px;
-  padding:10px 12px;border-radius:10px;color:var(--ink2);
-  text-decoration:none;border:1px solid transparent;font-weight:550; }
-.nav-icon { width:22px;text-align:center;font-size:17px;font-weight:700; }
-.nav-link:hover { background:rgba(255,255,255,.055);color:var(--ink); }
-.nav-link[aria-current="page"] { color:var(--primary);background:var(--primary-soft);
-  border-color:rgba(25,200,193,.24); }
-.sidebar-note { margin-top:auto;padding:13px;border-radius:12px;background:rgba(255,255,255,.035);
-  border:1px solid var(--border);color:var(--muted);font-size:11px; }
-.sidebar-note strong { color:var(--ink2);display:block;margin-bottom:4px; }
-.main-area { min-width:0; }
-.topbar { border-bottom:1px solid var(--border);padding:28px clamp(20px,3vw,42px);
-  background:radial-gradient(ellipse at right top,#163d4a 0%,transparent 68%),var(--sidebar); }
-.topbar-row { display:flex;align-items:flex-start;justify-content:space-between;gap:18px; }
-.topbar-actions { display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end; }
-.topbar button { font:inherit;color:var(--ink);background:var(--surface-raised);
-  border:1px solid var(--border);padding:6px 12px;border-radius:8px; }
-.eyebrow { color:var(--primary);text-transform:uppercase;letter-spacing:1.8px;
-  font-weight:750;font-size:10px;margin:0 0 6px; }
-h1 { margin:0;font-size:clamp(23px,2.25vw,32px);line-height:1.2;letter-spacing:-.8px; }
-.topbar .meta { margin:12px 0 0;color:var(--ink2);font-size:12px;max-width:850px; }
-.explorer { margin:20px clamp(16px,3vw,42px) 0; }
-.explorer-heading { display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px; }
-.explorer-heading h2 { margin:0;font-size:19px;letter-spacing:-.3px; }
-.controls { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px; }
-.controls label { display:grid;gap:4px;min-width:0;color:var(--ink2); }
-.explorer :is(input,select,button),.chart-dialog button,.chart-actions button {
-  min-width:0;min-height:38px;padding:6px 9px;border:1px solid var(--border);
-  border-radius:8px;background:var(--surface-raised);color:var(--ink);font:inherit;
-}
-.explorer :is(input,select):focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
-button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
-.control-actions,.filter-chips,.chart-actions { display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px; }
-.filter-chips span { color:var(--primary);background:var(--primary-soft);padding:3px 9px;border-radius:20px;overflow-wrap:anywhere; }
-.explorer p,.chart-status { color:var(--ink2);margin:9px 0; }
-.explorer details,.chart-actions { margin-top:12px; }
-.explorer summary { cursor:pointer;color:var(--primary); }
-.explorer details[open] > summary { margin-bottom:10px; }
-.chart-actions button[data-series][aria-pressed="true"] { border-color:var(--primary);background:var(--primary-soft); }
-.chart-actions button[data-series][aria-pressed="false"] { color:var(--muted); }
-.chart-values { margin-top:12px; }
-.chart-values summary { width:fit-content;cursor:pointer;color:var(--primary);padding:5px 0; }
-.chart-values summary:focus-visible,.scroll:focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
-.chart-values caption { text-align:left;padding:8px 0;color:var(--ink2);font-size:12px; }
-#manual-status[data-active] { border-left:3px solid var(--primary);padding-left:10px; }
-.chart-dialog { width:min(94vw,1100px);max-height:88vh;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px; }
-.chart-dialog::backdrop { background:#000a; }
-.chart-dialog .chart { height:min(62vh,620px); }
-.territory-map { display:grid;grid-template-columns:minmax(0,2fr) minmax(190px,1fr);gap:20px; }
-.territory-map svg { width:100%;height:clamp(340px,52vh,520px);background:#0d1825;border-radius:12px; }
-.territory-map path { stroke:var(--page);stroke-width:1.25;vector-effect:non-scaling-stroke;cursor:pointer; }
-.territory-map path:is(:focus-visible,[aria-pressed="true"]) { stroke:white;stroke-width:3;outline:none; }
-.map-legend { display:grid;gap:5px;padding:0;list-style:none;color:var(--ink2); }
-.map-legend span { display:inline-block;width:13px;height:13px;margin-right:7px;border-radius:3px;vertical-align:middle; }
-.territory-compare { display:grid;gap:5px;margin:14px 0;color:var(--ink2); }
-.territory-compare select { width:100%;min-height:38px;border:1px solid var(--border);border-radius:8px;
-  background:var(--surface-raised);color:var(--ink);font:inherit;padding:6px 9px; }
-.territory-compare select:focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
-@media (max-width:660px) { .territory-map { grid-template-columns:minmax(0,1fr); } }
-.version { border:1px solid rgba(25,200,193,.3);background:var(--primary-soft);
-  color:var(--primary);padding:5px 11px;border-radius:999px;white-space:nowrap;
-  font-weight:750;font-size:12px; }
-.page { max-width:1650px;margin:0 auto;padding:28px clamp(16px,3vw,42px) 54px; }
-.page-lead { display:flex;align-items:flex-end;justify-content:space-between;
-  gap:16px;margin-bottom:22px;flex-wrap:wrap; }
-.page-lead h2 { font-size:22px;line-height:1.3;margin:0;letter-spacing:-.45px; }
-.page-lead p { margin:6px 0 0;color:var(--ink2); }
-.link-action { display:inline-flex;align-items:center;gap:7px;color:var(--primary);
-  text-decoration:none;font-weight:650;padding:8px 0; }
-.link-action:hover { text-decoration:underline; }
-.dashboard-grid { display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px;margin-bottom:18px; }
-.card { background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);min-width:0; }
-.card h3 { margin:0 0 4px;font-size:16px;line-height:1.3;letter-spacing:-.2px; }
-.card .sub { margin:0 0 18px;color:var(--ink2);font-size:12px; }
-.card-header { display:flex;align-items:center;justify-content:space-between;gap:12px; }
-.card-marker { color:var(--primary);font-size:12px;font-weight:750; }
-.kpi { grid-column:span 3;min-height:168px;display:flex;flex-direction:column;gap:6px; }
-.kpi .l { color:var(--ink2);font-size:12px;min-height:38px; }
-.kpi .v { font-size:clamp(27px,2.4vw,35px);letter-spacing:-1px;line-height:1.17;
-  font-weight:750;font-variant-numeric:tabular-nums;margin-top:2px; }
-.kpi .st { margin-top:auto;color:var(--ink2);font-size:12px; }
-.kpi:first-child { border-color:rgba(25,200,193,.52);
-  background:linear-gradient(155deg,rgba(25,200,193,.09),var(--surface) 62%); }
-.bad::before { content:"▲ ";color:var(--crit); }
-.ok::before { content:"✓ ";color:var(--goodtxt); }
-.w12 { grid-column:span 12; }.w8 { grid-column:span 8; }
-.w6 { grid-column:span 6; }.w4 { grid-column:span 4; }
-.chart { position:relative;height:335px;overflow:hidden; }
-.chart.tall { height:565px; }
-.chart.medium { height:420px; }
-.scroll { max-width:100%;overflow-x:auto; }
-table { border-collapse:separate;border-spacing:0;width:100%;font-size:12px;
-  font-variant-numeric:tabular-nums; }
-th,td { padding:11px 12px;border-bottom:1px solid var(--grid);
-  text-align:right;white-space:nowrap; }
-th { color:var(--ink2);font-size:11px;font-weight:700;
-  background:var(--surface-raised); }
-th:first-child,td:first-child { text-align:left; }
-tr:last-child td { border-bottom:0; }
-.data-note { border:1px solid var(--border);border-radius:12px;
-  background:var(--surface-raised);padding:16px 18px;color:var(--ink2); }
-.data-note strong { color:var(--ink); }
-.data-note p { margin:5px 0 0; }
-.info-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px; }
-.definition { padding:14px 0;border-bottom:1px solid var(--grid); }
-.definition:last-child { border-bottom:0; }
-.definition strong { display:block;margin-bottom:4px; }
-.definition p { margin:0;color:var(--ink2); }
-.site-footer { color:var(--muted);font-size:11px;padding:10px clamp(16px,3vw,42px) 24px;
-  max-width:1650px;margin:0 auto; }
-@media (max-width:1250px) { .kpi { grid-column:span 6; }.w8,.w4 { grid-column:span 12; } }
-@media (max-width:950px) {
-  .app-shell { grid-template-columns:minmax(0,1fr); }
-  .sidebar { position:static;height:auto;padding:14px 18px;gap:12px; }
-  .brand { padding:0; }
-  .nav-title,.sidebar-note { display:none; }
-  .nav-links { flex-direction:row;overflow-x:auto;gap:7px;padding-bottom:3px; }
-  .nav-link { white-space:nowrap; }
-  .topbar { padding:22px 18px; }
-  .page { padding:24px 18px 42px; }
-}
-@media (max-width:660px) {
-  .kpi,.w12,.w8,.w6,.w4 { grid-column:span 12; }
-  .info-grid { grid-template-columns:1fr; }
-  .dashboard-grid { gap:12px; }
-  .card { padding:16px; }
-  .chart { height:310px; }.chart.tall { height:540px; }
-  .nav-link { padding:9px 10px; }
-  .nav-icon { display:none; }
-}
-@media (prefers-reduced-motion:reduce) {
-  html { scroll-behavior:auto; }
-}
-</style>
+<style>/*__ESTILOS__*/</style>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
@@ -211,31 +32,29 @@ tr:last-child td { border-bottom:0; }
   <div class="main-area">
     <header class="topbar">
       <div class="topbar-row">
-        <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
-          <h1>Cobertura de vacunación</h1></div>
-        <div class="topbar-actions"><span class="version">V2.0</span>
+        <div><p class="eyebrow">VacunaBI · Bogotá D.C.</p>
+          <h1 id="module-title">Resumen general</h1></div>
+        <div class="topbar-actions"><span class="version">V2.1</span>
           <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
+      <p class="meta" id="data-freshness" role="status">Cargando contexto de datos…</p>
       <p class="meta" id="refresh-status" role="status" hidden></p>
     </header>
     <main id="main-content" tabindex="-1">
-      <section class="card explorer" aria-labelledby="filters-title">
+      <section class="card explorer" id="global-filters" aria-labelledby="filters-title">
         <div class="explorer-heading"><h2 id="filters-title">Explorar datos</h2>
           <button id="fReset" type="button">Restablecer filtros</button></div>
         <div class="controls">
-          <label>Región <select id="fRegion"><option>Bogotá D.C.</option></select></label>
           <label>Año <select id="fYear"><option value="">Todos los años</option></select></label>
           <label>Localidad <select id="fLocal"><option value="">Todas</option></select></label>
+        </div>
+        <details id="advanced-filters"><summary>Más filtros</summary><div class="controls">
           <label>Biológico <select id="fBio"><option value="">Todos</option></select></label>
           <label>Sector <select id="fSector"><option value="">Todos</option></select></label>
-          <label>Modo <select id="fMode"><option value="">Todas las vistas</option><option value="historico">Histórico</option><option value="actual">Actual</option><option value="comparativo">Comparativo</option></select></label>
-          <label id="compare-label" hidden>Comparar con <select id="fCompare"></select></label>
-          <label id="month-from-label" hidden>Desde el mes <select id="fMonthFrom"><option value="">Primero disponible</option></select></label>
-          <label id="month-to-label" hidden>Hasta el mes <select id="fMonthTo"><option value="">Último disponible</option></select></label>
-        </div>
-        <div class="filter-chips" id="filter-chips"></div>
+        </div></details>
+        <div class="filter-chips" id="filter-chips" aria-label="Filtros activos"></div>
         <p id="filters-status" role="status"></p>
         <details>
           <summary>Cargar registros manuales</summary>
@@ -272,12 +91,22 @@ tr:last-child td { border-bottom:0; }
           <a class="link-action" href="#localidades">Explorar localidades <span aria-hidden="true">→</span></a>
         </div>
         <div class="dashboard-grid">
-          <div class="card kpi"><div class="l">Cobertura primera infancia (sectores)</div><div class="v" id="k1"></div><div class="st" id="k1s"></div></div>
-          <div class="card kpi"><div class="l">Diferencia triple viral 1 año y refuerzo 5 años</div><div class="v" id="k2"></div><div class="st" id="k2s"></div></div>
-          <div class="card kpi"><div class="l">Localidades bajo la meta (primera infancia)</div><div class="v" id="k3"></div><div class="st" id="k3s"></div></div>
-          <div class="card kpi"><div class="l">Dosis adicionales estimadas para la meta</div><div class="v" id="k4"></div><div class="st" id="k4s"></div></div>
+          <div class="card kpi"><div class="l">Cobertura de primera infancia</div><div class="v" id="k1"></div><div class="st" id="k1s"></div><details><summary>Cómo se calcula</summary>Dosis aplicadas divididas por la población objetivo del seguimiento sectorial.</details></div>
+          <div class="card kpi"><div class="l">Brecha frente a la meta</div><div class="v" id="kGap"></div><div class="st" id="kGaps"></div><details><summary>Cómo se calcula</summary>Diferencia positiva entre la meta del 95 % y la cobertura observada, en puntos porcentuales.</details></div>
+          <div class="card kpi"><div class="l">Localidades bajo la meta</div><div class="v" id="k3"></div><div class="st" id="k3s"></div><details><summary>Cómo se calcula</summary>Localidades con cobertura de primera infancia por debajo de la meta entre las que tienen datos compatibles.</details></div>
+          <div class="card kpi"><div class="l">Dosis adicionales estimadas</div><div class="v" id="k4"></div><div class="st" id="k4s"></div><details><summary>Cómo se calcula</summary>Dosis enteras que faltan para alcanzar el 95 % con la población objetivo observada.</details></div>
         </div>
+        <div class="data-note"><strong>Hallazgo de la selección</strong><p id="summary-finding" role="status"></p></div>
         <div class="dashboard-grid">
+          <section class="card w12 temporal-controls" aria-labelledby="evolution-title">
+            <h3 id="evolution-title">Evolución de cobertura</h3>
+            <div class="controls">
+              <label>Vista temporal <select id="fMode"><option value="">Histórico y avance</option><option value="historico">Histórico</option><option value="actual">Actual</option><option value="comparativo">Comparativo</option></select></label>
+              <label id="compare-label" hidden>Comparar con <select id="fCompare"></select></label>
+              <label id="month-from-label" hidden>Desde el mes <select id="fMonthFrom"><option value="">Primero disponible</option></select></label>
+              <label id="month-to-label" hidden>Hasta el mes <select id="fMonthTo"><option value="">Último disponible</option></select></label>
+            </div>
+          </section>
           <section class="card w8" aria-labelledby="anual-title">
             <div class="card-header"><h3 id="anual-title">Cobertura anual por biológico</h3><span class="card-marker">HISTÓRICO</span></div>
             <p class="sub">Distrito, años cerrados. Línea punteada: meta de referencia del 95 %.</p>
@@ -289,9 +118,11 @@ tr:last-child td { border-bottom:0; }
             <div class="chart"><canvas id="cActual" role="img" aria-label="Gráfico de avance mensual acumulado por biológico"></canvas></div>
           </section>
         </div>
-        <div class="data-note"><strong>Lectura del tablero</strong>
+        <div class="summary-links"><a class="link-action" href="#localidades">Explorar localidades</a><a class="link-action" href="#decisiones">Evaluar escenarios</a></div>
+        <details class="data-note"><summary>Comparación de etapas de triple viral</summary>
+          <p><strong id="k2"></strong> <span id="k2s"></span></p>
           <p>Los datos se actualizan desde fuentes oficiales; el último año puede estar incompleto. La diferencia de cobertura entre etapas del esquema no equivale necesariamente al abandono individual.</p>
-        </div>
+        </details>
       </section>
 
       <section class="page" id="localidades" data-page="localidades" aria-labelledby="title-localidades" hidden>
@@ -301,12 +132,17 @@ tr:last-child td { border-bottom:0; }
           <a class="link-action" href="#metodologia">Cómo se calcula <span aria-hidden="true">→</span></a>
         </div>
         <div class="dashboard-grid">
-          <section class="card w12" aria-labelledby="territory-title">
+          <section class="card w6" aria-labelledby="territory-title">
             <h3 id="territory-title">Mapa de cobertura por localidad</h3>
             <p class="sub">Primera infancia. Selecciona una localidad para consultar el mismo valor del ranking.</p>
-            <div class="territory-map">
+            <div class="territory-map territory-map-single">
               <svg id="territory-map" viewBox="0 0 450 580" role="group" aria-label="Localidades de Bogotá"></svg>
-              <div>
+            </div>
+            <ul class="map-legend" id="territory-legend" aria-label="Intervalos visuales de cobertura"></ul>
+            <p class="sub">Límites distritales de la Secretaría Distrital de Planeación.</p>
+          </section>
+          <section class="card w6"><h3>Cobertura por localidad</h3>
+            <div class="territory-sheet">
                 <p id="territory-detail" role="status"></p>
                 <p id="territory-district"></p>
                 <label class="territory-compare">Comparar con otra localidad
@@ -320,19 +156,14 @@ tr:last-child td { border-bottom:0; }
                   <summary>Evolución por corte</summary>
                   <div class="scroll" id="territory-periods" tabindex="0" role="region" aria-label="Cobertura histórica de la localidad"></div>
                 </details>
-                <ul class="map-legend" id="territory-legend" aria-label="Intervalos visuales de cobertura"></ul>
-                <p class="sub">Límites distritales de la Secretaría Distrital de Planeación. Los intervalos organizan la lectura visual.</p>
-              </div>
             </div>
-          </section>
-          <section class="card w12"><h3>Cobertura por localidad</h3>
             <p class="sub">Pentavalente, triple viral y refuerzos en colegios, ICBF e integración. Línea punteada: 95 %.</p>
             <div class="chart tall"><canvas id="cLoc" role="img" aria-label="Ranking de cobertura de primera infancia de las localidades de Bogotá"></canvas></div>
           </section>
-          <section class="card w12"><h3>Mapa de calor: localidad × sector</h3>
+          <details class="card w12"><summary>Análisis detallado · mapa de calor por localidad y sector</summary>
             <p class="sub">Cobertura (%) = dosis aplicadas / denominador. Los valores faltantes se muestran con un guion.</p>
             <div class="scroll" id="heat" role="region" aria-label="Tabla de cobertura por localidad y sector" tabindex="0"></div>
-          </section>
+          </details>
         </div>
       </section>
 
@@ -398,31 +229,47 @@ tr:last-child td { border-bottom:0; }
       <section class="page" id="decisiones" data-page="decisiones" aria-labelledby="title-decisiones" hidden>
         <div class="page-lead"><div><h2 id="title-decisiones">Apoyo a decisiones</h2>
           <p>Seguimiento sectorial oficial de primera infancia. Las cargas manuales quedan fuera del análisis.</p></div></div>
+        <nav class="decision-steps" aria-label="Etapas del análisis">
+          <button type="button" data-step="1" aria-current="step">1. Selección</button>
+          <button type="button" data-step="2">2. Priorización</button>
+          <button type="button" data-step="3">3. Simulación</button>
+          <button type="button" data-step="4">4. Resultados</button>
+        </nav>
         <div class="dashboard-grid" id="decision-panels">
-          <section class="card w12"><h3>Resumen ejecutivo</h3><p id="decision-summary" role="status"></p>
+          <section class="card w12" data-decision-panel="1"><h3>Selección oficial</h3><p id="decision-summary" role="status"></p>
+            <p>Indicador: cobertura de primera infancia. Fuente: seguimiento sectorial de Datos Abiertos Bogotá.</p>
+            <label>Territorio del escenario <select id="scenario-local"><option value="">Total de la selección</option></select></label>
+            <p class="sub">Puedes ajustar año, localidad, sector y biológico en los filtros de la parte superior.</p>
+            <button type="button" data-next-step="2">Continuar a priorización</button>
+          </section>
+          <section class="card w12" data-decision-panel="4" hidden><h3>Resumen ejecutivo</h3>
             <p id="decision-finding"></p>
             <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
-          <section class="card w12"><h3>Prioridades territoriales</h3>
-            <label>Peso de la brecha (%) <input id="priority-weight" type="number" min="0" max="100" value="60" step="1"></label>
+          <section class="card w12" data-decision-panel="2" hidden><h3>Prioridades territoriales</h3>
+            <label>Peso de la brecha <input id="priority-weight" type="range" min="0" max="100" value="60" step="1"></label>
+            <output id="priority-weights" for="priority-weight"></output>
             <p class="sub">El peso restante se asigna a las dosis faltantes. Las dos medidas se normalizan antes de sumarlas.</p>
             <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
+            <button type="button" data-next-step="3">Continuar a simulación</button>
           </section>
-          <section class="card w12"><h3>Escenarios de dosis</h3>
+          <section class="card w12" data-decision-panel="3" hidden><h3>Escenarios de dosis</h3>
             <div class="controls">
-              <label>Localidad <select id="scenario-local"><option value="">Total de la selección</option></select></label>
-              <label>Dosis adicionales A <input id="scenario-a" type="number" value="0" min="0" step="1"></label>
-              <label>Dosis adicionales B <input id="scenario-b" type="number" value="100" min="0" step="1"></label>
+              <label>Dosis adicionales A <input id="scenario-a" type="number" value="0" min="0" step="1" aria-describedby="scenario-status"></label>
+              <label>Dosis adicionales B <input id="scenario-b" type="number" value="100" min="0" step="1" aria-describedby="scenario-status"></label>
             </div>
+            <p id="scenario-status" role="status"></p>
             <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
             <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
+            <button type="button" data-next-step="4">Continuar a resultados</button>
           </section>
-          <section class="card w12"><h3>Alertas</h3>
+          <section class="card w12" data-decision-panel="4" hidden><h3>Alertas</h3>
             <p class="sub">Los descensos se calculan entre años consecutivos cerrados del mismo biológico distrital.</p>
             <div class="scroll" id="decision-alerts" tabindex="0" role="region" aria-label="Alertas de cobertura"></div>
             <a class="link-action" href="#calidad">Consultar calidad de las fuentes</a>
           </section>
-          <section class="card w12"><h3>Reporte ejecutivo</h3>
+          <section class="card w12" data-decision-panel="4" hidden><h3>Reporte ejecutivo</h3>
             <p class="sub">Incluye filtros, pesos, fuente, corte y supuestos de simulación.</p>
+            <p>Las simulaciones mantienen fijo el denominador y no incluyen cambios de población ni respuestas futuras a una intervención.</p>
             <div class="chart-actions"><button id="decision-export" type="button" disabled>Descargar reporte CSV</button></div>
           </section>
         </div>
@@ -452,12 +299,9 @@ const metaLine = {id:'meta', afterDatasetsDraw(ch, a, o){ if(!o.on) return; cons
   ctx.beginPath(); o.axis === 'x' ? (ctx.moveTo(p, A.top), ctx.lineTo(p, A.bottom)) : (ctx.moveTo(A.left, p), ctx.lineTo(A.right, p)); ctx.stroke(); ctx.restore(); }};
 Chart.register(metaLine);
 
-document.getElementById('meta-info').textContent = `Actualizado ${D.generado} desde la API de Datos Abiertos Bogotá · corte sectores ${K.fecha_corte_sectores} · meta PAI ${META} %`;
+document.getElementById('meta-info').textContent = `Fuente: Datos Abiertos Bogotá · corte sectorial: ${K.fecha_corte_sectores}`;
+document.getElementById('data-freshness').textContent = `Extracción: ${D.generado} · tablero disponible`;
 const set = (id, v, s, ok) => { document.getElementById(id).textContent = v; const e = document.getElementById(id + 's'); e.textContent = s; e.className = 'st ' + (ok ? 'ok' : 'bad'); };
-set('k1', K.cobertura_primera_infancia_sectores + ' %', `${(META - K.cobertura_primera_infancia_sectores).toFixed(1)} pts bajo la meta`, K.cobertura_primera_infancia_sectores >= META);
-set('k2', K.caida_esquema_1a5 + ' pts', `${K.tv_1anio_ult} % → ${K.tv_5anios_ult} % (${K.ultimo_anio_cerrado})`, K.caida_esquema_1a5 <= 0);
-set('k3', `${K.localidades_bajo_meta_infancia} de 20`, `Menor: ${K.localidad_menor_cobertura} (${K.localidad_menor_cobertura_valor} %)`, K.localidades_bajo_meta_infancia === 0);
-set('k4', fmt(K.dosis_faltantes_meta_infancia), 'en primera infancia, población de los sectores', K.dosis_faltantes_meta_infancia === 0);
 
 // 1. Serie anual (años cerrados)
 const cerr = D.anual.filter(r => r.anio_completo), bios = [...new Set(cerr.map(r => r.biologico))];
@@ -541,12 +385,15 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       [time(run.inicio),time(run.fin),run.estado,run.fase,run.detalle ?? '—']));
   }
   mostrarAuditoria(D.auditoria ?? []);
-  function reportRefresh(message) {
+  function reportRefresh(message, state = '') {
     refreshStatus.textContent = message;
+    refreshStatus.dataset.status = state;
     refreshStatus.hidden = false;
   }
   if (new URLSearchParams(location.search).has('sin-conexion')) {
-    reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.');
+    reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
+  } else if (new URLSearchParams(location.search).has('actualizado')) {
+    reportRefresh('Actualización completada.');
   }
   async function syncAudit() {
     try {
@@ -564,6 +411,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   enableRefresh();
   refresh.addEventListener('click',async () => {
     refresh.disabled = true;
+    refresh.setAttribute('aria-busy','true');
     reportRefresh('Consultando Datos Abiertos Bogotá…');
     try {
       const result = await window.pywebview.api.refresh_data();
@@ -572,13 +420,14 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         url.search = '?actualizado=' + Date.now();
         location.replace(url.href);
       } else {
-        reportRefresh(result.message);
+        reportRefresh(result.message,'error');
         await syncAudit();
       }
     } catch {
-      reportRefresh('Falló la consulta. Se conserva el tablero anterior.');
+      reportRefresh('Falló la consulta. Se conserva el tablero anterior.','error');
     } finally {
       refresh.disabled = false;
+      refresh.removeAttribute('aria-busy');
     }
   });
   const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
@@ -708,7 +557,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     }
     const row = lookup.get(selected);
     $('territory-detail').textContent = selected
-      ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}.`
+      ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}. ${fmt(+model.medicion(row.dosis_aplicada,row.denominador,META).brecha.toFixed(1))} pp de brecha y ${fmt(model.medicion(row.dosis_aplicada,row.denominador,META).faltantes)} dosis adicionales estimadas. Fuente: ${context.source}.`
         : `${selected} · sin datos para estos filtros.`
       : `${rows.length} de ${territory.length} localidades con cobertura para estos filtros.`;
     $('territory-district').textContent = row && district
@@ -740,7 +589,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       return;
     }
     const gap = +(row.cobertura - other.cobertura).toFixed(1);
-    comparison.textContent = `${other.localidad} · ${fmt(other.cobertura)} % · ${fmt(other.dosis_aplicada)} dosis / ${fmt(other.denominador)} · corte ${cut}. Diferencia (${selected} − ${other.localidad}): ${fmt(gap)} pp.`;
+    const interpretation = gap === 0 ? 'Las coberturas coinciden.' : `${gap > 0 ? selected : other.localidad} presenta la mayor cobertura en este corte y selección.`;
+    comparison.textContent = `${other.localidad} · ${fmt(other.cobertura)} % · ${fmt(other.dosis_aplicada)} dosis / ${fmt(other.denominador)} · corte ${cut}. Diferencia (${selected} − ${other.localidad}): ${fmt(gap)} pp. ${interpretation}`;
   }
   for (const id of Object.keys(charts)) {
     const chart = charts[id];
@@ -759,7 +609,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     values.className = 'chart-values';
     const summary = document.createElement('summary');
     summary.textContent = 'Consultar tabla del gráfico';
-    summary.setAttribute('aria-label','Consultar tabla: ' + title.textContent);
+    summary.setAttribute('aria-label','Consultar tabla del gráfico: ' + title.textContent);
     const region = document.createElement('div');
     region.className = 'scroll';
     region.tabIndex = 0;
@@ -796,7 +646,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   function renderChartValues(chart) {
     const region = chart.values.lastElementChild;
     const heading = chart.canvas.closest('.card').querySelector('h3').textContent;
-    chart.values.firstElementChild.setAttribute('aria-label','Consultar tabla: ' + heading);
+    chart.values.firstElementChild.setAttribute('aria-label','Consultar tabla del gráfico: ' + heading);
     region.setAttribute('aria-label','Valores: ' + heading);
     const columns = chart.data.datasets.map((dataset,index) => ({dataset,index})).filter(item => chart.isDatasetVisible(item.index));
     if (!columns.length) {
@@ -904,6 +754,22 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
   }
   const model = globalThis.VacunaDecisiones;
+  const steps = [...document.querySelectorAll('[data-step]')];
+  function showStep(step, focus = false) {
+    for (const button of steps) {
+      if (button.dataset.step === step) button.setAttribute('aria-current','step');
+      else button.removeAttribute('aria-current');
+    }
+    for (const panel of document.querySelectorAll('[data-decision-panel]')) panel.hidden = panel.dataset.decisionPanel !== step;
+    if (focus) {
+      const heading = document.querySelector('[data-decision-panel]:not([hidden]) h3');
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+  }
+  steps.forEach(button => button.addEventListener('click',() => showStep(button.dataset.step,true)));
+  document.querySelectorAll('[data-next-step]').forEach(button =>
+    button.addEventListener('click',() => showStep(button.dataset.nextStep,true)));
   let decisionContext = {filas:[],anual:[],corte:'',filtros:''};
   function refreshDecisions() {
     const ctx = decisionContext;
@@ -913,6 +779,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       ? `Corte ${ctx.corte} · ${ctx.filas.length} localidades · cobertura ${fmt(+data.cobertura.toFixed(1))} % · ${fmt(data.faltantes)} dosis para la meta de ${META} % con el denominador actual.`
       : 'No hay registros sectoriales oficiales compatibles con los filtros.';
     const weight = $('priority-weight').valueAsNumber;
+    $('priority-weights').textContent = `Brecha: ${weight} % · dosis faltantes: ${100-weight} %`;
     ctx.prioridades = model.priorizar(ctx.filas,META,weight);
     const first = ctx.prioridades[0];
     $('decision-finding').textContent = first?.dato.faltantes
@@ -926,11 +793,14 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     if ([...picker.options].some(option => option.value === local)) picker.value = local;
     const territorial = ctx.filas.find(row => row.localidad === picker.value);
     const baseline = territorial ? model.medicion(territorial.dosis_aplicada,territorial.denominador,META) : data;
-    const a = model.escenario(baseline,$('scenario-a').valueAsNumber,META);
-    const b = model.escenario(baseline,$('scenario-b').valueAsNumber,META);
+    const inputs = ['scenario-a','scenario-b'].map(id => $(id));
+    const valid = inputs.map(input => Number.isSafeInteger(input.valueAsNumber) && input.valueAsNumber >= 0);
+    inputs.forEach((input,index) => input.setAttribute('aria-invalid',String(!valid[index])));
+    $('scenario-status').textContent = valid.every(Boolean) ? 'A y B son simulaciones. El dato observado permanece fijo.' : 'Ingresa una cantidad entera de dosis igual o mayor que cero.';
+    const [a,b] = inputs.map((input,index) => valid[index] ? model.escenario(baseline,input.valueAsNumber,META) : null);
     ctx.escenarios = baseline ? [['Dato observado',baseline],['Escenario A',a],['Escenario B',b]] : [];
-    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Dosis para la meta'],
-      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(row.faltantes)] : [label,'Ingresa dosis enteras no negativas','—','—','—']));
+    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Cambio (pp)','Dosis para la meta'],
+      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(+(row.mejora ?? 0).toFixed(1)),fmt(row.faltantes)] : [label,'Entrada inválida','—','—','—','—']));
     const alertRows = ctx.filas.map(row => ({...row,dato:model.medicion(row.dosis_aplicada,row.denominador,META)}));
     ctx.alertas = model.alertas(alertRows,ctx.anual,META,D.logs);
     if (ctx.alertas.length) auditTable('decision-alerts',['Regla','Evidencia','Valor'],ctx.alertas.map(row => [
@@ -961,18 +831,16 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const infancy = rows.filter(r => r.grupo_biologico === 'Primera infancia');
     const locations = aggregate(infancy, ['localidad']);
     const total = aggregate(infancy, [])[0];
-    if (year || local || inst || biological || mode || manualRows.length) {
-      const lower = locations.filter(r => r.cobertura < META).length;
-      const gap = total ? Math.max(0, META-total.cobertura) : 0;
-      const extra = total ? Math.max(0, Math.trunc(total.denominador*META/100-total.dosis_aplicada)) : null;
-      set('k1',total ? `${fmt(total.cobertura)} %` : '—',total ? `${fmt(+gap.toFixed(1))} pp de brecha · ${cut}` : empty,gap === 0 && Boolean(total));
-      set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `Menor: ${locations[0].localidad} (${fmt(locations[0].cobertura)} %)` : empty,locations.length > 0 && lower === 0);
-      set('k4',extra == null ? '—' : fmt(extra),extra == null ? empty : `Primera infancia · corte ${cut}`,extra === 0);
-    } else {
-      set('k1', K.cobertura_primera_infancia_sectores + ' %', `${(META-K.cobertura_primera_infancia_sectores).toFixed(1)} pts bajo la meta`, K.cobertura_primera_infancia_sectores >= META);
-      set('k3', `${K.localidades_bajo_meta_infancia} de ${locations.length}`, `Menor: ${K.localidad_menor_cobertura} (${K.localidad_menor_cobertura_valor} %)`, K.localidades_bajo_meta_infancia === 0);
-      set('k4', fmt(K.dosis_faltantes_meta_infancia), 'en primera infancia, población de los sectores', K.dosis_faltantes_meta_infancia === 0);
-    }
+    const medida = total ? model.medicion(total.dosis_aplicada,total.denominador,META) : null;
+    const lower = locations.filter(r => model.medicion(r.dosis_aplicada,r.denominador,META)?.brecha > 0).length;
+    const periodo = `Corte ${cut}${infancy.some(r => r.manual) ? ' · vista previa manual' : ''}`;
+    set('k1',medida ? `${fmt(+medida.cobertura.toFixed(1))} %` : '—',medida ? `${periodo} · ${medida.brecha ? 'bajo la meta' : 'en la meta o superior'}` : empty,medida?.brecha === 0);
+    set('kGap',medida ? `${fmt(+medida.brecha.toFixed(1))} pp` : '—',medida ? `Meta ${META} % · ${periodo}` : empty,medida?.brecha === 0);
+    set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `${periodo} · con datos compatibles` : empty,locations.length > 0 && lower === 0);
+    set('k4',medida ? fmt(medida.faltantes) : '—',medida ? `Dosis · ${periodo}` : empty,medida?.faltantes === 0);
+    $('summary-finding').textContent = locations.length
+      ? `${locations[0].localidad} registra la menor cobertura de la selección (${fmt(locations[0].cobertura)} %). ${lower} de ${locations.length} localidades con datos están por debajo del ${META} %.`
+      : 'No hay datos de primera infancia compatibles con los filtros.';
     const primary = year ? +year : historicalYears.at(-1);
     $('compare-label').hidden = mode !== 'comparativo';
     $('fCompare').disabled = mode !== 'comparativo';
@@ -1248,34 +1116,6 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
 })();
 </script>
 
-<script>
-(function () {
-  const views = new Set(['resumen','localidades','sectores','calidad','metodologia','decisiones']);
-  const links = [...document.querySelectorAll('[data-nav]')];
-  const pages = [...document.querySelectorAll('[data-page]')];
-  const main = document.getElementById('main-content');
-  document.querySelector('.skip-link').addEventListener('click', event => {
-    event.preventDefault();
-    main.focus();
-  });
-  function renderNavigation() {
-    const requested = location.hash.slice(1);
-    const active = views.has(requested) ? requested : 'resumen';
-    pages.forEach(page => { page.hidden = page.dataset.page !== active; });
-    links.forEach(link => {
-      if(link.dataset.nav === active) link.setAttribute('aria-current','page');
-      else link.removeAttribute('aria-current');
-    });
-    document.title = 'VacunaBI · ' + (links.find(link => link.dataset.nav === active)?.textContent.trim() || 'Resumen');
-    requestAnimationFrame(() => {
-      if(typeof Chart !== 'undefined' && Chart.instances) {
-        Object.values(Chart.instances).forEach(chart => chart.resize());
-      }
-    });
-  }
-  addEventListener('hashchange', renderNavigation);
-  renderNavigation();
-})();
-</script>
+<script>/*__NAVEGACION__*/</script>
 </body>
 </html>

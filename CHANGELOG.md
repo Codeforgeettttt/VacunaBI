@@ -1,5 +1,12 @@
 # Registro de cambios — VacunaBI
 
+## [2.1.0]
+
+- Unifica la estimación de dosis adicionales con redondeo del objetivo al entero superior.
+- Simplifica los filtros globales y traslada los controles temporales al gráfico correspondiente.
+- Reorganiza el resumen, la vista territorial y el análisis de decisiones por etapas.
+- Separa los estilos y la navegación en `frontend/` e incluye los recursos en el HTML y el ejecutable.
+
 ## [2.0.0]
 
 - Resumen ejecutivo con prioridades territoriales y reglas visibles.

@@ -215,7 +215,17 @@ def cobertura(df, por):
     return g
 
 
+def dosis_adicionales(dosis, denominador, meta=META):
+    """Dosis enteras necesarias para alcanzar la meta con el denominador observado."""
+    if not all(math.isfinite(valor) for valor in (dosis, denominador, meta)):
+        return None
+    if dosis < 0 or denominador <= 0 or not 0 < meta <= 100:
+        return None
+    return max(0, math.ceil(meta * denominador / 100) - dosis)
+
+
 def calcular_kpis(sec, anu):
+    sec = sec[sec["fecha_reporte"] == sec["fecha_reporte"].max()]
     infancia = sec[sec["grupo_biologico"] == "Primera infancia"]
     por_loc = cobertura(infancia, ["localidad", "zona"]).sort_values("cobertura")
     cerrados = anu[anu["anio_completo"]]
@@ -227,17 +237,17 @@ def calcular_kpis(sec, anu):
         "fecha_corte_sectores": sec["fecha_reporte"].max().strftime("%Y-%m-%d"),
         "ultimo_anio_cerrado": int(ult),
         "cobertura_global_sectores": round(sec["dosis_aplicada"].sum() / sec["denominador"].sum() * 100, 1),
-        "cobertura_primera_infancia_sectores": round(infancia["dosis_aplicada"].sum() / infancia["denominador"].sum() * 100, 1),
+        "cobertura_primera_infancia_sectores": round(infancia["dosis_aplicada"].sum() / infancia["denominador"].sum() * 100, 1) if not infancia.empty else None,
         "pct_registros_cumplen_meta": round(sec.loc[validos, "cumple_meta"].mean() * 100, 1),
         "localidades_bajo_meta_infancia": int((por_loc["cobertura"] < META).sum()),
-        "localidad_menor_cobertura": por_loc.iloc[0]["localidad"],
-        "localidad_menor_cobertura_valor": float(por_loc.iloc[0]["cobertura"]),
+        "localidad_menor_cobertura": por_loc.iloc[0]["localidad"] if not por_loc.empty else None,
+        "localidad_menor_cobertura_valor": float(por_loc.iloc[0]["cobertura"]) if not por_loc.empty else None,
         "tv_1anio_ult": float(tv1),
         "tv_5anios_ult": float(tv5),
         "caida_esquema_1a5": round(float(tv1 - tv5), 1),
         "biologicos_cumplen_meta_ult": int((cerrados[cerrados["anio"] == ult]["cobertura"] >= META).sum()),
         "biologicos_total_ult": int((cerrados["anio"] == ult).sum()),
-        "dosis_faltantes_meta_infancia": int(max(0, (infancia["denominador"].sum() * META / 100) - infancia["dosis_aplicada"].sum())),
+        "dosis_faltantes_meta_infancia": dosis_adicionales(float(infancia["dosis_aplicada"].sum()), float(infancia["denominador"].sum())),
     }
 
 
@@ -270,8 +280,11 @@ def construir_dashboard(sec, anu, mens, kpis, logs, *, destino=None, auditoria=(
     }
     plantilla = (RECURSOS / "dashboard_template.html").read_text(encoding="utf-8")
     decisiones = (RECURSOS / "decisiones.js").read_text(encoding="utf-8")
+    frontend = RECURSOS / "frontend"
     html = (plantilla.replace("/*__CHARTJS__*/", (RECURSOS / "chart.umd.min.js").read_text(encoding="utf-8"))
             .replace("/*__DECISIONES__*/", decisiones)
+            .replace("/*__ESTILOS__*/", (frontend / "dashboard.css").read_text(encoding="utf-8"))
+            .replace("/*__NAVEGACION__*/", (frontend / "navigation.js").read_text(encoding="utf-8"))
             .replace("/*__DATOS__*/null", json.dumps(datos, ensure_ascii=False, default=str).replace("<", "\\u003c")))
     escribir_texto((destino or OUT) / "dashboard.html", html)
 
