@@ -1,5 +1,14 @@
 # Registro de cambios — VacunaBI
 
+## [2.2.0]
+
+- Refina la tipografía, las acciones y la navegación agrupada por tipo de análisis.
+- Añade contexto de fuente y periodo a los indicadores y gráficos.
+- Mantiene mapa y ranking en el mismo corte y mejora la ficha y la comparación territorial.
+- Muestra progreso, selección y resultados prioritarios durante el análisis de decisiones.
+- Separa utilidades de datos, tablas y etapas y las integra en el tablero autónomo.
+- Usa el diálogo nativo para el guardado de CSV y Excel en Windows y explica los fallos de actualización.
+
 ## [2.1.0]
 
 - Unifica la estimación de dosis adicionales con redondeo del objetivo al entero superior.
