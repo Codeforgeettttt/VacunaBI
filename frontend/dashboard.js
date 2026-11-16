@@ -345,7 +345,7 @@
       const row = rows[dataIndex];
       return `${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} de ${fmt(row.denominador)}`;
     };
-    setChart(id, rows.map(r => r[key]), [dataset], rows.length ? '' : 'Sin datos para esta selección.', source, rows);
+    setChart(id, rows.map(r => r[key]), [dataset], rows.length ? '' : 'No hay registros del seguimiento sectorial que cumplan los filtros. Revisa el año y la fuente en «Explorar datos»; no significa cobertura cero.', source, rows);
   }
   const color = name => S[(Math.max(0,bios.indexOf(name))) % S.length];
   function series(rows, periods, key) {
@@ -401,7 +401,7 @@
     const data = model.medicion(...totals,META);
     $('decision-summary').textContent = data
       ? `Corte ${ctx.corte} · ${ctx.filas.length} localidades · cobertura ${fmt(+data.cobertura.toFixed(1))} % · ${fmt(data.faltantes)} dosis para la meta de ${META} % con el denominador actual.`
-      : 'No hay registros sectoriales oficiales compatibles con los filtros.';
+      : 'No hay registros oficiales de primera infancia compatibles con el año y los filtros. La ausencia de registros no implica cobertura cero.';
     const weight = $('priority-weight').valueAsNumber;
     $('priority-weights').textContent = `Brecha: ${weight} % · dosis faltantes: ${100-weight} %`;
     ctx.prioridades = model.priorizar(ctx.filas,META,weight);
@@ -440,7 +440,7 @@
   ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
   // El inventario se deriva de los registros realmente descargados, nunca de años supuestos.
   function updateAvailability(info,selection) {
-    const {sourceMode,year,local,inst,bio} = selection;
+    const {sourceMode,year,local,inst,bio,cut} = selection;
     const yearOption = $('fYear');
     for (const option of yearOption.options) {
       if (!option.value) continue;
@@ -487,9 +487,7 @@
     }));
     const notice = $('filters-status');
     notice.dataset.status = info.reason === 'ok' ? '' : 'warning';
-    notice.textContent = info.message + (info.territorial ? ` Corte sectorial compatible: ${sector.filter(row =>
-      (!year || row.fecha_reporte.startsWith(year)) && (!local || row.localidad === local) &&
-      (!inst || row.institucion === inst)).reduce((date,row) => row.fecha_reporte > date ? row.fecha_reporte : date,'')}.` : '');
+    notice.textContent = info.message + (info.territorial && cut ? ` Corte sectorial compatible: ${cut}.` : '');
     $('filter-suggestions').replaceChildren(...info.buttons.map(action => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -630,7 +628,7 @@
       chip.textContent = name;
       return chip;
     }));
-    updateAvailability(availability,{sourceMode,year,local,inst,bio});
+    updateAvailability(availability,{sourceMode,year,local,inst,bio,cut});
     if (sourceMode === 'district' || sourceMode === 'sector' || (year && (!availability.sectorYear || !availability.districtYear))) {
       $('table-source').value = sourceMode === 'district' || (sourceMode === 'auto' && !availability.sectorYear) ? 'serie' : 'sector';
     }
