@@ -89,7 +89,11 @@ class TestDashboardV11(unittest.TestCase):
         self.assertTrue(controls.issubset(self.document.ids))
 
     def test_mapa_y_panel_territorial(self):
-        self.assertTrue({"territory-map", "territory-detail", "territory-legend"}.issubset(self.document.ids))
+        controls = {
+            "territory-map", "territory-detail", "territory-legend",
+            "territory-compare", "territory-comparison",
+        }
+        self.assertTrue(controls.issubset(self.document.ids))
 
 
 if __name__ == "__main__":
