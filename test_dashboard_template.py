@@ -65,8 +65,11 @@ class TestDashboardV11(unittest.TestCase):
 
     def test_marcadores_de_inyeccion_etl(self):
         self.assertIn("/*__CHARTJS__*/", self.content)
-        self.assertIn("/*__DATOS__*/null", self.content)
-        self.assertIn("const D =", self.content)
+        self.assertIn("/*__GRAFICOS__*/", self.content)
+        self.assertIn("/*__DASHBOARD__*/", self.content)
+        charts = (TEMPLATE.parent / "frontend" / "charts.js").read_text(encoding="utf-8")
+        self.assertIn("/*__DATOS__*/null", charts)
+        self.assertIn("const D =", charts)
 
     def test_accesibilidad_basica_y_rutas(self):
         self.assertIn("es", self.document.languages)
@@ -112,7 +115,8 @@ class TestDashboardV11(unittest.TestCase):
 
     def test_tema_tablas_de_graficos_y_politica_de_contenido(self):
         self.assertIn("theme-toggle", self.document.ids)
-        self.assertIn("Consultar tabla del gráfico", self.content)
+        dashboard = (TEMPLATE.parent / "frontend" / "dashboard.js").read_text(encoding="utf-8")
+        self.assertIn("Consultar tabla del gráfico", dashboard)
         self.assertIn("Content-Security-Policy", self.content)
 
 
