@@ -88,3 +88,31 @@ jobs:
             --title "VacunaBI 2.2.3 · optimización de consultas CKAN" \
             --notes "VacunaBI V2.2.3 ejecuta ambas consultas CKAN simultáneamente y pagina con concurrencia acotada, validando todos los registros antes de publicar. Conserva el inicio rápido y la actualización bajo demanda. **Preliminar:** la mejora de tiempo depende de la API y requiere medición en Windows; ver docs/VALIDACION_WINDOWS.md." \
             --prerelease
+
+  promote:
+    name: Promover V2.2.3 existente a release estable
+    needs: build
+    if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'release(promote-v2.2.3): publicar version estable' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Comprobar tag y ZIP originales
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG_SHA=$(gh api "repos/$GH_REPO/git/ref/tags/v2.2.3" --jq '.object.sha')
+          test "$TAG_SHA" = "42f15838a6bc1988aebbbe6851b3170559f54936"
+          gh release view v2.2.3 --repo "$GH_REPO" --json assets \
+            --jq '.assets[].name' | grep -Fxq "VacunaBI-Windows.zip"
+      - name: Publicar release estable sin reemplazar el ejecutable
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release edit v2.2.3 \
+            --repo "$GH_REPO" \
+            --prerelease=false \
+            --latest \
+            --notes "VacunaBI V2.2.3 mejora la descarga de las fuentes CKAN en paralelo y conserva la verificación de integridad, el inicio desde copia guardada y la actualización bajo demanda. Incluye VacunaBI-Windows.zip compilado en el commit 42f15838a6bc1988aebbbe6851b3170559f54936 y aprobado por GitHub Actions. La comprobación manual de rendimiento y funcionamiento en Windows sigue recomendada; ver docs/VALIDACION_WINDOWS.md."
