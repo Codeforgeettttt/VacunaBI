@@ -1,35 +1,33 @@
 # Registro de cambios — VacunaBI
 
-Todos los cambios funcionales se registran mediante commits verificables en GitHub. Las fechas se refieren a las entregas de este repositorio y no reatribuyen el trabajo del repositorio original.
-
 ## [1.1.0] — En desarrollo (2026-11-16)
 
 ### Añadido
-- Identidad visual VacunaBI y menú de navegación entre cinco módulos.
-- Páginas de Resumen, Localidades, Sectores y biológicos, Calidad de datos y Metodología.
-- Sistema de diseño con tokens CSS, tarjetas, cuadrícula adaptable y navegación para ventanas reducidas.
-- Etiquetas accesibles, enlace para saltar al contenido, foco visible y soporte de movimiento reducido.
-- Pruebas de integridad estructural del dashboard y ejecución mediante GitHub Actions.
-- Documentación de alcance, decisiones UI/UX y pendientes de validación.
+- Identidad visual VacunaBI y navegación en cinco módulos.
+- Resumen, Localidades, Sectores y biológicos, Calidad de datos y Metodología.
+- Sistema de diseño con tarjetas, espacios, tipografía y rejilla adaptable.
+- Navegación con teclado, foco visible y ajuste de gráficos al cambiar de vista.
+- Pruebas automáticas de interfaz e integración con GitHub Actions.
 
 ### Modificado
-- Organización visual de todos los indicadores y gráficos existentes.
-- Ajuste de tamaño de los gráficos cuando el usuario cambia de vista.
-- README para reflejar el estado efectivo de la V1.1.
+- Interfaz y distribución de los gráficos existentes.
+- README enfocado exclusivamente en el código de la aplicación.
+- Instrucciones de clonación y ejecución del nuevo repositorio.
+- Documentación técnica de línea base y roadmap.
+
+### Eliminado
+- `informe.py`, dedicado a generar documentos académicos y gráficos fuera de la aplicación.
+- Referencias al archivo Word y a entregas académicas en la documentación de producto.
 
 ### Pendiente
-- Validación visual en navegador y pywebview.
-- Comprobación de vistas con datos reales.
-- Activación de GitHub Pages en el nuevo repositorio, si se desea publicar la versión web.
+- Verificar visualmente la V1.1 en navegador y pywebview.
+- Validar las vistas con datos reales.
+- Habilitar GitHub Pages solo cuando se necesite publicar el dashboard web.
 
-## [1.0.0] — Línea base integrada (2026-11-16)
+## [1.0.0] — Base integrada (2026-11-16)
 
-### Incluido desde el proyecto anterior
-- Consulta y procesamiento ETL de Datos Abiertos de Bogotá.
-- Indicadores, dashboard HTML y gráficos Chart.js.
-- Aplicación de escritorio pywebview y código de generación de informes.
-- Pruebas de limpieza, pruebas de regresión y workflow de GitHub Actions.
-- Documentación inicial del equipo y roadmap de evolución.
-
-### Nota de migración
-Las capturas originales y el informe Word están enlazados temporalmente al repositorio fuente. Su copia binaria está pendiente y registrada en el issue correspondiente.
+- ETL para Datos Abiertos Bogotá y cálculo de indicadores.
+- Dashboard con Chart.js, aplicación de escritorio mediante pywebview.
+- Salidas CSV, Excel, JSON y HTML.
+- Pruebas unitarias y regresiones de transformación.
+- Workflow de actualización y documentación técnica de desarrollo.
