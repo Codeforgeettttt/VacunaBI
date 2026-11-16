@@ -26,6 +26,8 @@ jobs:
         run: python test_etl.py
       - name: Ejecutar regresiones y pruebas de interfaz
         run: python -m unittest -v test_etl_regression test_dashboard_template
+      - name: Probar cálculos de decisiones
+        run: node --test test_decisiones.cjs
 
   refresh:
     name: Actualizar datos y dashboard

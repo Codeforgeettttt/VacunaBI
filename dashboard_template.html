@@ -7,6 +7,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; base-uri 'none'; form-action 'none'">
 <title>VacunaBI · Cobertura de vacunación Bogotá D.C.</title>
 <script>/*__CHARTJS__*/</script><!-- Chart.js local inyectado por etl.py; sin CDN -->
+<script>/*__DECISIONES__*/</script>
 <style>
 :root {
   color-scheme: dark;
@@ -200,6 +201,7 @@ tr:last-child td { border-bottom:0; }
       <a href="#localidades" class="nav-link" data-nav="localidades"><span class="nav-icon" aria-hidden="true">◎</span>Localidades</a>
       <a href="#sectores" class="nav-link" data-nav="sectores"><span class="nav-icon" aria-hidden="true">◈</span>Sectores y biológicos</a>
       <a href="#calidad" class="nav-link" data-nav="calidad"><span class="nav-icon" aria-hidden="true">▤</span>Calidad de datos</a>
+      <a href="#decisiones" class="nav-link" data-nav="decisiones"><span class="nav-icon" aria-hidden="true">⌁</span>Decisiones</a>
       <a href="#metodologia" class="nav-link" data-nav="metodologia"><span class="nav-icon" aria-hidden="true">ⓘ</span>Metodología</a>
     </nav>
     <div class="sidebar-note"><strong>Meta de referencia: 95 %</strong>
@@ -211,7 +213,7 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <div class="topbar-actions"><span class="version">V1.5</span>
+        <div class="topbar-actions"><span class="version">V2.0</span>
           <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
@@ -390,6 +392,38 @@ tr:last-child td { border-bottom:0; }
             <div class="definition"><strong>Portal de Datos Abiertos de Bogotá</strong><p>Registros públicos de vacunación publicados mediante recursos de API CKAN.</p></div>
             <div class="definition"><strong>Procesamiento</strong><p>Los indicadores se calculan mediante el proceso ETL de VacunaBI, manteniendo las reglas originales de la versión base.</p></div>
             <div class="definition"><strong>Alcance actual</strong><p>Las fuentes procesadas en esta versión corresponden a Bogotá D.C.; Cundinamarca es una ampliación prevista.</p></div>
+          </section>
+        </div>
+      </section>
+      <section class="page" id="decisiones" data-page="decisiones" aria-labelledby="title-decisiones" hidden>
+        <div class="page-lead"><div><h2 id="title-decisiones">Apoyo a decisiones</h2>
+          <p>Seguimiento sectorial oficial de primera infancia. Las cargas manuales quedan fuera del análisis.</p></div></div>
+        <div class="dashboard-grid" id="decision-panels">
+          <section class="card w12"><h3>Resumen ejecutivo</h3><p id="decision-summary" role="status"></p>
+            <p id="decision-finding"></p>
+            <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
+          <section class="card w12"><h3>Prioridades territoriales</h3>
+            <label>Peso de la brecha (%) <input id="priority-weight" type="number" min="0" max="100" value="60" step="1"></label>
+            <p class="sub">El peso restante se asigna a las dosis faltantes. Las dos medidas se normalizan antes de sumarlas.</p>
+            <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
+          </section>
+          <section class="card w12"><h3>Escenarios de dosis</h3>
+            <div class="controls">
+              <label>Localidad <select id="scenario-local"><option value="">Total de la selección</option></select></label>
+              <label>Dosis adicionales A <input id="scenario-a" type="number" value="0" min="0" step="1"></label>
+              <label>Dosis adicionales B <input id="scenario-b" type="number" value="100" min="0" step="1"></label>
+            </div>
+            <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
+            <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
+          </section>
+          <section class="card w12"><h3>Alertas</h3>
+            <p class="sub">Los descensos se calculan entre años consecutivos cerrados del mismo biológico distrital.</p>
+            <div class="scroll" id="decision-alerts" tabindex="0" role="region" aria-label="Alertas de cobertura"></div>
+            <a class="link-action" href="#calidad">Consultar calidad de las fuentes</a>
+          </section>
+          <section class="card w12"><h3>Reporte ejecutivo</h3>
+            <p class="sub">Incluye filtros, pesos, fuente, corte y supuestos de simulación.</p>
+            <div class="chart-actions"><button id="decision-export" type="button" disabled>Descargar reporte CSV</button></div>
           </section>
         </div>
       </section>
@@ -869,6 +903,44 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         '<tr>' + tableFields.map(key => `<td>${esc(format(row[key], key))}</td>`).join('') + '</tr>').join('') +
       '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
   }
+  const model = globalThis.VacunaDecisiones;
+  let decisionContext = {filas:[],anual:[],corte:'',filtros:''};
+  function refreshDecisions() {
+    const ctx = decisionContext;
+    const totals = ctx.filas.reduce((sum,row) => [sum[0]+row.dosis_aplicada,sum[1]+row.denominador],[0,0]);
+    const data = model.medicion(...totals,META);
+    $('decision-summary').textContent = data
+      ? `Corte ${ctx.corte} · ${ctx.filas.length} localidades · cobertura ${fmt(+data.cobertura.toFixed(1))} % · ${fmt(data.faltantes)} dosis para la meta de ${META} % con el denominador actual.`
+      : 'No hay registros sectoriales oficiales compatibles con los filtros.';
+    const weight = $('priority-weight').valueAsNumber;
+    ctx.prioridades = model.priorizar(ctx.filas,META,weight);
+    const first = ctx.prioridades[0];
+    $('decision-finding').textContent = first?.dato.faltantes
+      ? `Revisar primero ${first.localidad}. En el corte ${ctx.corte}, el seguimiento sectorial registra ${fmt(+first.dato.cobertura.toFixed(1))} %; faltan ${fmt(first.dato.faltantes)} dosis para alcanzar la meta bajo el denominador observado. Regla: ${weight} % de peso para la brecha.`
+      : '';
+    auditTable('priority-table',['Localidad','Cobertura (%)','Brecha (pp)','Dosis faltantes','Puntaje'],
+      ctx.prioridades.map(row => [row.localidad,fmt(+row.dato.cobertura.toFixed(1)),fmt(+row.dato.brecha.toFixed(1)),fmt(row.dato.faltantes),fmt(+row.puntaje.toFixed(1))]));
+    const picker = $('scenario-local'), local = picker.value;
+    picker.replaceChildren(new Option('Total de la selección',''));
+    append(picker,available(ctx.filas,'localidad'));
+    if ([...picker.options].some(option => option.value === local)) picker.value = local;
+    const territorial = ctx.filas.find(row => row.localidad === picker.value);
+    const baseline = territorial ? model.medicion(territorial.dosis_aplicada,territorial.denominador,META) : data;
+    const a = model.escenario(baseline,$('scenario-a').valueAsNumber,META);
+    const b = model.escenario(baseline,$('scenario-b').valueAsNumber,META);
+    ctx.escenarios = baseline ? [['Dato observado',baseline],['Escenario A',a],['Escenario B',b]] : [];
+    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Dosis para la meta'],
+      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(row.faltantes)] : [label,'Ingresa dosis enteras no negativas','—','—','—']));
+    const alertRows = ctx.filas.map(row => ({...row,dato:model.medicion(row.dosis_aplicada,row.denominador,META)}));
+    ctx.alertas = model.alertas(alertRows,ctx.anual,META,D.logs);
+    if (ctx.alertas.length) auditTable('decision-alerts',['Regla','Evidencia','Valor'],ctx.alertas.map(row => [
+      row.tipo,row.detalle,row.valor == null ? '—' : `${fmt(+row.valor.toFixed(1))} ${row.tipo === 'Descenso distrital' ? 'pp' : '%'}`
+    ]));
+    else $('decision-alerts').textContent = 'No hay alertas para los datos comparables de esta selección.';
+    $('decision-export').disabled = !(data || ctx.alertas.length);
+  }
+  $('priority-weight').addEventListener('input',refreshDecisions);
+  ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
   function render() {
     const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
       Object.fromEntries(filters.map(id => [id, $(id).value]));
@@ -966,6 +1038,14 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     }));
     $('filters-status').textContent = [districtCompatible ? '' : disabledDistrict,
       sectorCompatible ? (cut ? `Seguimiento sectorial · corte ${cut}.` : 'Sin registros sectoriales para esta selección.') : disabledSector].filter(Boolean).join(' ');
+    const baseDecisiones = sectorCompatible ? sector.filter(r => r.grupo_biologico === 'Primera infancia'
+      && (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local)
+      && (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
+    const corteDecisiones = baseDecisiones.reduce((date,r) => r.fecha_reporte > date ? r.fecha_reporte : date,'');
+    decisionContext = {corte:corteDecisiones,filas:aggregate(baseDecisiones.filter(r => r.fecha_reporte === corteDecisiones),['localidad']),
+      anual:districtCompatible ? D.anual.filter(r => (!year || r.anio <= +year) && (!biological || r.biologico === biological)) : [],
+      filtros:[year || 'Años disponibles',local || 'Todas las localidades',inst || 'Todos los sectores',biological || 'Primera infancia'].join(' · ')};
+    refreshDecisions();
     page = 0;
     renderTable();
   }
@@ -1086,6 +1166,25 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const headings = ['Tipo','Territorio','Corte','Biológico','Sector','Dosis','Denominador','Cobertura (%)','Fuente'];
     download(csv([headings,...fichaTerritorial]),'text/csv;charset=utf-8','csv','VacunaBI-ficha-territorial.csv');
   });
+  $('decision-export').addEventListener('click',() => {
+    const ctx = decisionContext;
+    const weight = $('priority-weight').valueAsNumber;
+    const history = [
+      ['Bloque','Elemento','Dosis','Denominador','Cobertura (%)','Brecha (pp)','Dosis faltantes','Puntaje o alerta'],
+      ['Metadatos','Corte sectorial: '+(ctx.corte || 'sin datos')],
+      ['Metadatos','Filtros: '+ctx.filtros],
+      ['Metadatos','Fuente sectorial: '+sectorSource],
+      ['Metadatos','Fuente distrital: '+seriesSource],
+      ['Metadatos','Generado: '+D.generado],
+      ['Metadatos','Meta '+META+' % · peso brecha '+(Number.isFinite(weight) ? weight+' %' : 'inválido')],
+      ['Metadatos','Simulación con denominador fijo, sin proyección estadística; registros manuales excluidos.'],
+      ['Metadatos','Escenario territorial: '+($('scenario-local').value || 'total de la selección')],
+      ...ctx.prioridades.map(({localidad,dato,puntaje}) => ['Prioridad',localidad,dato.dosis,dato.denominador,+dato.cobertura.toFixed(1),+dato.brecha.toFixed(1),dato.faltantes,+puntaje.toFixed(1)]),
+      ...ctx.escenarios.filter(([,dato]) => dato).map(([label,dato]) => ['Escenario',label,dato.dosis,dato.denominador,+dato.cobertura.toFixed(1),+dato.brecha.toFixed(1),dato.faltantes]),
+      ...ctx.alertas.map(row => ['Alerta',row.detalle,'','','','','',row.tipo+(row.valor == null ? '' : ' · '+fmt(+row.valor.toFixed(1))+' '+(row.tipo === 'Descenso distrital' ? 'pp' : '%'))])
+    ];
+    download(csv(history),'text/csv;charset=utf-8','csv','VacunaBI-reporte-ejecutivo.csv');
+  });
   // Open XML necesita un contenedor ZIP. Las cinco entradas se guardan sin compresión.
   function zipXml(parts) {
     const encoder = new TextEncoder();
@@ -1151,7 +1250,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
 
 <script>
 (function () {
-  const views = new Set(['resumen','localidades','sectores','calidad','metodologia']);
+  const views = new Set(['resumen','localidades','sectores','calidad','metodologia','decisiones']);
   const links = [...document.querySelectorAll('[data-nav]')];
   const pages = [...document.querySelectorAll('[data-page]')];
   const main = document.getElementById('main-content');

@@ -10,9 +10,11 @@ on:
       - 'etl.py'
       - 'dashboard_template.html'
       - 'localidades.json'
+      - 'decisiones.js'
       - 'chart.umd.min.js'
       - 'requirements.txt'
       - 'test_*.py'
+      - 'test_*.cjs'
 
 permissions:
   contents: read
@@ -33,11 +35,14 @@ jobs:
           python test_etl.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m unittest -v test_etl_regression test_dashboard_template
+      - name: Probar cálculos de decisiones
+        run: node --test test_decisiones.cjs
       - name: Compilar VacunaBI.exe
         run: >-
           python -m PyInstaller --onefile --windowed --name VacunaBI
           --add-data "dashboard_template.html:."
           --add-data "localidades.json:."
+          --add-data "decisiones.js:."
           --add-data "chart.umd.min.js:."
           app.py
       - name: Guardar ejecutable

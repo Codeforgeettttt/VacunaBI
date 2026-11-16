@@ -10,7 +10,9 @@ El repositorio está dedicado a la **aplicación VacunaBI**: interfaz, lógica, 
 | V1.3 | Mapa geográfico, fichas y comparación de localidades | Implementada |
 | V1.4 | Calidad de datos, trazabilidad ETL y diccionario | Implementada |
 | V1.5 | Tablas accesibles, modo claro y optimización de gráficos | Implementada |
-| V2.0 | Escenarios, alertas y priorización territorial explicable | Pendiente |
+| V2.0 | Escenarios, alertas y priorización territorial explicable | Implementada |
+
+V2.0 usa simulaciones aritméticas de denominador fijo. Las proyecciones estadísticas requieren series adecuadas y una evaluación del error fuera de muestra. Consulta la [metodología de decisiones](DECISIONES.md).
 
 ## Reglas de evolución
 
