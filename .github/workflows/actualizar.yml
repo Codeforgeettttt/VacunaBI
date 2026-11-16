@@ -15,7 +15,10 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install -r requirements.txt && python test_etl.py && python -m unittest -v test_etl_regression test_dashboard_template && python etl.py
       - run: cp salidas/dashboard.html salidas/index.html
+      # Habilitar solo después de configurar GitHub Pages y la variable ENABLE_PAGES=true.
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        if: ${{ vars.ENABLE_PAGES == 'true' }}
         with: {path: salidas}
       - id: deploy
+        if: ${{ vars.ENABLE_PAGES == 'true' }}
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
