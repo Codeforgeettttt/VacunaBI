@@ -92,6 +92,10 @@ button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
 .territory-map path:is(:focus-visible,[aria-pressed="true"]) { stroke:white;stroke-width:3;outline:none; }
 .map-legend { display:grid;gap:5px;padding:0;list-style:none;color:var(--ink2); }
 .map-legend span { display:inline-block;width:13px;height:13px;margin-right:7px;border-radius:3px;vertical-align:middle; }
+.territory-compare { display:grid;gap:5px;margin:14px 0;color:var(--ink2); }
+.territory-compare select { width:100%;min-height:38px;border:1px solid var(--border);border-radius:8px;
+  background:var(--surface-raised);color:var(--ink);font:inherit;padding:6px 9px; }
+.territory-compare select:focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
 @media (max-width:660px) { .territory-map { grid-template-columns:minmax(0,1fr); } }
 .version { border:1px solid rgba(25,200,193,.3);background:var(--primary-soft);
   color:var(--primary);padding:5px 11px;border-radius:999px;white-space:nowrap;
@@ -287,6 +291,12 @@ tr:last-child td { border-bottom:0; }
               <svg id="territory-map" viewBox="0 0 450 580" role="group" aria-label="Localidades de Bogotá"></svg>
               <div>
                 <p id="territory-detail" role="status"></p>
+                <label class="territory-compare">Comparar con otra localidad
+                  <select id="territory-compare" disabled>
+                    <option value="">Elige una segunda localidad</option>
+                  </select>
+                </label>
+                <p id="territory-comparison" role="status"></p>
                 <ul class="map-legend" id="territory-legend" aria-label="Intervalos visuales de cobertura"></ul>
                 <p class="sub">Límites distritales de la Secretaría Distrital de Planeación. Los intervalos organizan la lectura visual.</p>
               </div>
@@ -491,6 +501,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   append($('fCompare'), historicalYears.slice().reverse());
   const territory = D.limites_localidades ?? [];
   append($('fLocal'), territory.length ? available(territory,'localidad') : available(sector,'localidad'));
+  append($('territory-compare'), territory.length ? available(territory,'localidad') : available(sector,'localidad'));
   append($('fSector'), available(sector, 'institucion'));
   for (const [name, rows] of [['Serie distrital', D.anual], ['Seguimiento sectorial', sector]]) {
     const group = document.createElement('optgroup');
@@ -563,7 +574,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       svg.append(path);
     }
   }
-  function renderTerritory(rows, selected, cut) {
+  function renderTerritory(rows, selected, cut, candidates) {
     const lookup = new Map(rows.map(row => [row.localidad,row]));
     for (const [name,{path,title}] of mapPaths) {
       const row = lookup.get(name);
@@ -578,6 +589,22 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}.`
         : `${selected} · sin datos para estos filtros.`
       : `${rows.length} de ${territory.length} localidades con cobertura para estos filtros.`;
+    const picker = $('territory-compare');
+    picker.disabled = !selected;
+    for (const option of picker.options) option.disabled = option.value !== '' && option.value === selected;
+    if (!selected || picker.value === selected) picker.value = '';
+    const comparison = $('territory-comparison');
+    if (!picker.value) {
+      comparison.textContent = selected ? '' : 'Selecciona primero una localidad en el mapa o en el filtro.';
+      return;
+    }
+    const other = candidates.find(candidate => candidate.localidad === picker.value);
+    if (!row || !other) {
+      comparison.textContent = `${picker.value} · sin datos comparables para el mismo corte y filtros.`;
+      return;
+    }
+    const gap = +(row.cobertura - other.cobertura).toFixed(1);
+    comparison.textContent = `${other.localidad} · ${fmt(other.cobertura)} % · ${fmt(other.dosis_aplicada)} dosis / ${fmt(other.denominador)} · corte ${cut}. Diferencia (${selected} − ${other.localidad}): ${fmt(gap)} pp.`;
   }
   for (const id of Object.keys(charts)) {
     const chart = charts[id];
@@ -699,9 +726,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const empty = 'Sin datos para esta selección.';
     const disabledDistrict = 'La serie distrital no se desagrega por localidad, sector ni biológico sectorial.';
     const disabledSector = 'El biológico seleccionado pertenece a la serie distrital.';
-    const selected = sectorCompatible ? currentSector().filter(r =>
-      (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local) &&
+    const comparable = sectorCompatible ? currentSector().filter(r =>
+      (!year || r.fecha_reporte.startsWith(year)) &&
       (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
+    const selected = comparable.filter(r => !local || r.localidad === local);
     // Cada corte es una foto de cobertura. Agregar solo el corte más reciente de la selección.
     const cut = selected.reduce((date, r) => r.fecha_reporte > date ? r.fecha_reporte : date, '');
     const rows = selected.filter(r => r.fecha_reporte === cut);
@@ -756,7 +784,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     set('k2',difference == null || !annualVisible ? '—' : `${fmt(difference)} pts`,
       difference == null || !annualVisible ? 'Requiere las dos etapas para el mismo año cerrado.' : `${fmt(tv1.cobertura)} % → ${fmt(tv5.cobertura)} % (${primary})`,difference != null && difference <= 0);
     bar('cLoc',locations,'localidad',source);
-    renderTerritory(locations,local,cut);
+    const comparisonRows = local ? comparable.filter(r => r.fecha_reporte === cut && r.grupo_biologico === 'Primera infancia') : [];
+    renderTerritory(locations,local,cut,aggregate(comparisonRows,['localidad']));
     bar('cInst',aggregate(rows,['institucion']),'institucion',source);
     bar('cGrupo',aggregate(rows,['grupo_biologico']),'grupo_biologico',source);
     renderHeat(aggregate(rows,['localidad','institucion']));
@@ -785,6 +814,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     renderTable();
   }
   filters.forEach(id => $(id).addEventListener('change',render));
+  $('territory-compare').addEventListener('change',render);
   $('fReset').addEventListener('click',() => {
     filters.forEach(id => $(id).selectedIndex = 0);
     render();
