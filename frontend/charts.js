@@ -62,7 +62,7 @@ function renderHeat(rows) {
   const index = new Map(rows.map(r => [JSON.stringify([r.localidad, r.institucion]), r.cobertura]));
   heat.innerHTML = rows.length ? '<table><tr><th>Localidad</th>' + insts.map(i => `<th>${esc(i)}</th>`).join('') + '</tr>' +
     locs.map(l => '<tr><th scope="row">' + esc(l) + '</th>' + insts.map(i => cell(index.get(JSON.stringify([l, i])))).join('') + '</tr>').join('') + '</table>'
-    : '<p>Sin datos para esta selección.</p>';
+    : '<p>No hay registros de seguimiento sectorial que cumplan esta combinación de año y filtros. Consulta la disponibilidad de fuentes arriba; un dato ausente no significa 0 %.</p>';
 }
 renderHeat(D.heat);
 
