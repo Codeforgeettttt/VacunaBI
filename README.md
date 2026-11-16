@@ -184,6 +184,8 @@ Detalles de desarrollo: [V1.0](docs/V1.0_BASELINE.md) · [V1.1](docs/V1.1_UI_UX.
 
 ## Equipo
 
+VacunaBI continúa el trabajo de la [versión original del proyecto](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion). En esa primera entrega, Julián desarrolló el ETL, el dashboard y la aplicación de escritorio. Valery y Daniel participaron en las pruebas de la aplicación.
+
 - [Valery Michell Herrera Roca · @Codeforgeettttt](https://github.com/Codeforgeettttt)
 - [Daniel Felipe Rojas González · @Dani2026403](https://github.com/Dani2026403)
 - [Julián Andrés Peñuela Alfonso · @julianpenuelaalfonso-fullstack](https://github.com/julianpenuelaalfonso-fullstack)
