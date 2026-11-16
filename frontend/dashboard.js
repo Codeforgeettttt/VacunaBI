@@ -89,7 +89,7 @@
       refresh.removeAttribute('aria-busy');
     }
   });
-  const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
+  const filters = ['fSource', 'fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
   const sector = D.sectoriales ?? [];
   let manualRows = [];
   const manualSource = 'Registro manual · vista previa';
@@ -105,7 +105,9 @@
   const {available,rate,aggregate} = globalThis.VacunaDatos;
   const append = (select, values) => values.forEach(value => select.add(new Option(value, value)));
   const historicalYears = available(cerr, 'anio').map(Number);
-  append($('fYear'), [...new Set([...available(D.anual, 'anio'), ...sector.map(r => +r.fecha_reporte.slice(0,4))])].sort((a,b) => b-a));
+  const disponibilidad = globalThis.VacunaDisponibilidad;
+  const inventory = disponibilidad.years(D.anual,sector);
+  inventory.forEach(row => $('fYear').add(new Option(`${row.year} · ${disponibilidad.label(row)}`,row.year)));
   append($('fCompare'), historicalYears.slice().reverse());
   const territory = D.limites_localidades ?? [];
   append($('fLocal'), territory.length ? available(territory,'localidad') : available(sector,'localidad'));
@@ -388,7 +390,7 @@
       tableNames.map(name => `<th scope="col">${name}</th>`).join('') +
       '</tr></thead><tbody>' + rows.slice(page*pageSize, (page+1)*pageSize).map(row =>
         '<tr>' + tableFields.map(key => `<td>${esc(format(row[key], key))}</td>`).join('') + '</tr>').join('') +
-      '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
+      '</tbody></table>' : '<p>La fuente de esta tabla no tiene filas para el periodo y los filtros actuales. No equivale a cobertura cero; puedes cambiar la fuente o el año.</p>';
   }
   const model = globalThis.VacunaDecisiones;
   globalThis.VacunaEtapas.connect(document);
@@ -436,15 +438,108 @@
   }
   $('priority-weight').addEventListener('input',refreshDecisions);
   ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
+  // El inventario se deriva de los registros realmente descargados, nunca de años supuestos.
+  function updateAvailability(info,selection) {
+    const {sourceMode,year,local,inst,bio} = selection;
+    const yearOption = $('fYear');
+    for (const option of yearOption.options) {
+      if (!option.value) continue;
+      const record = info.inventory.find(row => row.year === option.value);
+      option.disabled = (sourceMode === 'district' && !record?.district ||
+        sourceMode === 'sector' && !record?.sector) && option.value !== year;
+    }
+    const sectorUnavailable = sourceMode === 'district' || (year && !info.sectorYear);
+    for (const id of ['fLocal','fSector']) {
+      const select = $(id);
+      select.disabled = Boolean(sectorUnavailable && !select.value);
+      for (const option of select.options) {
+        if (!option.value) continue;
+        const compatible = sector.some(row => (!year || row.fecha_reporte.startsWith(year)) &&
+          (id === 'fLocal' ? row.localidad === option.value : row.institucion === option.value));
+        option.disabled = (!compatible || sourceMode === 'district') && option.value !== select.value;
+      }
+    }
+    for (const option of $('fBio').options) {
+      if (!option.value) continue;
+      const [origin,name] = JSON.parse(option.value);
+      const rows = origin === 'Serie distrital' ? D.anual : sector;
+      const compatible = (origin === 'Serie distrital' ? sourceMode !== 'sector' :
+        sourceMode !== 'district' && !(year && !info.sectorYear)) &&
+        rows.some(row => (!year || (origin === 'Serie distrital' ? String(row.anio) === year :
+            row.fecha_reporte.startsWith(year))) && row.biologico === name &&
+          (origin === 'Serie distrital' || ((!local || row.localidad === local) &&
+            (!inst || row.institucion === inst))));
+      option.disabled = !compatible && option.value !== bio;
+    }
+    const badges = [
+      {text:'Serie distrital',present:info.district,
+        detail:sourceMode === 'sector' ? 'fuera de la consulta' : !info.districtYear ? 'sin datos en el año' :
+          info.districtAllowed ? 'disponible' : 'sin el desglose solicitado'},
+      {text:'Seguimiento sectorial',present:info.territorial,
+        detail:sourceMode === 'district' ? 'fuera de la consulta' : !info.sectorYear ? 'sin datos en el año' :
+          info.sectorAllowed ? 'compatible con filtros' : 'sin el desglose solicitado'}
+    ];
+    $('source-availability').replaceChildren(...badges.map(item => {
+      const el = document.createElement('span');
+      el.dataset.available = String(item.present);
+      el.textContent = `${item.text}: ${item.present ? 'con datos' : item.detail}`;
+      return el;
+    }));
+    const notice = $('filters-status');
+    notice.dataset.status = info.reason === 'ok' ? '' : 'warning';
+    notice.textContent = info.message + (info.territorial ? ` Corte sectorial compatible: ${sector.filter(row =>
+      (!year || row.fecha_reporte.startsWith(year)) && (!local || row.localidad === local) &&
+      (!inst || row.institucion === inst)).reduce((date,row) => row.fecha_reporte > date ? row.fecha_reporte : date,'')}.` : '');
+    $('filter-suggestions').replaceChildren(...info.buttons.map(action => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = action.label;
+      button.dataset.suggestion = action.id;
+      return button;
+    }));
+  }
+  $('filter-suggestions').addEventListener('click',event => {
+    const action = event.target.closest('button[data-suggestion]')?.dataset.suggestion;
+    if (!action) return;
+    const bio = $('fBio').value;
+    const bioSource = bio ? JSON.parse(bio)[0] : '';
+    if (action === 'reset-selection') {
+      filters.forEach(id => $(id).selectedIndex = 0);
+    } else if (action === 'latest-sector') {
+      const latest = sector.reduce((date,row) => row.fecha_reporte > date ? row.fecha_reporte : date,'');
+      $('fSource').value = 'sector';
+      $('fYear').value = latest.slice(0,4);
+      $('fLocal').value = '';
+      $('fSector').value = '';
+      if (bioSource === 'Serie distrital') $('fBio').value = '';
+    } else if (action === 'district' || action === 'clear-granularity') {
+      if (action === 'district' || bioSource === 'Serie distrital') $('fSource').value = 'district';
+      $('fLocal').value = '';
+      $('fSector').value = '';
+      if (bioSource === 'Seguimiento sectorial') $('fBio').value = '';
+      if (action === 'clear-granularity' && $('fSource').value === 'sector') $('fSource').value = 'auto';
+    } else if (action === 'sector') {
+      $('fSource').value = 'sector';
+      if (bioSource === 'Serie distrital') $('fBio').value = '';
+    } else if (action === 'clear-biological') {
+      $('fBio').value = '';
+    }
+    render();
+  });
   function render() {
-    const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
+    const {fSource:sourceMode, fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
       Object.fromEntries(filters.map(id => [id, $(id).value]));
     const [bioSource, biological] = bio ? JSON.parse(bio) : [];
-    const sectorCompatible = bioSource !== 'Serie distrital';
-    const districtCompatible = !(local || inst || bioSource === 'Seguimiento sectorial');
-    const empty = 'Sin datos para esta selección.';
-    const disabledDistrict = 'La serie distrital no se desagrega por localidad, sector ni biológico sectorial.';
-    const disabledSector = 'El biológico seleccionado pertenece a la serie distrital.';
+    const availability = disponibilidad.inspect({source:sourceMode,year,local,inst,bioSource,biological},D.anual,sector);
+    const sectorCompatible = availability.sectorAllowed;
+    const districtCompatible = availability.districtAllowed;
+    const empty = 'Esta fuente no tiene registros compatibles con los filtros. Consulta la disponibilidad de fuentes arriba; la ausencia no equivale a una cobertura del 0 %.';
+    const disabledDistrict = sourceMode === 'sector'
+      ? 'Este gráfico utiliza la serie distrital. Cambia la fuente a «Según la vista» o «Serie distrital».'
+      : 'La serie distrital no publica un desglose por localidad, institución o biológico del seguimiento sectorial. Ajusta los filtros.';
+    const disabledSector = sourceMode === 'district'
+      ? 'Este gráfico necesita seguimiento sectorial. Cambia la fuente a «Según la vista» o «Seguimiento sectorial».'
+      : 'El biológico seleccionado pertenece a la serie distrital y no está disponible en el seguimiento sectorial.';
     const comparable = sectorCompatible ? currentSector().filter(r =>
       (!year || r.fecha_reporte.startsWith(year)) &&
       (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
@@ -465,7 +560,7 @@
     set('k4',medida ? fmt(medida.faltantes) : '—',medida ? `Dosis · ${periodo}` : empty,medida?.faltantes === 0);
     $('summary-finding').textContent = locations.length
       ? `${locations[0].localidad} registra la menor cobertura de la selección (${fmt(locations[0].cobertura)} %). ${lower} de ${locations.length} localidades con datos están por debajo del ${META} %. ${periodo}. Fuente: seguimiento sectorial de Datos Abiertos Bogotá.`
-      : 'No hay datos de primera infancia compatibles con los filtros.';
+      : 'No hay registros de primera infancia compatibles en el seguimiento sectorial. No significa que la cobertura sea 0 %; revisa la fuente, el año y los filtros.';
     const primary = year ? +year : historicalYears.at(-1);
     $('compare-label').hidden = mode !== 'comparativo';
     $('fCompare').disabled = mode !== 'comparativo';
@@ -526,7 +621,7 @@
       ...(monthlyVisible ? monthRows.map(r => ({periodo:`${r.anio}-${String(r.mes_num).padStart(2,'0')}`, biologico:r.biologico,
         dosis:r.vacunados_acum, denominador:r.poblacion_meta, cobertura:r.cobertura, fuente:seriesSource})) : [])
     ];
-    const chips = ['Bogotá D.C.',year,local,biological,inst,mode ? $('fMode').selectedOptions[0].textContent : '',
+    const chips = ['Bogotá D.C.',sourceMode === 'auto' ? '' : $('fSource').selectedOptions[0].textContent,year,local,biological,inst,mode ? $('fMode').selectedOptions[0].textContent : '',
       mode === 'comparativo' && compare ? `Comparar con ${compare}` : '',
       applicableRange && (from || to) ? `Meses ${low}–${high}` : '',
       manualRows.length ? 'Vista previa manual' : ''].filter(Boolean);
@@ -535,8 +630,10 @@
       chip.textContent = name;
       return chip;
     }));
-    $('filters-status').textContent = [districtCompatible ? '' : disabledDistrict,
-      sectorCompatible ? (cut ? `Seguimiento sectorial · corte ${cut}.` : 'Sin registros sectoriales para esta selección.') : disabledSector].filter(Boolean).join(' ');
+    updateAvailability(availability,{sourceMode,year,local,inst,bio});
+    if (sourceMode === 'district' || sourceMode === 'sector' || (year && (!availability.sectorYear || !availability.districtYear))) {
+      $('table-source').value = sourceMode === 'district' || (sourceMode === 'auto' && !availability.sectorYear) ? 'serie' : 'sector';
+    }
     const baseDecisiones = sectorCompatible ? sector.filter(r => r.grupo_biologico === 'Primera infancia'
       && (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local)
       && (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
