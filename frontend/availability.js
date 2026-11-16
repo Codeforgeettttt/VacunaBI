@@ -70,8 +70,7 @@ globalThis.VacunaDisponibilidad = (() => {
       reason = 'no-sector-year';
       message = `En ${year} hay información distrital, pero no hay registros de seguimiento sectorial para ese año en los datos cargados. Los mapas, indicadores por localidad y prioridades necesitan esa fuente. No significa que la cobertura haya sido cero.`;
       if (latestCut) buttons.push({id:'latest-sector',label:`Ver corte sectorial ${latestCut}`});
-      if (!local && !inst && bioSource !== 'Seguimiento sectorial')
-        buttons.push({id:'district',label:'Consultar serie distrital'});
+      buttons.push({id:'district',label:'Consultar serie distrital sin filtros territoriales'});
     } else if (year && sectorYear && !districtYear && source !== 'sector' && hasSector) {
       reason = 'no-district-year';
       message = `En ${year} hay seguimiento sectorial, pero no hay serie distrital para ese año en los datos cargados. Las tendencias históricas pueden no estar disponibles.`;
