@@ -1,5 +1,14 @@
 # Registro de cambios — VacunaBI
 
+## [2.2.2] — Inicio rápido y actualización bajo demanda
+
+- Reutiliza el `dashboard.html` ya generado en aperturas posteriores de la misma versión y evita descargar las dos fuentes de nuevo al iniciar.
+- Conserva el botón **Actualizar datos** como acción manual para ejecutar el ETL completo cuando el usuario lo solicita.
+- Marca la versión de la interfaz incrustada en el HTML para no abrir una copia antigua con controles incompatibles; la primera ejecución de otra versión regenera una vez el tablero.
+- Informa que se está viendo una copia guardada y permite actualizarla; no presenta la copia como datos recién descargados.
+- Añade pruebas para inicio con cache, migración de versión y estado sin copia. Se mantienen pendientes las pruebas manuales del ejecutable y la revisión de accesibilidad.
+
+
 ## [2.2.1] — Estabilización Windows (publicación preliminar condicionada al CI)
 
 - Evita añadir parámetros a la URL local `file://` al actualizar datos en la ventana Windows.
