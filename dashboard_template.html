@@ -106,6 +106,7 @@
           <div class="card kpi"><div class="l">Localidades bajo la meta</div><div class="v" id="k3"></div><div class="st" id="k3s"></div><details><summary>Cómo se calcula</summary>Localidades con cobertura de primera infancia por debajo de la meta entre las que tienen datos compatibles.</details></div>
           <div class="card kpi"><div class="l">Dosis adicionales estimadas</div><div class="v" id="k4"></div><div class="st" id="k4s"></div><details><summary>Cómo se calcula</summary>Dosis enteras que faltan para alcanzar el 95 % con la población objetivo observada.</details></div>
         </div>
+        <p class="sub muted" id="summary-source">Fuente de los cuatro indicadores: seguimiento sectorial de Datos Abiertos Bogotá.</p>
         <div class="data-note"><strong>Hallazgo de la selección</strong><p id="summary-finding" role="status"></p></div>
         <div class="dashboard-grid">
           <section class="card w12 temporal-controls" aria-labelledby="evolution-title">
@@ -124,6 +125,7 @@
           </section>
           <section class="card w4" aria-labelledby="tActual">
             <h3 id="tActual">Avance anual</h3>
+            <p class="notice" id="period-status" hidden></p>
             <p class="sub">Cobertura acumulada mes a mes. Diagonal: trayectoria de referencia, no proyección.</p>
             <div class="chart"><canvas id="cActual" role="img" aria-label="Gráfico de avance mensual acumulado por biológico"></canvas></div>
           </section>
@@ -849,7 +851,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `${periodo} · con datos compatibles` : empty,locations.length > 0 && lower === 0);
     set('k4',medida ? fmt(medida.faltantes) : '—',medida ? `Dosis · ${periodo}` : empty,medida?.faltantes === 0);
     $('summary-finding').textContent = locations.length
-      ? `${locations[0].localidad} registra la menor cobertura de la selección (${fmt(locations[0].cobertura)} %). ${lower} de ${locations.length} localidades con datos están por debajo del ${META} %.`
+      ? `${locations[0].localidad} registra la menor cobertura de la selección (${fmt(locations[0].cobertura)} %). ${lower} de ${locations.length} localidades con datos están por debajo del ${META} %. ${periodo}. Fuente: seguimiento sectorial de Datos Abiertos Bogotá.`
       : 'No hay datos de primera infancia compatibles con los filtros.';
     const primary = year ? +year : historicalYears.at(-1);
     $('compare-label').hidden = mode !== 'comparativo';
@@ -875,8 +877,12 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     charts.cActual.canvas.closest('.card').hidden = !monthlyVisible;
     const pair = mode === 'comparativo' && periods.length !== 2;
     const annualMessage = !districtCompatible ? disabledDistrict : pair ? 'Selecciona dos años cerrados con datos comparables.' : annualRows.length ? '' : empty;
-    setChart('cAnual', periods, series(annualRows,periods,'anio'), annualMessage, seriesSource);
+    setChart('cAnual', periods, series(annualRows,periods,'anio'), annualMessage,
+      periods.length ? `${seriesSource} · Años cerrados ${periods.join(', ')}` : seriesSource);
     $('tActual').textContent = `Avance ${actualYear || D.anio_actual}`;
+    const partial = monthRows.length && D.anual.some(r => r.anio === actualYear && !r.anio_completo && (!biological || r.biologico === biological));
+    $('period-status').hidden = !partial;
+    $('period-status').textContent = partial ? 'Periodo parcial · las series incluyen solo los meses reportados.' : '';
     const pace = {...template.cActual.at(-1),borderColor:css('--muted'),data:selectedMonths.map(month => template.cActual.at(-1).data[month-1])};
     setChart('cActual', selectedMonths.map(month => monthNames[month-1]), [...series(monthRows,selectedMonths,'mes_num'),pace],
       !districtCompatible ? disabledDistrict : low > high ? 'El mes inicial debe ser anterior o igual al mes final.' : monthRows.length ? '' : empty, `${seriesSource} · ${actualYear}`);
