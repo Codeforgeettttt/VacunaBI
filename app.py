@@ -22,7 +22,7 @@ font:16px system-ui,'Segoe UI',sans-serif;text-align:center"><div>{}</div></body
 def cargar(ventana):
     try:
         etl.main()
-        ventana.load_html((etl.OUT / "dashboard.html").read_text(encoding="utf-8"))
+        ventana.load_url((etl.OUT / "dashboard.html").resolve().as_uri())
     except Exception as e:
         traceback.print_exc()
         ventana.load_html(PANTALLA.format(
