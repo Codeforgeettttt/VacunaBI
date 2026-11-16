@@ -90,12 +90,13 @@ class TestDashboardV11(unittest.TestCase):
 
     def test_estados_y_contexto_de_v22(self):
         self.assertIn("/*__COMPONENTES__*/", self.content)
+        self.assertTrue({"source-availability", "filter-suggestions", "filters-status"}.issubset(self.document.ids))
         self.assertTrue({"module-description", "period-status", "territory-quality",
                          "decision-progress", "decision-selection", "audit-summary", "export-status"}.issubset(self.document.ids))
 
     def test_controles_de_exploracion_y_exportacion(self):
         controls = {
-            "advanced-filters", "fYear", "fLocal", "fBio", "fSector", "fMode", "fCompare",
+            "advanced-filters", "fSource", "fYear", "fLocal", "fBio", "fSector", "fMode", "fCompare",
             "fMonthFrom", "fMonthTo", "fReset", "filters-status", "table-source",
             "table-search", "table-sort", "table-prev", "table-next",
             "selection-table", "export-csv", "export-xlsx", "chart-dialog",
