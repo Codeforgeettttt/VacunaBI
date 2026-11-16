@@ -4,9 +4,11 @@
 
 VacunaBI analiza la cobertura de vacunación en Bogotá D.C. a partir de datos abiertos. El proyecto reúne la extracción de las fuentes, la validación de los datos y la visualización de indicadores en un tablero que puede abrirse en el navegador o como aplicación de Windows.
 
-El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. En V2.2 puedes recorrer los módulos desde la barra lateral y consultar el corte y la procedencia de los datos en cada vista.
+El análisis responde tres preguntas: qué tan lejos está la cobertura de la meta, en qué localidades y sectores se concentra la brecha y cuántas dosis adicionales harían falta bajo un denominador fijo. En V2.2.3 puedes recorrer los módulos desde la barra lateral y consultar el corte y la procedencia de los datos en cada vista.
 
-[Compilaciones de VacunaBI para Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
+**[Leer la documentación integral de VacunaBI V2.2.3](docs/DOCUMENTACION_INTEGRAL.md)** — Manual de usuario, documentación técnica, arquitectura, ETL, metodología BI, fuentes, indicadores, filtros, pruebas, instalación y mantenimiento.
+
+[Descargar V2.2.3](https://github.com/Codeforgeettttt/VacunaBI/releases/tag/v2.2.3) · [Compilaciones de Windows](https://github.com/Codeforgeettttt/VacunaBI/actions/workflows/windows.yml) · [Metodología de decisiones](docs/DECISIONES.md) · [Historial de cambios](CHANGELOG.md)
 
 ## Cómo probar el proyecto
 
