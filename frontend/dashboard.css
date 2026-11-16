@@ -227,6 +227,11 @@ summary:focus-visible,button:focus-visible,select:focus-visible,input:focus-visi
 .map-legend { grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr));gap:6px 12px; }
 .notice { color:var(--ink2);background:var(--surface-raised);padding:10px 12px;border-radius:8px; }
 .muted { color:var(--muted); }
+.decision-context { display:grid;grid-template-columns:auto minmax(110px,220px);gap:8px 14px;align-items:center;margin-bottom:14px; }
+.decision-context progress { width:100%;accent-color:var(--primary); }
+.decision-context p { grid-column:1/-1;margin:0;font-size:13px; }
+.priority-list { padding-inline-start:22px;color:var(--ink2); }
+.priority-list li { padding-block:4px; }
 .comparison-cards { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:8px;margin-bottom:12px; }
 .comparison-cards div { display:grid;gap:3px;background:var(--surface);padding:10px;border-radius:8px;border:1px solid var(--border); }
 .comparison-cards span { color:var(--primary);font-size:19px;font-weight:700; }

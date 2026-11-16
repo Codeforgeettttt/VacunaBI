@@ -249,6 +249,11 @@
           <button type="button" data-step="3">3. Simulación</button>
           <button type="button" data-step="4">4. Resultados</button>
         </nav>
+        <div class="decision-context notice">
+          <label for="decision-progress" id="decision-progress-label">Etapa 1 de 4 · Selección</label>
+          <progress id="decision-progress" max="4" value="1"></progress>
+          <p id="decision-selection"></p>
+        </div>
         <div class="dashboard-grid" id="decision-panels">
           <section class="card w12" data-decision-panel="1"><h3>Selección oficial</h3><p id="decision-summary" role="status"></p>
             <p>Indicador: cobertura de primera infancia. Fuente: seguimiento sectorial de Datos Abiertos Bogotá.</p>
@@ -258,12 +263,14 @@
           </section>
           <section class="card w12" data-decision-panel="4" hidden><h3>Resumen ejecutivo</h3>
             <p id="decision-finding"></p>
+            <ol id="decision-top" class="priority-list"></ol>
             <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
           <section class="card w12" data-decision-panel="2" hidden><h3>Prioridades territoriales</h3>
             <label>Peso de la brecha <input id="priority-weight" type="range" min="0" max="100" value="60" step="1"></label>
             <output id="priority-weights" for="priority-weight"></output>
-            <p class="sub">El peso restante se asigna a las dosis faltantes. Las dos medidas se normalizan antes de sumarlas.</p>
+            <p class="sub">La brecha indica cuánto falta en porcentaje. Las dosis faltantes reflejan el volumen necesario. El ranking combina ambos criterios y depende de los datos disponibles para estos filtros.</p>
             <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
+            <button type="button" data-next-step="1">Regresar a selección</button>
             <button type="button" data-next-step="3">Continuar a simulación</button>
           </section>
           <section class="card w12" data-decision-panel="3" hidden><h3>Escenarios de dosis</h3>
@@ -274,6 +281,7 @@
             <p id="scenario-status" role="status"></p>
             <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
             <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
+            <button type="button" data-next-step="2">Regresar a priorización</button>
             <button type="button" data-next-step="4">Continuar a resultados</button>
           </section>
           <section class="card w12" data-decision-panel="4" hidden><h3>Alertas</h3>
@@ -285,6 +293,7 @@
             <p class="sub">Incluye filtros, pesos, fuente, corte y supuestos de simulación.</p>
             <p>Las simulaciones mantienen fijo el denominador y no incluyen cambios de población ni respuestas futuras a una intervención.</p>
             <div class="chart-actions"><button id="decision-export" type="button" disabled>Descargar reporte CSV</button></div>
+            <button type="button" data-next-step="3">Regresar a simulación</button>
           </section>
         </div>
       </section>
@@ -784,6 +793,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       else button.removeAttribute('aria-current');
     }
     for (const panel of document.querySelectorAll('[data-decision-panel]')) panel.hidden = panel.dataset.decisionPanel !== step;
+    $('decision-progress').value = Number(step);
+    $('decision-progress-label').textContent = `Etapa ${step} de 4 · ${steps.find(button => button.dataset.step === step).textContent.replace(/^\d+\.\s*/, '')}`;
     if (focus) {
       const heading = document.querySelector('[data-decision-panel]:not([hidden]) h3');
       heading.tabIndex = -1;
@@ -805,6 +816,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     $('priority-weights').textContent = `Brecha: ${weight} % · dosis faltantes: ${100-weight} %`;
     ctx.prioridades = model.priorizar(ctx.filas,META,weight);
     const first = ctx.prioridades[0];
+    $('decision-top').innerHTML = ctx.prioridades.filter(row => row.dato.faltantes > 0).slice(0,3).map(row =>
+      `<li><strong>${esc(row.localidad)}</strong> · ${fmt(+row.dato.brecha.toFixed(1))} pp de brecha · ${fmt(row.dato.faltantes)} dosis</li>`).join('');
     $('decision-finding').textContent = first?.dato.faltantes
       ? `Revisar primero ${first.localidad}. En el corte ${ctx.corte}, el seguimiento sectorial registra ${fmt(+first.dato.cobertura.toFixed(1))} %; faltan ${fmt(first.dato.faltantes)} dosis para alcanzar la meta bajo el denominador observado. Regla: ${weight} % de peso para la brecha.`
       : '';
@@ -814,6 +827,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     picker.replaceChildren(new Option('Total de la selección',''));
     append(picker,available(ctx.filas,'localidad'));
     if ([...picker.options].some(option => option.value === local)) picker.value = local;
+    $('decision-selection').textContent = `${ctx.filtros} · ${ctx.corte ? 'Corte '+ctx.corte : 'Sin corte sectorial compatible'} · Escenario: ${picker.value || 'total de la selección'}`;
     const territorial = ctx.filas.find(row => row.localidad === picker.value);
     const baseline = territorial ? model.medicion(territorial.dosis_aplicada,territorial.denominador,META) : data;
     const inputs = ['scenario-a','scenario-b'].map(id => $(id));
@@ -822,15 +836,15 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     $('scenario-status').textContent = valid.every(Boolean) ? 'A y B son simulaciones. El dato observado permanece fijo.' : 'Ingresa una cantidad entera de dosis igual o mayor que cero.';
     const [a,b] = inputs.map((input,index) => valid[index] ? model.escenario(baseline,input.valueAsNumber,META) : null);
     ctx.escenarios = baseline ? [['Dato observado',baseline],['Escenario A',a],['Escenario B',b]] : [];
-    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Cambio (pp)','Dosis para la meta'],
-      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(+(row.mejora ?? 0).toFixed(1)),fmt(row.faltantes)] : [label,'Entrada inválida','—','—','—','—']));
+    auditTable('scenario-table',['Caso','Dosis','Dosis añadidas','Denominador','Cobertura (%)','Cambio (pp)','Dosis para la meta'],
+      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.dosis-baseline.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(+(row.mejora ?? 0).toFixed(1)),fmt(row.faltantes)] : [label,'Entrada inválida','—','—','—','—','—']));
     const alertRows = ctx.filas.map(row => ({...row,dato:model.medicion(row.dosis_aplicada,row.denominador,META)}));
     ctx.alertas = model.alertas(alertRows,ctx.anual,META,D.logs);
     if (ctx.alertas.length) auditTable('decision-alerts',['Regla','Evidencia','Valor'],ctx.alertas.map(row => [
       row.tipo,row.detalle,row.valor == null ? '—' : `${fmt(+row.valor.toFixed(1))} ${row.tipo === 'Descenso distrital' ? 'pp' : '%'}`
     ]));
     else $('decision-alerts').textContent = 'No hay alertas para los datos comparables de esta selección.';
-    $('decision-export').disabled = !(data || ctx.alertas.length);
+    $('decision-export').disabled = !(data || ctx.alertas.length) || Boolean(baseline && !valid.every(Boolean));
   }
   $('priority-weight').addEventListener('input',refreshDecisions);
   ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
