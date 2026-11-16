@@ -3,59 +3,269 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cobertura de Vacunación Bogotá</title>
-<script>/*__CHARTJS__*/</script><!-- Chart.js 4.4.1 embebido por etl.py: el tablero funciona sin CDN -->
+<meta name="theme-color" content="#0b111b">
+<title>VacunaBI · Cobertura de vacunación Bogotá D.C.</title>
+<script>/*__CHARTJS__*/</script><!-- Chart.js local inyectado por etl.py; sin CDN -->
 <style>
-:root{color-scheme:light;--page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
---s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--good:#0ca30c;--crit:#d03b3b;--goodtxt:#006300}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);
---s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--goodtxt:#0ca30c;--crit:#e66767}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{padding:24px 16px 8px;max-width:1200px;margin:auto}
-h1{margin:0;font-size:22px}
-header p{margin:4px 0 0;color:var(--ink2)}
-main{max-width:1200px;margin:auto;padding:8px 16px 32px;display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;min-width:0}
-.card h2{margin:0 0 2px;font-size:15px}
-.card .sub{margin:0 0 12px;color:var(--ink2);font-size:12.5px}
-.kpi{grid-column:span 3}
-.kpi .v{font-size:30px;font-weight:600;margin-top:4px}
-.kpi .l{color:var(--ink2);font-size:12.5px}
-.kpi .st{font-size:12px;margin-top:4px;color:var(--ink2)}
-.bad::before{content:"▲ ";color:var(--crit)} .ok::before{content:"✔ ";color:var(--goodtxt)}
-.w12{grid-column:span 12}.w8{grid-column:span 8}.w6{grid-column:span 6}.w4{grid-column:span 4}
-.chart{position:relative;height:320px}.tall{height:520px}
-table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
-th,td{padding:4px 6px;border-bottom:1px solid var(--grid);text-align:right;white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-.scroll{overflow-x:auto}
-footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
-@media (max-width:900px){.kpi{grid-column:span 6}.w8,.w6,.w4{grid-column:span 12}}
+:root {
+  color-scheme: dark;
+  --page:#0b111b;--surface:#151e2b;--surface-raised:#1c2939;
+  --sidebar:#101a28;--ink:#f5f7fa;--ink2:#b8c5d5;
+  --muted:#9caec3;--grid:#304052;--axis:#344052;
+  --border:#344052;--primary:#19c8c1;--primary-soft:rgba(25,200,193,.11);
+  --s1:#4285e9;--s2:#ef7847;--s3:#26ba98;--s4:#e4b446;--s5:#e35f91;
+  --good:#2fc48d;--goodtxt:#5adfb1;--crit:#f36b75;
+  --radius:14px;--shadow:0 12px 30px rgba(0,0,0,.12);
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0;background:var(--page);color:var(--ink);
+  font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+a { color:inherit; }
+a:focus-visible,button:focus-visible { outline:3px solid var(--primary);
+  outline-offset:3px; }
+[hidden] { display:none!important; }
+.skip-link { position:absolute;left:12px;top:-60px;z-index:50;
+  background:var(--primary);color:var(--page);font-weight:700;
+  padding:10px 14px;border-radius:8px;text-decoration:none; }
+.skip-link:focus { top:12px; }
+.app-shell { min-height:100vh;display:grid;grid-template-columns:232px minmax(0,1fr); }
+.sidebar { background:var(--sidebar);border-right:1px solid var(--border);
+  position:sticky;top:0;align-self:start;height:100vh;padding:26px 15px;
+  display:flex;flex-direction:column;gap:31px; }
+.brand { display:flex;align-items:center;gap:12px;padding:4px 9px; }
+.brand-mark { width:42px;height:42px;border-radius:13px;display:grid;
+  place-items:center;font-size:24px;font-weight:800;color:#061c23;
+  background:linear-gradient(135deg,#4ce4d3,#4a92e8); }
+.brand strong { display:block;font-size:18px;letter-spacing:-.6px; }
+.brand small { display:block;color:var(--muted);font-size:11px; }
+.nav-title { margin:0 13px 10px;text-transform:uppercase;letter-spacing:1.5px;
+  font-size:10px;font-weight:700;color:var(--muted); }
+.nav-links { display:flex;flex-direction:column;gap:5px; }
+.nav-link { display:flex;align-items:center;gap:12px;min-height:44px;
+  padding:10px 12px;border-radius:10px;color:var(--ink2);
+  text-decoration:none;border:1px solid transparent;font-weight:550; }
+.nav-icon { width:22px;text-align:center;font-size:17px;font-weight:700; }
+.nav-link:hover { background:rgba(255,255,255,.055);color:var(--ink); }
+.nav-link[aria-current="page"] { color:var(--primary);background:var(--primary-soft);
+  border-color:rgba(25,200,193,.24); }
+.sidebar-note { margin-top:auto;padding:13px;border-radius:12px;background:rgba(255,255,255,.035);
+  border:1px solid var(--border);color:var(--muted);font-size:11px; }
+.sidebar-note strong { color:var(--ink2);display:block;margin-bottom:4px; }
+.main-area { min-width:0; }
+.topbar { border-bottom:1px solid var(--border);padding:24px clamp(20px,3vw,42px) 22px; }
+.topbar-row { display:flex;align-items:flex-start;justify-content:space-between;gap:18px; }
+.eyebrow { color:var(--primary);text-transform:uppercase;letter-spacing:1.8px;
+  font-weight:750;font-size:10px;margin:0 0 6px; }
+h1 { margin:0;font-size:clamp(23px,2.25vw,32px);line-height:1.2;letter-spacing:-.8px; }
+.topbar .meta { margin:12px 0 0;color:var(--ink2);font-size:12px;max-width:850px; }
+.version { border:1px solid rgba(25,200,193,.3);background:var(--primary-soft);
+  color:var(--primary);padding:5px 11px;border-radius:999px;white-space:nowrap;
+  font-weight:750;font-size:12px; }
+.page { max-width:1650px;margin:0 auto;padding:28px clamp(16px,3vw,42px) 54px; }
+.page-lead { display:flex;align-items:flex-end;justify-content:space-between;
+  gap:16px;margin-bottom:22px;flex-wrap:wrap; }
+.page-lead h2 { font-size:22px;line-height:1.3;margin:0;letter-spacing:-.45px; }
+.page-lead p { margin:6px 0 0;color:var(--ink2); }
+.link-action { display:inline-flex;align-items:center;gap:7px;color:var(--primary);
+  text-decoration:none;font-weight:650;padding:8px 0; }
+.link-action:hover { text-decoration:underline; }
+.dashboard-grid { display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px;margin-bottom:18px; }
+.card { background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);min-width:0; }
+.card h3 { margin:0 0 4px;font-size:16px;line-height:1.3;letter-spacing:-.2px; }
+.card .sub { margin:0 0 18px;color:var(--ink2);font-size:12px; }
+.card-header { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.card-marker { color:var(--primary);font-size:12px;font-weight:750; }
+.kpi { grid-column:span 3;min-height:168px;display:flex;flex-direction:column;gap:6px; }
+.kpi .l { color:var(--ink2);font-size:12px;min-height:38px; }
+.kpi .v { font-size:clamp(27px,2.4vw,35px);letter-spacing:-1px;line-height:1.17;
+  font-weight:750;font-variant-numeric:tabular-nums;margin-top:2px; }
+.kpi .st { margin-top:auto;color:var(--ink2);font-size:12px; }
+.kpi:first-child { border-color:rgba(25,200,193,.52);
+  background:linear-gradient(155deg,rgba(25,200,193,.09),var(--surface) 62%); }
+.bad::before { content:"▲ ";color:var(--crit); }
+.ok::before { content:"✓ ";color:var(--goodtxt); }
+.w12 { grid-column:span 12; }.w8 { grid-column:span 8; }
+.w6 { grid-column:span 6; }.w4 { grid-column:span 4; }
+.chart { position:relative;height:335px; }
+.chart.tall { height:565px; }
+.chart.medium { height:420px; }
+.scroll { max-width:100%;overflow-x:auto; }
+table { border-collapse:separate;border-spacing:0;width:100%;font-size:12px;
+  font-variant-numeric:tabular-nums; }
+th,td { padding:11px 12px;border-bottom:1px solid var(--grid);
+  text-align:right;white-space:nowrap; }
+th { color:var(--ink2);font-size:11px;font-weight:700;
+  background:var(--surface-raised); }
+th:first-child,td:first-child { text-align:left; }
+tr:last-child td { border-bottom:0; }
+.data-note { border:1px solid var(--border);border-radius:12px;
+  background:var(--surface-raised);padding:16px 18px;color:var(--ink2); }
+.data-note strong { color:var(--ink); }
+.data-note p { margin:5px 0 0; }
+.info-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px; }
+.definition { padding:14px 0;border-bottom:1px solid var(--grid); }
+.definition:last-child { border-bottom:0; }
+.definition strong { display:block;margin-bottom:4px; }
+.definition p { margin:0;color:var(--ink2); }
+.site-footer { color:var(--muted);font-size:11px;padding:10px clamp(16px,3vw,42px) 24px;
+  max-width:1650px;margin:0 auto; }
+@media (max-width:1250px) { .kpi { grid-column:span 6; }.w8,.w4 { grid-column:span 12; } }
+@media (max-width:950px) {
+  .app-shell { grid-template-columns:minmax(0,1fr); }
+  .sidebar { position:static;height:auto;padding:14px 18px;gap:12px; }
+  .brand { padding:0; }
+  .nav-title,.sidebar-note { display:none; }
+  .nav-links { flex-direction:row;overflow-x:auto;gap:7px;padding-bottom:3px; }
+  .nav-link { white-space:nowrap; }
+  .topbar { padding:22px 18px; }
+  .page { padding:24px 18px 42px; }
+}
+@media (max-width:660px) {
+  .kpi,.w12,.w8,.w6,.w4 { grid-column:span 12; }
+  .info-grid { grid-template-columns:1fr; }
+  .dashboard-grid { gap:12px; }
+  .card { padding:16px; }
+  .chart { height:310px; }.chart.tall { height:540px; }
+  .nav-link { padding:9px 10px; }
+  .nav-icon { display:none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>Cobertura de vacunación · Bogotá D.C.</h1>
-  <p id="meta-info"></p>
-</header>
-<main>
-  <div class="card kpi"><div class="l">Cobertura primera infancia (sectores)</div><div class="v" id="k1"></div><div class="st" id="k1s"></div></div>
-  <div class="card kpi"><div class="l">Caída triple viral 1 año → refuerzo 5 años</div><div class="v" id="k2"></div><div class="st" id="k2s"></div></div>
-  <div class="card kpi"><div class="l">Localidades bajo la meta (primera infancia)</div><div class="v" id="k3"></div><div class="st" id="k3s"></div></div>
-  <div class="card kpi"><div class="l">Dosis faltantes para llegar al 95 %</div><div class="v" id="k4"></div><div class="st" id="k4s"></div></div>
+<a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">V</div>
+      <div><strong>VacunaBI</strong><small>Inteligencia en salud pública</small></div>
+    </div>
+    <nav class="nav-links" aria-label="Módulos del dashboard">
+      <a href="#resumen" class="nav-link" data-nav="resumen" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>Resumen general</a>
+      <a href="#localidades" class="nav-link" data-nav="localidades"><span class="nav-icon" aria-hidden="true">◎</span>Localidades</a>
+      <a href="#sectores" class="nav-link" data-nav="sectores"><span class="nav-icon" aria-hidden="true">◈</span>Sectores y biológicos</a>
+      <a href="#calidad" class="nav-link" data-nav="calidad"><span class="nav-icon" aria-hidden="true">▤</span>Calidad de datos</a>
+      <a href="#metodologia" class="nav-link" data-nav="metodologia"><span class="nav-icon" aria-hidden="true">ⓘ</span>Metodología</a>
+    </nav>
+    <div class="sidebar-note"><strong>Meta de referencia: 95 %</strong>
+      Los resultados dependen de la fuente, el periodo y la población objetivo.
+    </div>
+  </aside>
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
+          <h1>Cobertura de vacunación</h1></div>
+        <span class="version">V1.1 · UI/UX</span>
+      </div>
+      <p class="meta" id="meta-info">Preparando indicadores…</p>
+    </header>
+    <main id="main-content">
+      <section class="page" id="resumen" data-page="resumen" aria-labelledby="title-resumen">
+        <div class="page-lead">
+          <div><p class="eyebrow">Visión general</p><h2 id="title-resumen">Panorama de vacunación</h2>
+            <p>Indicadores principales, evolución histórica y avance del periodo.</p></div>
+          <a class="link-action" href="#localidades">Explorar localidades <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card kpi"><div class="l">Cobertura primera infancia (sectores)</div><div class="v" id="k1"></div><div class="st" id="k1s"></div></div>
+          <div class="card kpi"><div class="l">Diferencia triple viral 1 año y refuerzo 5 años</div><div class="v" id="k2"></div><div class="st" id="k2s"></div></div>
+          <div class="card kpi"><div class="l">Localidades bajo la meta (primera infancia)</div><div class="v" id="k3"></div><div class="st" id="k3s"></div></div>
+          <div class="card kpi"><div class="l">Dosis adicionales estimadas para la meta</div><div class="v" id="k4"></div><div class="st" id="k4s"></div></div>
+        </div>
+        <div class="dashboard-grid">
+          <section class="card w8" aria-labelledby="anual-title">
+            <div class="card-header"><h3 id="anual-title">Cobertura anual por biológico</h3><span class="card-marker">HISTÓRICO</span></div>
+            <p class="sub">Distrito, años cerrados. Línea punteada: meta de referencia del 95 %.</p>
+            <div class="chart"><canvas id="cAnual" role="img" aria-label="Gráfico de líneas de cobertura anual por biológico"></canvas></div>
+          </section>
+          <section class="card w4" aria-labelledby="tActual">
+            <h3 id="tActual">Avance anual</h3>
+            <p class="sub">Cobertura acumulada mes a mes. Diagonal: trayectoria de referencia, no proyección.</p>
+            <div class="chart"><canvas id="cActual" role="img" aria-label="Gráfico de avance mensual acumulado por biológico"></canvas></div>
+          </section>
+        </div>
+        <div class="data-note"><strong>Lectura del tablero</strong>
+          <p>Los datos se actualizan desde fuentes oficiales; el último año puede estar incompleto. La diferencia de cobertura entre etapas del esquema no equivale necesariamente al abandono individual.</p>
+        </div>
+      </section>
 
-  <section class="card w8"><h2>Cobertura anual por biológico</h2><p class="sub">Distrito, años cerrados. Línea punteada = meta PAI 95 %.</p><div class="chart"><canvas id="cAnual"></canvas></div></section>
-  <section class="card w4"><h2 id="tActual"></h2><p class="sub">Cobertura acumulada mes a mes. Diagonal = ritmo necesario para cerrar el año en 95 %.</p><div class="chart"><canvas id="cActual"></canvas></div></section>
+      <section class="page" id="localidades" data-page="localidades" aria-labelledby="title-localidades" hidden>
+        <div class="page-lead"><div><p class="eyebrow">Análisis territorial</p>
+          <h2 id="title-localidades">Primera infancia por localidad</h2>
+          <p>Cobertura institucional de Bogotá y comparación frente a la meta de referencia.</p></div>
+          <a class="link-action" href="#metodologia">Cómo se calcula <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="dashboard-grid">
+          <section class="card w12"><h3>Cobertura por localidad</h3>
+            <p class="sub">Pentavalente, triple viral y refuerzos en colegios, ICBF e integración. Línea punteada: 95 %.</p>
+            <div class="chart tall"><canvas id="cLoc" role="img" aria-label="Ranking de cobertura de primera infancia de las localidades de Bogotá"></canvas></div>
+          </section>
+          <section class="card w12"><h3>Mapa de calor: localidad × sector</h3>
+            <p class="sub">Cobertura (%) = dosis aplicadas / denominador. Los valores faltantes se muestran con un guion.</p>
+            <div class="scroll" id="heat" role="region" aria-label="Tabla de cobertura por localidad y sector" tabindex="0"></div>
+          </section>
+        </div>
+      </section>
 
-  <section class="card w6"><h2>Primera infancia por localidad</h2><p class="sub">Pentavalente, triple viral y refuerzos en colegios, ICBF e integración. Línea roja punteada = meta 95 %.</p><div class="chart tall"><canvas id="cLoc"></canvas></div></section>
-  <section class="card w6"><h2>Cobertura por sector institucional</h2><p class="sub">Todas las edades y biológicos del seguimiento.</p><div class="chart"><canvas id="cInst"></canvas></div>
-    <h2 style="margin-top:16px">Cobertura por grupo de biológico</h2><p class="sub">Dónde está el mayor rezago del esquema.</p><div class="chart" style="height:170px"><canvas id="cGrupo"></canvas></div></section>
+      <section class="page" id="sectores" data-page="sectores" aria-labelledby="title-sectores" hidden>
+        <div class="page-lead"><div><p class="eyebrow">Análisis institucional</p>
+          <h2 id="title-sectores">Sectores y grupos de biológicos</h2>
+          <p>Comparaciones en la población de seguimiento de las fuentes sectoriales.</p></div>
+        </div>
+        <div class="dashboard-grid">
+          <section class="card w6"><h3>Cobertura por sector institucional</h3>
+            <p class="sub">Todas las edades y biológicos del seguimiento.</p>
+            <div class="chart medium"><canvas id="cInst" role="img" aria-label="Cobertura de vacunación según sector institucional"></canvas></div>
+          </section>
+          <section class="card w6"><h3>Cobertura por grupo de biológico</h3>
+            <p class="sub">Comparación de los grupos presentes en la fuente sectorial.</p>
+            <div class="chart medium"><canvas id="cGrupo" role="img" aria-label="Cobertura según grupo de biológico"></canvas></div>
+          </section>
+        </div>
+      </section>
 
-  <section class="card w12"><h2>Mapa de calor: localidad × sector</h2><p class="sub">Cobertura (%) = dosis aplicadas / denominador. Más oscuro = mayor cobertura; negrita = cumple la meta.</p><div class="scroll" id="heat"></div></section>
-  <section class="card w12"><h2>Trazabilidad de la limpieza</h2><p class="sub">Registros afectados en cada paso del ETL en la última ejecución.</p><div class="scroll" id="log"></div></section>
-</main>
-<footer>Fuente: Portal de Datos Abiertos de Bogotá – Secretaría Distrital de Salud / Observatorio de Salud de Bogotá (SaluData), vía API CKAN. Licencia CC BY 4.0.</footer>
+      <section class="page" id="calidad" data-page="calidad" aria-labelledby="title-calidad" hidden>
+        <div class="page-lead"><div><p class="eyebrow">Procesamiento de datos</p>
+          <h2 id="title-calidad">Calidad y trazabilidad ETL</h2>
+          <p>Registros afectados durante el último proceso de extracción y transformación.</p></div>
+        </div>
+        <div class="dashboard-grid">
+          <section class="card w12"><h3>Registro de limpieza</h3>
+            <p class="sub">Las cantidades corresponden a diferentes etapas y no deben sumarse entre sí.</p>
+            <div class="scroll" id="log" role="region" aria-label="Tabla de trazabilidad de limpieza" tabindex="0"></div>
+          </section>
+        </div>
+        <div class="data-note"><strong>Importante sobre calidad de datos</strong>
+          <p>Una cobertura administrativa superior al 100 % requiere análisis de su denominador y su procedencia. Los registros descartados y los meses sin reporte deben interpretarse según las reglas documentadas del ETL.</p>
+        </div>
+      </section>
+
+      <section class="page" id="metodologia" data-page="metodologia" aria-labelledby="title-metodologia" hidden>
+        <div class="page-lead"><div><p class="eyebrow">Definiciones y fuentes</p>
+          <h2 id="title-metodologia">Metodología del análisis</h2>
+          <p>Contexto necesario para interpretar correctamente los indicadores.</p></div>
+        </div>
+        <div class="info-grid">
+          <section class="card"><h3>Definiciones principales</h3>
+            <div class="definition"><strong>Cobertura administrativa</strong><p>Dosis aplicadas divididas entre el denominador de la población objetivo, multiplicadas por 100.</p></div>
+            <div class="definition"><strong>Brecha frente a la meta</strong><p>Diferencia en puntos porcentuales entre la meta de referencia (95 %) y la cobertura observada.</p></div>
+            <div class="definition"><strong>Diferencia entre etapas</strong><p>La comparación entre triple viral al año y refuerzo a los cinco años no implica el seguimiento de una misma cohorte.</p></div>
+          </section>
+          <section class="card"><h3>Origen de los datos</h3>
+            <div class="definition"><strong>Portal de Datos Abiertos de Bogotá</strong><p>Registros públicos de vacunación publicados mediante recursos de API CKAN.</p></div>
+            <div class="definition"><strong>Procesamiento</strong><p>Los indicadores se calculan mediante el proceso ETL de VacunaBI, manteniendo las reglas originales de la versión base.</p></div>
+            <div class="definition"><strong>Alcance actual</strong><p>Las fuentes procesadas en esta versión corresponden a Bogotá D.C.; Cundinamarca es una ampliación prevista.</p></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">Fuente: Datos Abiertos Bogotá · Secretaría Distrital de Salud / SaluData · API CKAN · Licencia CC BY 4.0. Proyecto académico de Inteligencia de Negocios.</footer>
+  </div>
+</div>
 <script>
 const D = /*__DATOS__*/null;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -123,6 +333,31 @@ heat.innerHTML = '<table><tr><th>Localidad</th>' + insts.map(i => `<th>${i}</th>
 // 7. Log de limpieza
 log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th><th>Registros</th></tr>' +
   Object.entries(D.logs).flatMap(([f, o]) => Object.entries(o).map(([k, v]) => `<tr><td>${f}</td><td style="text-align:left">${k.replaceAll('_', ' ')}</td><td>${fmt(v)}</td></tr>`)).join('') + '</table>';
+</script>
+
+<script>
+(function () {
+  const views = new Set(['resumen','localidades','sectores','calidad','metodologia']);
+  const links = [...document.querySelectorAll('[data-nav]')];
+  const pages = [...document.querySelectorAll('[data-page]')];
+  function renderNavigation() {
+    const requested = location.hash.slice(1);
+    const active = views.has(requested) ? requested : 'resumen';
+    pages.forEach(page => { page.hidden = page.dataset.page !== active; });
+    links.forEach(link => {
+      if(link.dataset.nav === active) link.setAttribute('aria-current','page');
+      else link.removeAttribute('aria-current');
+    });
+    document.title = 'VacunaBI · ' + (links.find(link => link.dataset.nav === active)?.textContent.trim() || 'Resumen');
+    requestAnimationFrame(() => {
+      if(typeof Chart !== 'undefined' && Chart.instances) {
+        Object.values(Chart.instances).forEach(chart => chart.resize());
+      }
+    });
+  }
+  addEventListener('hashchange', renderNavigation);
+  renderNavigation();
+})();
 </script>
 </body>
 </html>
