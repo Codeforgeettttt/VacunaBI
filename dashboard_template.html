@@ -18,12 +18,21 @@
       <div><strong>VacunaBI</strong><small>Inteligencia en salud pública</small></div>
     </div>
     <nav class="nav-links" aria-label="Módulos del dashboard">
-      <a href="#resumen" class="nav-link" data-nav="resumen" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>Resumen general</a>
-      <a href="#localidades" class="nav-link" data-nav="localidades"><span class="nav-icon" aria-hidden="true">◎</span>Localidades</a>
-      <a href="#sectores" class="nav-link" data-nav="sectores"><span class="nav-icon" aria-hidden="true">◈</span>Sectores y biológicos</a>
-      <a href="#calidad" class="nav-link" data-nav="calidad"><span class="nav-icon" aria-hidden="true">▤</span>Calidad de datos</a>
-      <a href="#decisiones" class="nav-link" data-nav="decisiones"><span class="nav-icon" aria-hidden="true">⌁</span>Decisiones</a>
-      <a href="#metodologia" class="nav-link" data-nav="metodologia"><span class="nav-icon" aria-hidden="true">ⓘ</span>Metodología</a>
+      <div class="nav-group" role="group" aria-label="Exploración">
+        <span class="nav-title" aria-hidden="true">Exploración</span>
+        <a href="#resumen" class="nav-link" data-nav="resumen" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>Resumen general</a>
+        <a href="#localidades" class="nav-link" data-nav="localidades"><span class="nav-icon" aria-hidden="true">◎</span>Localidades</a>
+        <a href="#sectores" class="nav-link" data-nav="sectores"><span class="nav-icon" aria-hidden="true">◈</span>Sectores y biológicos</a>
+      </div>
+      <div class="nav-group" role="group" aria-label="Análisis">
+        <span class="nav-title" aria-hidden="true">Análisis</span>
+        <a href="#decisiones" class="nav-link" data-nav="decisiones"><span class="nav-icon" aria-hidden="true">⌁</span>Decisiones</a>
+        <a href="#calidad" class="nav-link" data-nav="calidad"><span class="nav-icon" aria-hidden="true">▤</span>Calidad de datos</a>
+      </div>
+      <div class="nav-group" role="group" aria-label="Información">
+        <span class="nav-title" aria-hidden="true">Información</span>
+        <a href="#metodologia" class="nav-link" data-nav="metodologia"><span class="nav-icon" aria-hidden="true">ⓘ</span>Metodología</a>
+      </div>
     </nav>
     <div class="sidebar-note"><strong>Meta de referencia: 95 %</strong>
       Los resultados dependen de la fuente, el periodo y la población objetivo.
@@ -33,8 +42,9 @@
     <header class="topbar">
       <div class="topbar-row">
         <div><p class="eyebrow">VacunaBI · Bogotá D.C.</p>
-          <h1 id="module-title">Resumen general</h1></div>
-        <div class="topbar-actions"><span class="version">V2.1</span>
+          <h1 id="module-title">Resumen general</h1>
+          <p class="meta" id="module-description"></p></div>
+        <div class="topbar-actions"><span class="version">V2.2</span>
           <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>

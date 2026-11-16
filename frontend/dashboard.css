@@ -227,5 +227,10 @@ summary:focus-visible,button:focus-visible,select:focus-visible,input:focus-visi
 .map-legend { grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr));gap:6px 12px; }
 .notice { color:var(--ink2);background:var(--surface-raised);padding:10px 12px;border-radius:8px; }
 .muted { color:var(--muted); }
+.nav-group { display:flex;flex-direction:column;gap:3px; }
+.nav-group + .nav-group { margin-top:10px; }
+.nav-group .nav-title { margin-bottom:2px; }
+.nav-link[aria-current="page"] { box-shadow:inset 3px 0 var(--primary); }
+@media (max-width:950px) { .nav-group { flex-direction:row;flex:none; }.nav-group + .nav-group { margin:0; } }
 @media (min-width:951px) and (max-width:1120px) { .app-shell { grid-template-columns:198px minmax(0,1fr); } }
 @media (max-width:680px) { .topbar-row { flex-wrap:wrap; }.topbar-actions { justify-content:flex-start; } }
