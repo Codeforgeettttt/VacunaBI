@@ -2,6 +2,9 @@
 
 ## [2.2.0]
 
+- La estabilización posterior separa además el código de gráficos y dashboard en `frontend/charts.js` y `frontend/dashboard.js`, integrados por ETL en un único HTML autónomo.
+- Añade pruebas offline del ensamblado y una lista de aceptación manual de Windows y accesibilidad.
+
 - Las tareas de aceptación manual de Windows y accesibilidad se mantienen documentadas como pendientes hasta obtener evidencia real.
 
 - Refina la tipografía, las acciones y la navegación agrupada por tipo de análisis.
