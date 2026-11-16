@@ -215,7 +215,17 @@ def cobertura(df, por):
     return g
 
 
+def dosis_adicionales(dosis, denominador, meta=META):
+    """Dosis enteras necesarias para alcanzar la meta con el denominador observado."""
+    if not all(math.isfinite(valor) for valor in (dosis, denominador, meta)):
+        return None
+    if dosis < 0 or denominador <= 0 or not 0 < meta <= 100:
+        return None
+    return max(0, math.ceil(meta * denominador / 100) - dosis)
+
+
 def calcular_kpis(sec, anu):
+    sec = sec[sec["fecha_reporte"] == sec["fecha_reporte"].max()]
     infancia = sec[sec["grupo_biologico"] == "Primera infancia"]
     por_loc = cobertura(infancia, ["localidad", "zona"]).sort_values("cobertura")
     cerrados = anu[anu["anio_completo"]]
@@ -237,7 +247,7 @@ def calcular_kpis(sec, anu):
         "caida_esquema_1a5": round(float(tv1 - tv5), 1),
         "biologicos_cumplen_meta_ult": int((cerrados[cerrados["anio"] == ult]["cobertura"] >= META).sum()),
         "biologicos_total_ult": int((cerrados["anio"] == ult).sum()),
-        "dosis_faltantes_meta_infancia": int(max(0, (infancia["denominador"].sum() * META / 100) - infancia["dosis_aplicada"].sum())),
+        "dosis_faltantes_meta_infancia": dosis_adicionales(float(infancia["dosis_aplicada"].sum()), float(infancia["denominador"].sum())),
     }
 
 

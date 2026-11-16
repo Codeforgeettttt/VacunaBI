@@ -964,7 +964,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     if (year || local || inst || biological || mode || manualRows.length) {
       const lower = locations.filter(r => r.cobertura < META).length;
       const gap = total ? Math.max(0, META-total.cobertura) : 0;
-      const extra = total ? Math.max(0, Math.trunc(total.denominador*META/100-total.dosis_aplicada)) : null;
+      const extra = total ? model.medicion(total.dosis_aplicada,total.denominador,META)?.faltantes : null;
       set('k1',total ? `${fmt(total.cobertura)} %` : '—',total ? `${fmt(+gap.toFixed(1))} pp de brecha · ${cut}` : empty,gap === 0 && Boolean(total));
       set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `Menor: ${locations[0].localidad} (${fmt(locations[0].cobertura)} %)` : empty,locations.length > 0 && lower === 0);
       set('k4',extra == null ? '—' : fmt(extra),extra == null ? empty : `Primera infancia · corte ${cut}`,extra === 0);
