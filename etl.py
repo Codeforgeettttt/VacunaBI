@@ -12,6 +12,8 @@ import shutil
 import sys
 import unicodedata
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from time import perf_counter
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -27,7 +29,9 @@ ESCHEMAS = {
     RES_MENSUAL: {"biologico", "ano", "orden mes", "mes", "meta", "vacunados", "cobertura", "column7"},
 }
 META = 95.0  # meta PAI - Ministerio de Salud
-VERSION_TABLERO = "2.2.2"  # cache de interfaz compatible con este ejecutable
+API_PAGE_SIZE = 1000  # se conserva el tamaño de página compatible con CKAN
+API_PAGE_WORKERS = 2  # máximo dos páginas simultáneas por recurso
+VERSION_TABLERO = "2.2.3"  # cache de interfaz compatible con este ejecutable
 EXE = getattr(sys, "frozen", False)  # True cuando corre como .exe (PyInstaller)
 RECURSOS = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))  # plantilla y Chart.js empaquetados
 OUT = (Path(sys.executable).parent if EXE else Path(__file__).parent) / "salidas"
@@ -57,36 +61,64 @@ def limites_localidades():
 
 
 def consultar_api(resource_id):
-    """Trae todos los registros de un recurso CKAN, paginando."""
-    filas, offset = [], 0
-    total = None
+    """Descarga CKAN completa: páginas paralelas acotadas, ordenadas y verificadas.
+
+    No usa caché para la actualización manual. Nunca publica páginas incompletas,
+    duplicadas ni procedentes de totales incompatibles.
+    """
+    def pedir_pagina(offset, limit):
+        url = f"{API}?resource_id={resource_id}&limit={limit}&offset={offset}"
+        with urllib.request.urlopen(url, timeout=60) as respuesta:
+            payload = json.load(respuesta)
+        if not payload.get("success"):
+            raise RuntimeError(f"API respondió error para {resource_id}: {payload.get('error')}")
+        return payload["result"]
+
+    primera = pedir_pagina(0, API_PAGE_SIZE)
+    total = primera["total"]
+    lote_inicial = primera["records"]
+    if type(total) is not int or total <= 0:
+        raise ValueError(f"El recurso {resource_id} no contiene registros.")
+    if not isinstance(lote_inicial, list) or not lote_inicial or len(lote_inicial) > min(API_PAGE_SIZE, total):
+        raise ValueError(f"Descarga incompleta o inconsistente para {resource_id}.")
+
+    # Si CKAN limita la página por debajo de lo solicitado, se adapta la
+    # paginación al tamaño efectivamente devuelto, sin omitir registros.
+    paso = len(lote_inicial)
+    offsets = range(paso, total, paso)
+    filas = []
     identificadores = set()
-    while True:
-        url = f"{API}?resource_id={resource_id}&limit=1000&offset={offset}"
-        with urllib.request.urlopen(url, timeout=60) as r:
-            res = json.load(r)
-        if not res.get("success"):
-            raise RuntimeError(f"API respondió error para {resource_id}: {res.get('error')}")
-        resultado = res["result"]
+
+    def agregar(offset, resultado):
+        if resultado["total"] != total:
+            raise ValueError(f"Descarga incompleta o inconsistente para {resource_id}.")
         lote = resultado["records"]
-        total_pagina = resultado["total"]
-        if not isinstance(total_pagina, int) or total_pagina <= 0:
-            raise ValueError(f"El recurso {resource_id} no contiene registros.")
-        if total is None:
-            total = total_pagina
+        cantidad = min(paso, total - offset)
+        if not isinstance(lote, list) or len(lote) != cantidad:
+            raise ValueError(f"Descarga incompleta o inconsistente para {resource_id}.")
         ids = {fila.get("_id") for fila in lote}
-        if (total_pagina != total or not lote or offset + len(lote) > total
-                or None in ids or len(ids) != len(lote) or identificadores.intersection(ids)):
+        if None in ids or len(ids) != len(lote) or identificadores.intersection(ids):
             raise ValueError(f"Descarga incompleta o inconsistente para {resource_id}.")
         identificadores.update(ids)
-        filas += lote
-        offset += len(lote)
-        if offset == total:
-            df = pd.DataFrame(filas).drop(columns="_id")
-            faltantes = ESCHEMAS[resource_id] - {nombre.lower() for nombre in df.columns}
-            if faltantes:
-                raise ValueError(f"Faltan columnas en {resource_id}: {', '.join(sorted(faltantes))}.")
-            return df
+        filas.extend(lote)
+
+    agregar(0, primera)
+    if paso < total:
+        # map() conserva el orden de los offsets aun cuando las respuestas
+        # terminen desordenadas, con un máximo de API_PAGE_WORKERS peticiones.
+        with ThreadPoolExecutor(max_workers=API_PAGE_WORKERS) as executor:
+            for offset, pagina in zip(offsets, executor.map(
+                lambda off: pedir_pagina(off, paso), offsets
+            )):
+                agregar(offset, pagina)
+
+    if len(filas) != total:
+        raise ValueError(f"Descarga incompleta o inconsistente para {resource_id}.")
+    df = pd.DataFrame(filas).drop(columns="_id")
+    faltantes = ESCHEMAS[resource_id] - {nombre.lower() for nombre in df.columns}
+    if faltantes:
+        raise ValueError(f"Faltan columnas en {resource_id}: {', '.join(sorted(faltantes))}.")
+    return df
 
 
 def num_es(valor):
@@ -368,11 +400,18 @@ def main():
     fuentes = ejecucion["fuentes"]
     print("Consultando API de Datos Abiertos Bogotá...")
     try:
-        raw_sec = consultar_api(RES_SECTORES)
-        fuentes["sectores"] = {"recurso": RES_SECTORES, "originales": len(raw_sec)}
-        ejecucion["fase"] = "Descarga mensual"
-        raw_men = consultar_api(RES_MENSUAL)
-        fuentes["mensual"] = {"recurso": RES_MENSUAL, "originales": len(raw_men)}
+        inicio_descarga = perf_counter()
+        # Ambos recursos se solicitan a la vez; el ETL valida y publica solo
+        # después de comprobar la integridad de ambas respuestas.
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            tarea_sectores = executor.submit(consultar_api, RES_SECTORES)
+            tarea_mensual = executor.submit(consultar_api, RES_MENSUAL)
+            raw_sec = tarea_sectores.result()
+            fuentes["sectores"] = {"recurso": RES_SECTORES, "originales": len(raw_sec)}
+            ejecucion["fase"] = "Descarga mensual"
+            raw_men = tarea_mensual.result()
+            fuentes["mensual"] = {"recurso": RES_MENSUAL, "originales": len(raw_men)}
+        ejecucion["duracion_descarga_segundos"] = round(perf_counter() - inicio_descarga, 2)
         ejecucion["fase"] = "Validación y transformación"
         sec, log_sec = limpiar_sectores(raw_sec)
         mens, log_men = limpiar_mensual(raw_men)
