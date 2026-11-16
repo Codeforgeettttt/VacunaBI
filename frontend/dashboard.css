@@ -216,7 +216,7 @@ summary:focus-visible,button:focus-visible,select:focus-visible,input:focus-visi
 }
 #main-content button:not(:disabled):hover,.topbar button:not(:disabled):hover { border-color:var(--primary); }
 #main-content button:disabled,.topbar button:disabled { opacity:.6;cursor:not-allowed; }
-#main-content button[data-next-step],#refresh-data:not(:disabled) {
+#main-content button[data-next-step]:not([data-secondary]),#refresh-data:not(:disabled) {
   background:var(--primary);border-color:var(--primary);color:var(--action-text);font-weight:700;
 }
 #main-content :is(summary,a,button,input,select):focus-visible { outline:3px solid var(--primary);outline-offset:3px; }

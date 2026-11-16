@@ -203,6 +203,7 @@
           <h2 id="title-calidad">Calidad y trazabilidad ETL</h2>
           <p>Registros afectados durante el último proceso de extracción y transformación.</p></div>
         </div>
+        <p class="notice" id="audit-summary" role="status"></p>
         <div class="dashboard-grid">
           <section class="card w12"><h3>Fuentes del tablero actual</h3>
             <p class="sub">Los registros observados se conservan para revisión. No se suman a los descartes.</p>
@@ -270,7 +271,7 @@
             <output id="priority-weights" for="priority-weight"></output>
             <p class="sub">La brecha indica cuánto falta en porcentaje. Las dosis faltantes reflejan el volumen necesario. El ranking combina ambos criterios y depende de los datos disponibles para estos filtros.</p>
             <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
-            <button type="button" data-next-step="1">Regresar a selección</button>
+            <button type="button" data-next-step="1" data-secondary>Regresar a selección</button>
             <button type="button" data-next-step="3">Continuar a simulación</button>
           </section>
           <section class="card w12" data-decision-panel="3" hidden><h3>Escenarios de dosis</h3>
@@ -281,7 +282,7 @@
             <p id="scenario-status" role="status"></p>
             <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
             <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
-            <button type="button" data-next-step="2">Regresar a priorización</button>
+            <button type="button" data-next-step="2" data-secondary>Regresar a priorización</button>
             <button type="button" data-next-step="4">Continuar a resultados</button>
           </section>
           <section class="card w12" data-decision-panel="4" hidden><h3>Alertas</h3>
@@ -293,7 +294,7 @@
             <p class="sub">Incluye filtros, pesos, fuente, corte y supuestos de simulación.</p>
             <p>Las simulaciones mantienen fijo el denominador y no incluyen cambios de población ni respuestas futuras a una intervención.</p>
             <div class="chart-actions"><button id="decision-export" type="button" disabled>Descargar reporte CSV</button></div>
-            <button type="button" data-next-step="3">Regresar a simulación</button>
+            <button type="button" data-next-step="3" data-secondary>Regresar a simulación</button>
           </section>
         </div>
       </section>
@@ -404,14 +405,27 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       const date = new Date(value);
       return value && Number.isFinite(date.getTime()) ? auditTime.format(date) : '—';
     };
+    const latest = runs.at(-1);
+    const status = $('audit-summary');
+    status.dataset.status = latest?.estado === 'Fallida' ? 'error' : '';
+    status.textContent = latest
+      ? `Última ejecución: ${latest.estado.toLowerCase()} · ${time(latest.fin || latest.inicio)}. ${latest.estado === 'Fallida' ? 'El tablero conserva la última copia válida.' : 'Esta ejecución terminó correctamente.'}`
+      : 'Este tablero todavía no tiene un historial de actualizaciones.';
+    const explanation = run => {
+      if (run.estado !== 'Fallida') return '—';
+      if (run.fase?.startsWith('Descarga')) return 'La fuente no respondió o la descarga quedó incompleta.';
+      if (run.fase === 'Publicación') return 'No se pudieron publicar los archivos de esta actualización.';
+      return 'La actualización encontró datos que no superaron la validación.';
+    };
     auditTable('audit-runs',['Inicio','Fin','Estado','Fase','Detalle'],runs.slice().reverse().map(run =>
-      [time(run.inicio),time(run.fin),run.estado,run.fase,run.detalle ?? '—']));
+      [time(run.inicio),time(run.fin),run.estado,run.fase,explanation(run)]));
   }
   mostrarAuditoria(D.auditoria ?? []);
   function reportRefresh(message, state = '') {
     refreshStatus.textContent = message;
     refreshStatus.dataset.status = state;
     refreshStatus.hidden = false;
+    if (state === 'error') $('data-freshness').textContent = `Extracción: ${D.generado} · última copia válida`;
   }
   if (new URLSearchParams(location.search).has('sin-conexion')) {
     reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
