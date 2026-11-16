@@ -1,3 +1,10 @@
 salidas/
 __pycache__/
 dist/
+.venv/
+venv/
+*.py[cod]
+build/
+*.spec
+.pytest_cache/
+.coverage
