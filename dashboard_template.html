@@ -187,6 +187,23 @@ tr:last-child td { border-bottom:0; }
 @media (prefers-reduced-motion:reduce) {
   html { scroll-behavior:auto; }
 }
+.temporal-controls,.summary-links { margin-top:18px; }
+.summary-links,.decision-steps { display:flex;gap:12px;flex-wrap:wrap; }
+.kpi details { color:var(--ink2);font-size:12px; }
+summary { cursor:pointer; }
+summary:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible { outline:3px solid var(--primary);outline-offset:3px; }
+.territory-map-single { grid-template-columns:minmax(0,1fr); }
+.territory-sheet { padding:12px 14px;background:var(--surface-raised);border-radius:10px;margin-bottom:16px; }
+#decision-panels button,.decision-steps button,#decision-panels :is(input,select),.temporal-controls select {
+  min-height:38px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;
+  background:var(--surface-raised);color:var(--ink);font:inherit;
+}
+.decision-steps { margin-bottom:14px; }
+.decision-steps [aria-current="step"] { border-color:var(--primary);color:var(--primary);background:var(--primary-soft);font-weight:700; }
+#decision-panels button[data-next-step] { margin-top:14px; }
+#decision-panels [aria-invalid="true"] { border-color:var(--crit); }
+#scenario-table tr:nth-child(n+2) th { color:var(--primary); }
+[data-status="error"] { border-left:3px solid var(--crit);padding-left:8px; }
 </style>
 </head>
 <body>
@@ -213,12 +230,12 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">VacunaBI · Bogotá D.C.</p>
           <h1 id="module-title">Resumen general</h1></div>
-        <div class="topbar-actions"><span class="version">V2.0</span>
+        <div class="topbar-actions"><span class="version">V2.1</span>
           <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
-      <p class="meta" id="data-freshness">Cargando contexto de datos…</p>
+      <p class="meta" id="data-freshness" role="status">Cargando contexto de datos…</p>
       <p class="meta" id="refresh-status" role="status" hidden></p>
     </header>
     <main id="main-content" tabindex="-1">
@@ -568,12 +585,15 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       [time(run.inicio),time(run.fin),run.estado,run.fase,run.detalle ?? '—']));
   }
   mostrarAuditoria(D.auditoria ?? []);
-  function reportRefresh(message) {
+  function reportRefresh(message, state = '') {
     refreshStatus.textContent = message;
+    refreshStatus.dataset.status = state;
     refreshStatus.hidden = false;
   }
   if (new URLSearchParams(location.search).has('sin-conexion')) {
-    reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.');
+    reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
+  } else if (new URLSearchParams(location.search).has('actualizado')) {
+    reportRefresh('Actualización completada.');
   }
   async function syncAudit() {
     try {
@@ -591,6 +611,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   enableRefresh();
   refresh.addEventListener('click',async () => {
     refresh.disabled = true;
+    refresh.setAttribute('aria-busy','true');
     reportRefresh('Consultando Datos Abiertos Bogotá…');
     try {
       const result = await window.pywebview.api.refresh_data();
@@ -599,13 +620,14 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         url.search = '?actualizado=' + Date.now();
         location.replace(url.href);
       } else {
-        reportRefresh(result.message);
+        reportRefresh(result.message,'error');
         await syncAudit();
       }
     } catch {
-      reportRefresh('Falló la consulta. Se conserva el tablero anterior.');
+      reportRefresh('Falló la consulta. Se conserva el tablero anterior.','error');
     } finally {
       refresh.disabled = false;
+      refresh.removeAttribute('aria-busy');
     }
   });
   const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare', 'fMonthFrom', 'fMonthTo'];
