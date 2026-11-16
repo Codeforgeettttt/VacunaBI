@@ -14,6 +14,7 @@ on:
       - 'chart.umd.min.js'
       - 'requirements.txt'
       - 'test_*.py'
+      - 'test_*.cjs'
 
 permissions:
   contents: read
@@ -34,6 +35,8 @@ jobs:
           python test_etl.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m unittest -v test_etl_regression test_dashboard_template
+      - name: Probar cálculos de decisiones
+        run: node --test test_decisiones.cjs
       - name: Compilar VacunaBI.exe
         run: >-
           python -m PyInstaller --onefile --windowed --name VacunaBI
