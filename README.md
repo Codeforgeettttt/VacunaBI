@@ -151,6 +151,8 @@ GitHub Actions también compila el ejecutable cuando cambian los archivos de la 
 
 ## Fuentes y datos generados
 
+La vista **Calidad de datos** muestra el corte publicado por cada fuente, las filas originales, aceptadas, descartadas y observadas, y el historial reciente de ejecuciones. Consulta el [diccionario de auditoría](docs/CALIDAD_DATOS.md).
+
 **Endpoint CKAN:** `https://datosabiertos.bogota.gov.co/api/3/action/datastore_search`
 
 | Fuente | ID de recurso |

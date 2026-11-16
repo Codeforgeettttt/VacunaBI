@@ -8,6 +8,7 @@ Uso:  python etl.py          (cada ejecución trae los datos más recientes)
 """
 import json
 import math
+import shutil
 import sys
 import unicodedata
 import urllib.request
@@ -315,6 +316,30 @@ def ahora():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def publicar_salidas(destino):
+    archivos = sorted(destino.iterdir(), key=lambda archivo: archivo.name == "dashboard.html")
+    respaldo = destino / "respaldo"
+    respaldo.mkdir()
+    for archivo in archivos:
+        anterior = OUT / archivo.name
+        if anterior.is_file():
+            shutil.copy2(anterior, respaldo / archivo.name)
+    reemplazados = []
+    try:
+        for archivo in archivos:
+            objetivo = OUT / archivo.name
+            archivo.replace(objetivo)
+            reemplazados.append(objetivo)
+    except OSError:
+        for objetivo in reversed(reemplazados):
+            anterior = respaldo / objetivo.name
+            if anterior.is_file():
+                anterior.replace(objetivo)
+            else:
+                objetivo.unlink(missing_ok=True)
+        raise
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     historial = historial_auditoria()
@@ -347,10 +372,7 @@ def main():
             publicado = {**ejecucion, "fin": ahora(), "estado": "Correcta", "fase": "Completa"}
             guardar_salidas(destino, raw_sec, raw_men, sec, mens, anu, kpis, logs, [*historial, publicado])
             escribir_texto(destino / "auditoria.json", json.dumps([*historial, publicado], ensure_ascii=False, indent=2))
-            for archivo in destino.iterdir():
-                if archivo.name != "dashboard.html":
-                    archivo.replace(OUT / archivo.name)
-            (destino / "dashboard.html").replace(OUT / "dashboard.html")
+            publicar_salidas(destino)
     except Exception as error:
         historial.append({**ejecucion, "fin": ahora(), "estado": "Fallida", "detalle": str(error)})
         try:
