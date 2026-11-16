@@ -302,10 +302,6 @@ Chart.register(metaLine);
 document.getElementById('meta-info').textContent = `Fuente: Datos Abiertos Bogotá · corte sectorial: ${K.fecha_corte_sectores}`;
 document.getElementById('data-freshness').textContent = `Extracción: ${D.generado} · tablero disponible`;
 const set = (id, v, s, ok) => { document.getElementById(id).textContent = v; const e = document.getElementById(id + 's'); e.textContent = s; e.className = 'st ' + (ok ? 'ok' : 'bad'); };
-set('k1', K.cobertura_primera_infancia_sectores + ' %', `${(META - K.cobertura_primera_infancia_sectores).toFixed(1)} pts bajo la meta`, K.cobertura_primera_infancia_sectores >= META);
-set('k2', K.caida_esquema_1a5 + ' pts', `${K.tv_1anio_ult} % → ${K.tv_5anios_ult} % (${K.ultimo_anio_cerrado})`, K.caida_esquema_1a5 <= 0);
-set('k3', `${K.localidades_bajo_meta_infancia} de 20`, `Menor: ${K.localidad_menor_cobertura} (${K.localidad_menor_cobertura_valor} %)`, K.localidades_bajo_meta_infancia === 0);
-set('k4', fmt(K.dosis_faltantes_meta_infancia), 'en primera infancia, población de los sectores', K.dosis_faltantes_meta_infancia === 0);
 
 // 1. Serie anual (años cerrados)
 const cerr = D.anual.filter(r => r.anio_completo), bios = [...new Set(cerr.map(r => r.biologico))];
@@ -613,7 +609,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     values.className = 'chart-values';
     const summary = document.createElement('summary');
     summary.textContent = 'Consultar tabla del gráfico';
-    summary.setAttribute('aria-label','Consultar tabla: ' + title.textContent);
+    summary.setAttribute('aria-label','Consultar tabla del gráfico: ' + title.textContent);
     const region = document.createElement('div');
     region.className = 'scroll';
     region.tabIndex = 0;
@@ -650,7 +646,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   function renderChartValues(chart) {
     const region = chart.values.lastElementChild;
     const heading = chart.canvas.closest('.card').querySelector('h3').textContent;
-    chart.values.firstElementChild.setAttribute('aria-label','Consultar tabla: ' + heading);
+    chart.values.firstElementChild.setAttribute('aria-label','Consultar tabla del gráfico: ' + heading);
     region.setAttribute('aria-label','Valores: ' + heading);
     const columns = chart.data.datasets.map((dataset,index) => ({dataset,index})).filter(item => chart.isDatasetVisible(item.index));
     if (!columns.length) {
