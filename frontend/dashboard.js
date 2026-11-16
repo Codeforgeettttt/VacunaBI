@@ -43,9 +43,7 @@
     refreshStatus.hidden = false;
     if (state === 'error') $('data-freshness').textContent = `Extracción: ${D.generado} · última copia válida`;
   }
-  if (new URLSearchParams(location.search).has('sin-conexion')) {
-    reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
-  } else if (new URLSearchParams(location.search).has('actualizado')) {
+  if (new URLSearchParams(location.search).has('actualizado')) {
     reportRefresh('Actualización completada.');
   }
   async function syncAudit() {
@@ -56,9 +54,17 @@
       // Se conserva la auditoría publicada en el HTML.
     }
   }
-  function enableRefresh() {
+  async function enableRefresh() {
     refresh.hidden = !window.pywebview?.api?.refresh_data;
-    if (!refresh.hidden) syncAudit();
+    if (refresh.hidden) return;
+    await syncAudit();
+    try {
+      if (await window.pywebview.api.usa_copia_local?.() && refreshStatus.hidden) {
+        reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.','error');
+      }
+    } catch {
+      // El tablero y la actualización siguen disponibles aunque falle esta consulta de estado.
+    }
   }
   window.addEventListener('pywebviewready',enableRefresh);
   enableRefresh();
