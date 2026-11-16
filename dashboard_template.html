@@ -82,6 +82,10 @@ button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
 .explorer details[open] > summary { margin-bottom:10px; }
 .chart-actions button[data-series][aria-pressed="true"] { border-color:var(--primary);background:var(--primary-soft); }
 .chart-actions button[data-series][aria-pressed="false"] { color:var(--muted); }
+.chart-values { margin-top:12px; }
+.chart-values summary { width:fit-content;cursor:pointer;color:var(--primary);padding:5px 0; }
+.chart-values summary:focus-visible,.scroll:focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
+.chart-values caption { text-align:left;padding:8px 0;color:var(--ink2);font-size:12px; }
 #manual-status[data-active] { border-left:3px solid var(--primary);padding-left:10px; }
 .chart-dialog { width:min(94vw,1100px);max-height:88vh;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px; }
 .chart-dialog::backdrop { background:#000a; }
@@ -685,6 +689,20 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     actions.append(expand);
     chart.canvas.parentElement.after(actions);
     chart.actions = actions;
+    const values = document.createElement('details');
+    values.className = 'chart-values';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Consultar tabla del gráfico';
+    summary.setAttribute('aria-label','Consultar tabla: ' + title.textContent);
+    const region = document.createElement('div');
+    region.className = 'scroll';
+    region.tabIndex = 0;
+    region.setAttribute('role','region');
+    region.setAttribute('aria-label','Valores: ' + title.textContent);
+    values.append(summary,region);
+    actions.after(values);
+    chart.values = values;
+    values.addEventListener('toggle',() => { if (values.open) renderChartValues(chart); });
     expand.addEventListener('click', () => {
       opener = expand;
       $('chart-dialog-title').textContent = title.textContent;
@@ -709,7 +727,26 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     statusByChart[id] = status;
     charts[id].options.scales[charts[id].config.type === 'bar' ? 'x' : 'y'].max = undefined;
   }
-  function setChart(id, labels, datasets, message, source) {
+  function renderChartValues(chart) {
+    const region = chart.values.lastElementChild;
+    const heading = chart.canvas.closest('.card').querySelector('h3').textContent;
+    chart.values.firstElementChild.setAttribute('aria-label','Consultar tabla: ' + heading);
+    region.setAttribute('aria-label','Valores: ' + heading);
+    const columns = chart.data.datasets.map((dataset,index) => ({dataset,index})).filter(item => chart.isDatasetVisible(item.index));
+    if (!columns.length) {
+      region.innerHTML = '<p>Activa al menos una serie para consultar sus valores.</p>';
+      return;
+    }
+    const counts = chart.tableCounts;
+    const titles = counts ? ['Cobertura (%)','Dosis','Denominador'] : columns.map(({dataset}) => dataset.label ?? 'Cobertura (%)');
+    const table = chart.data.labels.map((label,index) => {
+      const result = columns.map(({dataset}) => dataset.data[index] == null ? 'Sin datos' : fmt(dataset.data[index]) + ' %');
+      if (counts) result.push(fmt(counts[index].dosis_aplicada),fmt(counts[index].denominador));
+      return `<tr><th scope="row">${esc(label)}</th>${result.map(value => `<td>${esc(value)}</td>`).join('')}</tr>`;
+    }).join('');
+    region.innerHTML = `<table><caption>${esc(chart.tableSource)}</caption><thead><tr><th scope="col">Categoría</th>${titles.map(title => `<th scope="col">${esc(title)}</th>`).join('')}</tr></thead><tbody>${table}</tbody></table>`;
+  }
+  function setChart(id, labels, datasets, message, source, counts = null) {
     const chart = charts[id];
     chart.data.labels = labels;
     chart.data.datasets = datasets;
@@ -717,6 +754,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     statusByChart[id].hidden = !message;
     statusByChart[id].textContent = message;
     chart.options.plugins.tooltip.callbacks.footer = () => source;
+    chart.tableSource = source;
+    chart.tableCounts = counts;
+    chart.values.hidden = Boolean(message);
+    if (chart.values.open) renderChartValues(chart);
     chart.update('none');
     const controls = chart.actions;
     controls.hidden = Boolean(message);
@@ -733,6 +774,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         chart.setDatasetVisibility(index,!chart.isDatasetVisible(index));
         button.setAttribute('aria-pressed',String(chart.isDatasetVisible(index)));
         chart.update('none');
+        if (chart.values.open) renderChartValues(chart);
       });
       controls.append(button);
     });
@@ -743,7 +785,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       const row = rows[dataIndex];
       return `${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} de ${fmt(row.denominador)}`;
     };
-    setChart(id, rows.map(r => r[key]), [dataset], rows.length ? '' : 'Sin datos para esta selección.', source);
+    setChart(id, rows.map(r => r[key]), [dataset], rows.length ? '' : 'Sin datos para esta selección.', source, rows);
   }
   const color = name => S[(Math.max(0,bios.indexOf(name))) % S.length];
   function series(rows, periods, key) {
