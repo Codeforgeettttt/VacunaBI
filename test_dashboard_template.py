@@ -1,4 +1,4 @@
-"""Pruebas sin red para verificar la estructura UI/UX de VacunaBI V1.1.
+"""Pruebas sin red para verificar la estructura UI de VacunaBI.
 
 Uso: python -m unittest -v test_dashboard_template
 """
@@ -78,6 +78,15 @@ class TestDashboardV11(unittest.TestCase):
     def test_graficos_se_redimensionan_al_cambiar_de_vista(self):
         self.assertIn("hashchange", self.content)
         self.assertRegex(self.content, r"chart\.resize\(\)")
+
+    def test_controles_de_exploracion_y_exportacion(self):
+        controls = {
+            "fRegion", "fYear", "fLocal", "fBio", "fSector", "fMode", "fCompare",
+            "fMonthFrom", "fMonthTo", "fReset", "filters-status", "table-source",
+            "table-search", "table-sort", "table-prev", "table-next",
+            "selection-table", "export-csv", "export-xlsx", "chart-dialog",
+        }
+        self.assertTrue(controls.issubset(self.document.ids))
 
 
 if __name__ == "__main__":
