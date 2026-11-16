@@ -406,6 +406,15 @@ tr:last-child td { border-bottom:0; }
             <p class="sub">El peso restante se asigna a las dosis faltantes. Las dos medidas se normalizan antes de sumarlas.</p>
             <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
           </section>
+          <section class="card w12"><h3>Escenarios de dosis</h3>
+            <div class="controls">
+              <label>Localidad <select id="scenario-local"><option value="">Total de la selección</option></select></label>
+              <label>Dosis adicionales A <input id="scenario-a" type="number" value="0" min="0" step="1"></label>
+              <label>Dosis adicionales B <input id="scenario-b" type="number" value="100" min="0" step="1"></label>
+            </div>
+            <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
+            <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
+          </section>
         </div>
       </section>
     </main>
@@ -897,8 +906,20 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     ctx.prioridades = model.priorizar(ctx.filas,META,weight);
     auditTable('priority-table',['Localidad','Cobertura (%)','Brecha (pp)','Dosis faltantes','Puntaje'],
       ctx.prioridades.map(row => [row.localidad,fmt(+row.dato.cobertura.toFixed(1)),fmt(+row.dato.brecha.toFixed(1)),fmt(row.dato.faltantes),fmt(+row.puntaje.toFixed(1))]));
+    const picker = $('scenario-local'), local = picker.value;
+    picker.replaceChildren(new Option('Total de la selección',''));
+    append(picker,available(ctx.filas,'localidad'));
+    if ([...picker.options].some(option => option.value === local)) picker.value = local;
+    const territorial = ctx.filas.find(row => row.localidad === picker.value);
+    const baseline = territorial ? model.medicion(territorial.dosis_aplicada,territorial.denominador,META) : data;
+    const a = model.escenario(baseline,$('scenario-a').valueAsNumber,META);
+    const b = model.escenario(baseline,$('scenario-b').valueAsNumber,META);
+    ctx.escenarios = baseline ? [['Dato observado',baseline],['Escenario A',a],['Escenario B',b]] : [];
+    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Dosis para la meta'],
+      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(row.faltantes)] : [label,'Ingresa dosis enteras no negativas','—','—','—']));
   }
   $('priority-weight').addEventListener('input',refreshDecisions);
+  ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
   function render() {
     const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other, fMonthFrom:from, fMonthTo:to} =
       Object.fromEntries(filters.map(id => [id, $(id).value]));
