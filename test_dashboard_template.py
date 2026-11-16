@@ -85,6 +85,11 @@ class TestDashboardV11(unittest.TestCase):
         self.assertIn("/*__NAVEGACION__*/", self.content)
         self.assertTrue({"module-title", "summary-finding", "kGap", "scenario-status", "priority-weights"}.issubset(self.document.ids))
 
+    def test_estados_y_contexto_de_v22(self):
+        self.assertIn("/*__COMPONENTES__*/", self.content)
+        self.assertTrue({"module-description", "period-status", "territory-quality",
+                         "decision-progress", "decision-selection", "audit-summary", "export-status"}.issubset(self.document.ids))
+
     def test_controles_de_exploracion_y_exportacion(self):
         controls = {
             "advanced-filters", "fYear", "fLocal", "fBio", "fSector", "fMode", "fCompare",
