@@ -311,12 +311,17 @@ tr:last-child td { border-bottom:0; }
           <a class="link-action" href="#metodologia">Cómo se calcula <span aria-hidden="true">→</span></a>
         </div>
         <div class="dashboard-grid">
-          <section class="card w12" aria-labelledby="territory-title">
+          <section class="card w6" aria-labelledby="territory-title">
             <h3 id="territory-title">Mapa de cobertura por localidad</h3>
             <p class="sub">Primera infancia. Selecciona una localidad para consultar el mismo valor del ranking.</p>
-            <div class="territory-map">
+            <div class="territory-map territory-map-single">
               <svg id="territory-map" viewBox="0 0 450 580" role="group" aria-label="Localidades de Bogotá"></svg>
-              <div>
+            </div>
+            <ul class="map-legend" id="territory-legend" aria-label="Intervalos visuales de cobertura"></ul>
+            <p class="sub">Límites distritales de la Secretaría Distrital de Planeación.</p>
+          </section>
+          <section class="card w6"><h3>Cobertura por localidad</h3>
+            <div class="territory-sheet">
                 <p id="territory-detail" role="status"></p>
                 <p id="territory-district"></p>
                 <label class="territory-compare">Comparar con otra localidad
@@ -330,19 +335,14 @@ tr:last-child td { border-bottom:0; }
                   <summary>Evolución por corte</summary>
                   <div class="scroll" id="territory-periods" tabindex="0" role="region" aria-label="Cobertura histórica de la localidad"></div>
                 </details>
-                <ul class="map-legend" id="territory-legend" aria-label="Intervalos visuales de cobertura"></ul>
-                <p class="sub">Límites distritales de la Secretaría Distrital de Planeación. Los intervalos organizan la lectura visual.</p>
-              </div>
             </div>
-          </section>
-          <section class="card w12"><h3>Cobertura por localidad</h3>
             <p class="sub">Pentavalente, triple viral y refuerzos en colegios, ICBF e integración. Línea punteada: 95 %.</p>
             <div class="chart tall"><canvas id="cLoc" role="img" aria-label="Ranking de cobertura de primera infancia de las localidades de Bogotá"></canvas></div>
           </section>
-          <section class="card w12"><h3>Mapa de calor: localidad × sector</h3>
+          <details class="card w12"><summary>Análisis detallado · mapa de calor por localidad y sector</summary>
             <p class="sub">Cobertura (%) = dosis aplicadas / denominador. Los valores faltantes se muestran con un guion.</p>
             <div class="scroll" id="heat" role="region" aria-label="Tabla de cobertura por localidad y sector" tabindex="0"></div>
-          </section>
+          </details>
         </div>
       </section>
 
@@ -719,7 +719,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     }
     const row = lookup.get(selected);
     $('territory-detail').textContent = selected
-      ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}.`
+      ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}. ${fmt(+model.medicion(row.dosis_aplicada,row.denominador,META).brecha.toFixed(1))} pp de brecha y ${fmt(model.medicion(row.dosis_aplicada,row.denominador,META).faltantes)} dosis adicionales estimadas. Fuente: ${context.source}.`
         : `${selected} · sin datos para estos filtros.`
       : `${rows.length} de ${territory.length} localidades con cobertura para estos filtros.`;
     $('territory-district').textContent = row && district
@@ -751,7 +751,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       return;
     }
     const gap = +(row.cobertura - other.cobertura).toFixed(1);
-    comparison.textContent = `${other.localidad} · ${fmt(other.cobertura)} % · ${fmt(other.dosis_aplicada)} dosis / ${fmt(other.denominador)} · corte ${cut}. Diferencia (${selected} − ${other.localidad}): ${fmt(gap)} pp.`;
+    const interpretation = gap === 0 ? 'Las coberturas coinciden.' : `${gap > 0 ? selected : other.localidad} presenta la mayor cobertura en este corte y selección.`;
+    comparison.textContent = `${other.localidad} · ${fmt(other.cobertura)} % · ${fmt(other.dosis_aplicada)} dosis / ${fmt(other.denominador)} · corte ${cut}. Diferencia (${selected} − ${other.localidad}): ${fmt(gap)} pp. ${interpretation}`;
   }
   for (const id of Object.keys(charts)) {
     const chart = charts[id];
