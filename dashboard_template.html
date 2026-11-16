@@ -400,6 +400,7 @@ tr:last-child td { border-bottom:0; }
           <p>Seguimiento sectorial oficial de primera infancia. Las cargas manuales quedan fuera del análisis.</p></div></div>
         <div class="dashboard-grid" id="decision-panels">
           <section class="card w12"><h3>Resumen ejecutivo</h3><p id="decision-summary" role="status"></p>
+            <p id="decision-finding"></p>
             <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
           <section class="card w12"><h3>Prioridades territoriales</h3>
             <label>Peso de la brecha (%) <input id="priority-weight" type="number" min="0" max="100" value="60" step="1"></label>
@@ -913,6 +914,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       : 'No hay registros sectoriales oficiales compatibles con los filtros.';
     const weight = $('priority-weight').valueAsNumber;
     ctx.prioridades = model.priorizar(ctx.filas,META,weight);
+    const first = ctx.prioridades[0];
+    $('decision-finding').textContent = first?.dato.faltantes
+      ? `Revisar primero ${first.localidad}. En el corte ${ctx.corte}, el seguimiento sectorial registra ${fmt(+first.dato.cobertura.toFixed(1))} %; faltan ${fmt(first.dato.faltantes)} dosis para alcanzar la meta bajo el denominador observado. Regla: ${weight} % de peso para la brecha.`
+      : '';
     auditTable('priority-table',['Localidad','Cobertura (%)','Brecha (pp)','Dosis faltantes','Puntaje'],
       ctx.prioridades.map(row => [row.localidad,fmt(+row.dato.cobertura.toFixed(1)),fmt(+row.dato.brecha.toFixed(1)),fmt(row.dato.faltantes),fmt(+row.puntaje.toFixed(1))]));
     const picker = $('scenario-local'), local = picker.value;
