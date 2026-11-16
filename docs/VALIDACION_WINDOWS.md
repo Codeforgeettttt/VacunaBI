@@ -1,6 +1,6 @@
 # VacunaBI — Validación de salida y aceptación en Windows
 
-**Alcance:** aplicación V2.2 y estabilizaciones V2.2.1–V2.2.2.
+**Alcance:** aplicación V2.2 y estabilizaciones V2.2.1–V2.2.3.
 
 La corrección de recarga en V2.2.1 usa la API de pywebview para abrir `salidas/dashboard.html` sin añadir parámetros a la dirección `file://`. Comprobar especialmente WIN-09 y WIN-10 en un equipo real; las regresiones automatizadas no sustituyen esta prueba.
 
@@ -11,6 +11,12 @@ El workflow de Windows ejecuta pruebas de ETL, decisiones, interfaz, exportació
 En V2.2.2, confirmar con una segunda apertura que la copia compatible se muestra sin descargar otra vez ambas fuentes. Pulsar **Actualizar datos** debe iniciar una consulta explícita, no una recarga automática al abrir.
 
 **Importante:** que el ejecutable se compile y las pruebas pasen no demuestra que la aplicación se haya iniciado y utilizado en un equipo Windows. El uso manual se valida por separado.
+
+## Rendimiento de la API (V2.2.3)
+
+La actualización explícita descarga en paralelo el recurso sectorial y el mensual, con hasta dos páginas concurrentes por recurso. La base anterior no se reemplaza si alguna página está incompleta o tiene totales/identificadores inconsistentes.
+
+Para medir la mejora real, registrar el tiempo de **Actualizar datos** con la misma conexión y las mismas condiciones que una versión anterior. No inferir aceleración por la aprobación de pruebas simuladas. Confirmar también que el indicador de actualización termina y el corte y el denominador siguen siendo correctos.
 
 ## Lista de aceptación manual — Windows 10/11
 
