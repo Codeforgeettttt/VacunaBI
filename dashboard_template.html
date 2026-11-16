@@ -415,6 +415,11 @@ tr:last-child td { border-bottom:0; }
             <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
             <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
           </section>
+          <section class="card w12"><h3>Alertas</h3>
+            <p class="sub">Los descensos se calculan entre años consecutivos cerrados del mismo biológico distrital.</p>
+            <div class="scroll" id="decision-alerts" tabindex="0" role="region" aria-label="Alertas de cobertura"></div>
+            <a class="link-action" href="#calidad">Consultar calidad de las fuentes</a>
+          </section>
         </div>
       </section>
     </main>
@@ -917,6 +922,12 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     ctx.escenarios = baseline ? [['Dato observado',baseline],['Escenario A',a],['Escenario B',b]] : [];
     auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Dosis para la meta'],
       ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(row.faltantes)] : [label,'Ingresa dosis enteras no negativas','—','—','—']));
+    const alertRows = ctx.filas.map(row => ({...row,dato:model.medicion(row.dosis_aplicada,row.denominador,META)}));
+    ctx.alertas = model.alertas(alertRows,ctx.anual,META,D.logs);
+    if (ctx.alertas.length) auditTable('decision-alerts',['Regla','Evidencia','Valor'],ctx.alertas.map(row => [
+      row.tipo,row.detalle,row.valor == null ? '—' : `${fmt(+row.valor.toFixed(1))} ${row.tipo === 'Descenso distrital' ? 'pp' : '%'}`
+    ]));
+    else $('decision-alerts').textContent = 'No hay alertas para los datos comparables de esta selección.';
   }
   $('priority-weight').addEventListener('input',refreshDecisions);
   ['scenario-local','scenario-a','scenario-b'].forEach(id => $(id).addEventListener('input',refreshDecisions));
