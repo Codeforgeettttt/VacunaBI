@@ -7,6 +7,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; base-uri 'none'; form-action 'none'">
 <title>VacunaBI · Cobertura de vacunación Bogotá D.C.</title>
 <script>/*__CHARTJS__*/</script><!-- Chart.js local inyectado por etl.py; sin CDN -->
+<script>/*__DECISIONES__*/</script>
 <style>
 :root {
   color-scheme: dark;
@@ -200,6 +201,7 @@ tr:last-child td { border-bottom:0; }
       <a href="#localidades" class="nav-link" data-nav="localidades"><span class="nav-icon" aria-hidden="true">◎</span>Localidades</a>
       <a href="#sectores" class="nav-link" data-nav="sectores"><span class="nav-icon" aria-hidden="true">◈</span>Sectores y biológicos</a>
       <a href="#calidad" class="nav-link" data-nav="calidad"><span class="nav-icon" aria-hidden="true">▤</span>Calidad de datos</a>
+      <a href="#decisiones" class="nav-link" data-nav="decisiones"><span class="nav-icon" aria-hidden="true">⌁</span>Decisiones</a>
       <a href="#metodologia" class="nav-link" data-nav="metodologia"><span class="nav-icon" aria-hidden="true">ⓘ</span>Metodología</a>
     </nav>
     <div class="sidebar-note"><strong>Meta de referencia: 95 %</strong>
@@ -391,6 +393,14 @@ tr:last-child td { border-bottom:0; }
             <div class="definition"><strong>Procesamiento</strong><p>Los indicadores se calculan mediante el proceso ETL de VacunaBI, manteniendo las reglas originales de la versión base.</p></div>
             <div class="definition"><strong>Alcance actual</strong><p>Las fuentes procesadas en esta versión corresponden a Bogotá D.C.; Cundinamarca es una ampliación prevista.</p></div>
           </section>
+        </div>
+      </section>
+      <section class="page" id="decisiones" data-page="decisiones" aria-labelledby="title-decisiones" hidden>
+        <div class="page-lead"><div><h2 id="title-decisiones">Apoyo a decisiones</h2>
+          <p>Seguimiento sectorial oficial de primera infancia. Las cargas manuales quedan fuera del análisis.</p></div></div>
+        <div class="dashboard-grid" id="decision-panels">
+          <section class="card w12"><h3>Resumen ejecutivo</h3><p id="decision-summary" role="status"></p>
+            <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
         </div>
       </section>
     </main>
@@ -1151,7 +1161,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
 
 <script>
 (function () {
-  const views = new Set(['resumen','localidades','sectores','calidad','metodologia']);
+  const views = new Set(['resumen','localidades','sectores','calidad','metodologia','decisiones']);
   const links = [...document.querySelectorAll('[data-nav]')];
   const pages = [...document.querySelectorAll('[data-page]')];
   const main = document.getElementById('main-content');

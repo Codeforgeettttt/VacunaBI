@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 TEMPLATE = Path(__file__).with_name("dashboard_template.html")
-PAGES = {"resumen", "localidades", "sectores", "calidad", "metodologia"}
+PAGES = {"resumen", "localidades", "sectores", "calidad", "metodologia", "decisiones"}
 CHARTS = {"cAnual", "cActual", "cLoc", "cInst", "cGrupo"}
 KPIS = {"k1", "k2", "k3", "k4"}
 
