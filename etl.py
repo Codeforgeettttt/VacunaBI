@@ -181,6 +181,12 @@ def calcular_kpis(sec, anu):
 
 def construir_dashboard(sec, anu, mens, kpis, logs):
     anio_actual = int(anu["anio"].max())
+    dimensiones = ["fecha_reporte", "localidad", "zona", "institucion", "grupo_biologico", "biologico"]
+    medidas = ["dosis_aplicada", "denominador"]
+    sectoriales = sec.loc[sec["denominador"].gt(0) & sec["dosis_aplicada"].ge(0), dimensiones + medidas].copy()
+    sectoriales["fecha_reporte"] = sectoriales["fecha_reporte"].dt.strftime("%Y-%m-%d")
+    columnas_mensuales = ["anio", "biologico", "mes_num", "vacunados_acum", "poblacion_meta", "cobertura_acum"]
+    mensual = mens.loc[mens["poblacion_meta"].gt(0), columnas_mensuales].dropna()
     datos = {
         "kpis": kpis,
         "meta": META,
@@ -189,6 +195,8 @@ def construir_dashboard(sec, anu, mens, kpis, logs):
         "anual": anu.to_dict("records"),
         "mensual_actual": mens[mens["anio"] == anio_actual][["biologico", "mes_num", "cobertura_acum"]].dropna().to_dict("records"),
         "anio_actual": anio_actual,
+        "sectoriales": sectoriales.to_dict("records"),
+        "mensual": mensual.to_dict("records"),
         "loc_infancia": cobertura(sec[sec["grupo_biologico"] == "Primera infancia"], ["localidad", "zona"])
             .sort_values("cobertura").to_dict("records"),
         "institucion": cobertura(sec, ["institucion"]).sort_values("cobertura").to_dict("records"),
@@ -198,7 +206,7 @@ def construir_dashboard(sec, anu, mens, kpis, logs):
     }
     plantilla = (RECURSOS / "dashboard_template.html").read_text(encoding="utf-8")
     html = (plantilla.replace("/*__CHARTJS__*/", (RECURSOS / "chart.umd.min.js").read_text(encoding="utf-8"))
-            .replace("/*__DATOS__*/null", json.dumps(datos, ensure_ascii=False, default=str)))
+            .replace("/*__DATOS__*/null", json.dumps(datos, ensure_ascii=False, default=str).replace("<", "\\u003c")))
     (OUT / "dashboard.html").write_text(html, encoding="utf-8")
 
 
