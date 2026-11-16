@@ -1,5 +1,11 @@
 # Registro de cambios — VacunaBI
 
+## [1.3.0]
+
+- Mapa de las 20 localidades con límites oficiales, filtros compartidos y ficha territorial.
+- Comparación de localidades y referencia distrital bajo el mismo corte y filtros.
+- Evolución territorial cuando hay al menos dos cortes comparables y exportación de la ficha en CSV.
+
 ## [1.2.0] — 2026-11-16
 
 - Filtros compartidos por año, localidad, sector y biológico para las dimensiones disponibles en cada fuente.

@@ -86,6 +86,17 @@ button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
 .chart-dialog { width:min(94vw,1100px);max-height:88vh;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px; }
 .chart-dialog::backdrop { background:#000a; }
 .chart-dialog .chart { height:min(62vh,620px); }
+.territory-map { display:grid;grid-template-columns:minmax(0,2fr) minmax(190px,1fr);gap:20px; }
+.territory-map svg { width:100%;height:clamp(340px,52vh,520px);background:#0d1825;border-radius:12px; }
+.territory-map path { stroke:var(--page);stroke-width:1.25;vector-effect:non-scaling-stroke;cursor:pointer; }
+.territory-map path:is(:focus-visible,[aria-pressed="true"]) { stroke:white;stroke-width:3;outline:none; }
+.map-legend { display:grid;gap:5px;padding:0;list-style:none;color:var(--ink2); }
+.map-legend span { display:inline-block;width:13px;height:13px;margin-right:7px;border-radius:3px;vertical-align:middle; }
+.territory-compare { display:grid;gap:5px;margin:14px 0;color:var(--ink2); }
+.territory-compare select { width:100%;min-height:38px;border:1px solid var(--border);border-radius:8px;
+  background:var(--surface-raised);color:var(--ink);font:inherit;padding:6px 9px; }
+.territory-compare select:focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
+@media (max-width:660px) { .territory-map { grid-template-columns:minmax(0,1fr); } }
 .version { border:1px solid rgba(25,200,193,.3);background:var(--primary-soft);
   color:var(--primary);padding:5px 11px;border-radius:999px;white-space:nowrap;
   font-weight:750;font-size:12px; }
@@ -115,7 +126,7 @@ button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
 .ok::before { content:"✓ ";color:var(--goodtxt); }
 .w12 { grid-column:span 12; }.w8 { grid-column:span 8; }
 .w6 { grid-column:span 6; }.w4 { grid-column:span 4; }
-.chart { position:relative;height:335px; }
+.chart { position:relative;height:335px;overflow:hidden; }
 .chart.tall { height:565px; }
 .chart.medium { height:420px; }
 .scroll { max-width:100%;overflow-x:auto; }
@@ -186,7 +197,7 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <div class="topbar-actions"><span class="version">V1.2.1</span>
+        <div class="topbar-actions"><span class="version">V1.3</span>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
@@ -273,6 +284,30 @@ tr:last-child td { border-bottom:0; }
           <a class="link-action" href="#metodologia">Cómo se calcula <span aria-hidden="true">→</span></a>
         </div>
         <div class="dashboard-grid">
+          <section class="card w12" aria-labelledby="territory-title">
+            <h3 id="territory-title">Mapa de cobertura por localidad</h3>
+            <p class="sub">Primera infancia. Selecciona una localidad para consultar el mismo valor del ranking.</p>
+            <div class="territory-map">
+              <svg id="territory-map" viewBox="0 0 450 580" role="group" aria-label="Localidades de Bogotá"></svg>
+              <div>
+                <p id="territory-detail" role="status"></p>
+                <p id="territory-district"></p>
+                <label class="territory-compare">Comparar con otra localidad
+                  <select id="territory-compare" disabled>
+                    <option value="">Elige una segunda localidad</option>
+                  </select>
+                </label>
+                <p id="territory-comparison" role="status"></p>
+                <div class="chart-actions"><button id="territory-export" type="button" disabled>Descargar ficha territorial CSV</button></div>
+                <details id="territory-history" hidden>
+                  <summary>Evolución por corte</summary>
+                  <div class="scroll" id="territory-periods" tabindex="0" role="region" aria-label="Cobertura histórica de la localidad"></div>
+                </details>
+                <ul class="map-legend" id="territory-legend" aria-label="Intervalos visuales de cobertura"></ul>
+                <p class="sub">Límites distritales de la Secretaría Distrital de Planeación. Los intervalos organizan la lectura visual.</p>
+              </div>
+            </div>
+          </section>
           <section class="card w12"><h3>Cobertura por localidad</h3>
             <p class="sub">Pentavalente, triple viral y refuerzos en colegios, ICBF e integración. Línea punteada: 95 %.</p>
             <div class="chart tall"><canvas id="cLoc" role="img" aria-label="Ranking de cobertura de primera infancia de las localidades de Bogotá"></canvas></div>
@@ -470,7 +505,9 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   const historicalYears = available(cerr, 'anio').map(Number);
   append($('fYear'), [...new Set([...available(D.anual, 'anio'), ...sector.map(r => +r.fecha_reporte.slice(0,4))])].sort((a,b) => b-a));
   append($('fCompare'), historicalYears.slice().reverse());
-  append($('fLocal'), available(sector, 'localidad'));
+  const territory = D.limites_localidades ?? [];
+  append($('fLocal'), territory.length ? available(territory,'localidad') : available(sector,'localidad'));
+  append($('territory-compare'), territory.length ? available(territory,'localidad') : available(sector,'localidad'));
   append($('fSector'), available(sector, 'institucion'));
   for (const [name, rows] of [['Serie distrital', D.anual], ['Seguimiento sectorial', sector]]) {
     const group = document.createElement('optgroup');
@@ -506,6 +543,90 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     opener?.focus();
   });
   const statusByChart = {};
+  const svg = $('territory-map');
+  const mapPaths = new Map();
+  const levels = [
+    [70,'#a44962','Menos de 70 %'], [80,'#d66d5c','70 a menos de 80 %'],
+    [90,'#d3a756','80 a menos de 90 %'], [95,'#5ba3bb','90 a menos de 95 %'],
+    [Infinity,'#299e83','95 % o más']
+  ];
+  const missing = '#33455b';
+  $('territory-legend').innerHTML = [...levels,[null,missing,'Sin datos para los filtros']]
+    .map(([,color,label]) => `<li><span aria-hidden="true" style="background:${color}"></span>${label}</li>`).join('');
+  if (territory.length) {
+    const points = territory.flatMap(item => item.anillos.flat());
+    const xs = points.map(point => point[0]), ys = points.map(point => point[1]);
+    const left = Math.min(...xs), right = Math.max(...xs), bottom = Math.min(...ys), top = Math.max(...ys);
+    const scale = Math.min(412/(right-left),544/(top-bottom));
+    const dx = (450-(right-left)*scale)/2, dy = (580-(top-bottom)*scale)/2;
+    for (const item of territory) {
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      const title = document.createElementNS('http://www.w3.org/2000/svg','title');
+      path.setAttribute('d',item.anillos.map(ring => ring.map(([x,y], i) =>
+        `${i ? 'L' : 'M'}${(dx+(x-left)*scale).toFixed(2)},${(dy+(top-y)*scale).toFixed(2)}`).join('') + 'Z').join(' '));
+      path.setAttribute('fill-rule','evenodd');
+      path.setAttribute('role','button');
+      path.setAttribute('tabindex','0');
+      path.append(title);
+      const select = () => {
+        $('fLocal').value = $('fLocal').value === item.localidad ? '' : item.localidad;
+        render();
+      };
+      path.addEventListener('click',select);
+      path.addEventListener('keydown',event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(); }
+      });
+      mapPaths.set(item.localidad,{path,title});
+      svg.append(path);
+    }
+  }
+  let fichaTerritorial = [];
+  function renderTerritory(rows, selected, cut, candidates, district, history, context) {
+    const lookup = new Map(rows.map(row => [row.localidad,row]));
+    for (const [name,{path,title}] of mapPaths) {
+      const row = lookup.get(name);
+      const label = name + (row ? `: ${fmt(row.cobertura)} %` : ': sin datos');
+      title.textContent = label;
+      path.setAttribute('aria-label',label);
+      path.setAttribute('aria-pressed',String(name === selected));
+      path.setAttribute('fill',row ? levels.find(([max]) => row.cobertura < max)[1] : missing);
+    }
+    const row = lookup.get(selected);
+    $('territory-detail').textContent = selected
+      ? row ? `${selected} · ${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} dosis / ${fmt(row.denominador)} · corte ${cut}.`
+        : `${selected} · sin datos para estos filtros.`
+      : `${rows.length} de ${territory.length} localidades con cobertura para estos filtros.`;
+    $('territory-district').textContent = row && district
+      ? `Referencia distrital del seguimiento sectorial: ${fmt(district.cobertura)} % (${fmt(district.dosis_aplicada)} dosis / ${fmt(district.denominador)}). Diferencia local: ${fmt(+(row.cobertura-district.cobertura).toFixed(1))} pp.` : '';
+    $('territory-history').hidden = !selected;
+    $('territory-periods').innerHTML = history.length > 1
+      ? '<table><thead><tr><th>Corte</th><th>Dosis</th><th>Denominador</th><th>Cobertura</th></tr></thead><tbody>' +
+        history.map(item => `<tr><th scope="row">${esc(item.fecha_reporte)}</th><td>${fmt(item.dosis_aplicada)}</td><td>${fmt(item.denominador)}</td><td>${fmt(item.cobertura)} %</td></tr>`).join('') +
+        '</tbody></table>'
+      : '<p>Se requieren al menos dos cortes de esta localidad con filtros compatibles para mostrar la evolución.</p>';
+    const picker = $('territory-compare');
+    picker.disabled = !selected;
+    for (const option of picker.options) option.disabled = option.value !== '' && option.value === selected;
+    if (!selected || picker.value === selected) picker.value = '';
+    const other = candidates.find(candidate => candidate.localidad === picker.value);
+    fichaTerritorial = row ? [
+      ['Localidad seleccionada',selected,row],
+      ...(district ? [['Referencia distrital','Bogotá D.C.',district]] : []),
+      ...(other ? [['Localidad de comparación',other.localidad,other]] : [])
+    ].map(([tipo,nombre,dato]) => [tipo,nombre,cut,context.biological,context.inst,dato.dosis_aplicada,dato.denominador,dato.cobertura,context.source]) : [];
+    $('territory-export').disabled = !fichaTerritorial.length;
+    const comparison = $('territory-comparison');
+    if (!picker.value) {
+      comparison.textContent = selected ? '' : 'Selecciona primero una localidad en el mapa o en el filtro.';
+      return;
+    }
+    if (!row || !other) {
+      comparison.textContent = `${picker.value} · sin datos comparables para el mismo corte y filtros.`;
+      return;
+    }
+    const gap = +(row.cobertura - other.cobertura).toFixed(1);
+    comparison.textContent = `${other.localidad} · ${fmt(other.cobertura)} % · ${fmt(other.dosis_aplicada)} dosis / ${fmt(other.denominador)} · corte ${cut}. Diferencia (${selected} − ${other.localidad}): ${fmt(gap)} pp.`;
+  }
   for (const id of Object.keys(charts)) {
     const chart = charts[id];
     const card = chart.canvas.closest('.card');
@@ -626,9 +747,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const empty = 'Sin datos para esta selección.';
     const disabledDistrict = 'La serie distrital no se desagrega por localidad, sector ni biológico sectorial.';
     const disabledSector = 'El biológico seleccionado pertenece a la serie distrital.';
-    const selected = sectorCompatible ? currentSector().filter(r =>
-      (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local) &&
+    const comparable = sectorCompatible ? currentSector().filter(r =>
+      (!year || r.fecha_reporte.startsWith(year)) &&
       (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
+    const selected = comparable.filter(r => !local || r.localidad === local);
     // Cada corte es una foto de cobertura. Agregar solo el corte más reciente de la selección.
     const cut = selected.reduce((date, r) => r.fecha_reporte > date ? r.fecha_reporte : date, '');
     const rows = selected.filter(r => r.fecha_reporte === cut);
@@ -683,6 +805,12 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     set('k2',difference == null || !annualVisible ? '—' : `${fmt(difference)} pts`,
       difference == null || !annualVisible ? 'Requiere las dos etapas para el mismo año cerrado.' : `${fmt(tv1.cobertura)} % → ${fmt(tv5.cobertura)} % (${primary})`,difference != null && difference <= 0);
     bar('cLoc',locations,'localidad',source);
+    const comparisonRows = local ? comparable.filter(r => r.fecha_reporte === cut && r.grupo_biologico === 'Primera infancia') : [];
+    const history = local ? aggregate(selected.filter(r => r.grupo_biologico === 'Primera infancia'),['fecha_reporte'])
+      .sort((a,b) => a.fecha_reporte.localeCompare(b.fecha_reporte)) : [];
+    const territorySource = sectorSource + (comparisonRows.some(r => r.manual) ? ' · incluye vista previa manual' : '');
+    renderTerritory(locations,local,cut,aggregate(comparisonRows,['localidad']),aggregate(comparisonRows,[])[0],history,
+      {biological:biological || 'Primera infancia',inst:inst || 'Todos los sectores',source:territorySource});
     bar('cInst',aggregate(rows,['institucion']),'institucion',source);
     bar('cGrupo',aggregate(rows,['grupo_biologico']),'grupo_biologico',source);
     renderHeat(aggregate(rows,['localidad','institucion']));
@@ -711,6 +839,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     renderTable();
   }
   filters.forEach(id => $(id).addEventListener('change',render));
+  $('territory-compare').addEventListener('change',render);
   $('fReset').addEventListener('click',() => {
     filters.forEach(id => $(id).selectedIndex = 0);
     render();
@@ -809,14 +938,21 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     if (example) lines.push(manualFields.map(key => '"' + String(example[key]).replaceAll('"','""') + '"').join(';'));
     download(['\uFEFF',lines.join('\r\n')],'text/csv;charset=utf-8','csv','VacunaBI-plantilla-manual.csv');
   });
-  $('export-csv').addEventListener('click',() => {
+  function csv(rows) {
     const csvCell = value => {
       if (typeof value === 'number') return String(value).replace('.',',');
       const text = String(value ?? '');
       const safe = /^[\s]*[=+\-@]|^[\t\r\n]/.test(text) ? "'" + text : text;
       return '"' + safe.replaceAll('"','""') + '"';
     };
-    download(['\uFEFF',exportValues().map(row => row.map(csvCell).join(';')).join('\r\n')], 'text/csv;charset=utf-8','csv');
+    return ['\uFEFF',rows.map(row => row.map(csvCell).join(';')).join('\r\n')];
+  }
+  $('export-csv').addEventListener('click',() => {
+    download(csv(exportValues()),'text/csv;charset=utf-8','csv');
+  });
+  $('territory-export').addEventListener('click',() => {
+    const headings = ['Tipo','Territorio','Corte','Biológico','Sector','Dosis','Denominador','Cobertura (%)','Fuente'];
+    download(csv([headings,...fichaTerritorial]),'text/csv;charset=utf-8','csv','VacunaBI-ficha-territorial.csv');
   });
   // Open XML necesita un contenedor ZIP. Las cinco entradas se guardan sin compresión.
   function zipXml(parts) {

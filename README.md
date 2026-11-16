@@ -142,7 +142,7 @@ python app.py
 
 ```powershell
 python -m pip install pyinstaller pywebview==5.3.2
-pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." app.py
+pyinstaller --onefile --windowed --name VacunaBI --add-data "dashboard_template.html;." --add-data "chart.umd.min.js;." --add-data "localidades.json;." app.py
 ```
 
 El ejecutable se genera dentro de `dist/`.
@@ -191,7 +191,7 @@ Así, una caída o demora de la API pública no marca como fallido un commit cuy
 | **V1.0** | ETL, KPIs, dashboard y aplicación de escritorio | Base integrada |
 | **V1.1** | Rediseño UI/UX y navegación modular | Primera iteración; validación pendiente |
 | **V1.2** | Filtros globales, comparación de años y exportaciones CSV/XLSX | Implementada |
-| **V1.3** | Mapa geográfico y fichas territoriales | Planificada |
+| **V1.3** | Mapa de localidades, comparación territorial y ficha CSV | Implementada |
 | **V1.4** | Trazabilidad y calidad de datos ampliada | Planificada |
 | **V1.5** | Rendimiento, accesibilidad y pruebas | Planificada |
 | **V2.0** | Priorización, simulaciones y alertas explicables | Planificada |
