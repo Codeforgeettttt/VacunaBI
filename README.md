@@ -38,15 +38,15 @@ Busca responder:
 
 ## 🖼️ Capturas de pantalla
 
-![Dashboard, vista general](evidencias/dashboard_1.jpg)
+![Dashboard, vista general](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/raw/refs/heads/main/evidencias/dashboard_1.jpg)
 
-![Dashboard, visualizaciones](evidencias/dashboard_2.jpg)
+![Dashboard, visualizaciones](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/raw/refs/heads/main/evidencias/dashboard_2.jpg)
 
-![Dashboard, análisis y trazabilidad](evidencias/dashboard_3.jpg)
+![Dashboard, análisis y trazabilidad](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/raw/refs/heads/main/evidencias/dashboard_3.jpg)
 
 **Aplicación de escritorio:**
 
-![Interfaz de escritorio](evidencias/app_exe.png)
+![Interfaz de escritorio](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/raw/refs/heads/main/evidencias/app_exe.png)
 
 Las cifras mostradas en las capturas son evidencias de una ejecución: pueden cambiar cuando se actualicen las fuentes.
 
@@ -85,9 +85,9 @@ Proyecto_vacunacion/
 ├── dashboard_template.html             # Interfaz HTML y gráficos
 ├── chart.umd.min.js                    # Chart.js incluido localmente
 ├── requirements.txt                    # Dependencias básicas
-├── evidencias/                         # Capturas
-├── graficas/                           # Gráficas para informe
-├── Proyecto_Final_Cobertura_Vacunacion.docx
+├── evidencias/                         # Capturas históricas (disponibles en repositorio fuente)
+├── graficas/                           # Gráficas originales (en repositorio fuente)
+├── Proyecto_Final_Cobertura_Vacunacion.docx  # Documento original enlazado externamente
 └── salidas/                             # Generados, ignorados por Git
 ```
 
@@ -271,9 +271,9 @@ No atribuir cambios a personas que no los realizaron; el historial de Git y las 
 
 ## 📚 Referencias y documentación
 
-- [Informe académico](Proyecto_Final_Cobertura_Vacunacion.docx)
-- [Evidencias de funcionamiento](evidencias/)
-- [Gráficas del proyecto](graficas/)
+- [Informe académico](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/blob/main/Proyecto_Final_Cobertura_Vacunacion.docx)
+- [Evidencias de funcionamiento](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/tree/main/evidencias)
+- [Gráficas del proyecto](https://github.com/julianpenuelaalfonso-fullstack/Proyecto_vacunacion/tree/main/graficas)
 - [Portal de Datos Abiertos de Bogotá](https://datosabiertos.bogota.gov.co/)
 - [Secretaría Distrital de Salud](https://www.saludcapital.gov.co/)
 
