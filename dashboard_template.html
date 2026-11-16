@@ -225,17 +225,14 @@ tr:last-child td { border-bottom:0; }
         <div class="explorer-heading"><h2 id="filters-title">Explorar datos</h2>
           <button id="fReset" type="button">Restablecer filtros</button></div>
         <div class="controls">
-          <label>Región <select id="fRegion"><option>Bogotá D.C.</option></select></label>
           <label>Año <select id="fYear"><option value="">Todos los años</option></select></label>
           <label>Localidad <select id="fLocal"><option value="">Todas</option></select></label>
+        </div>
+        <details id="advanced-filters"><summary>Más filtros</summary><div class="controls">
           <label>Biológico <select id="fBio"><option value="">Todos</option></select></label>
           <label>Sector <select id="fSector"><option value="">Todos</option></select></label>
-          <label>Modo <select id="fMode"><option value="">Todas las vistas</option><option value="historico">Histórico</option><option value="actual">Actual</option><option value="comparativo">Comparativo</option></select></label>
-          <label id="compare-label" hidden>Comparar con <select id="fCompare"></select></label>
-          <label id="month-from-label" hidden>Desde el mes <select id="fMonthFrom"><option value="">Primero disponible</option></select></label>
-          <label id="month-to-label" hidden>Hasta el mes <select id="fMonthTo"><option value="">Último disponible</option></select></label>
-        </div>
-        <div class="filter-chips" id="filter-chips"></div>
+        </div></details>
+        <div class="filter-chips" id="filter-chips" aria-label="Filtros activos"></div>
         <p id="filters-status" role="status"></p>
         <details>
           <summary>Cargar registros manuales</summary>
@@ -278,6 +275,15 @@ tr:last-child td { border-bottom:0; }
           <div class="card kpi"><div class="l">Dosis adicionales estimadas para la meta</div><div class="v" id="k4"></div><div class="st" id="k4s"></div></div>
         </div>
         <div class="dashboard-grid">
+          <section class="card w12 temporal-controls" aria-labelledby="evolution-title">
+            <h3 id="evolution-title">Evolución de cobertura</h3>
+            <div class="controls">
+              <label>Vista temporal <select id="fMode"><option value="">Histórico y avance</option><option value="historico">Histórico</option><option value="actual">Actual</option><option value="comparativo">Comparativo</option></select></label>
+              <label id="compare-label" hidden>Comparar con <select id="fCompare"></select></label>
+              <label id="month-from-label" hidden>Desde el mes <select id="fMonthFrom"><option value="">Primero disponible</option></select></label>
+              <label id="month-to-label" hidden>Hasta el mes <select id="fMonthTo"><option value="">Último disponible</option></select></label>
+            </div>
+          </section>
           <section class="card w8" aria-labelledby="anual-title">
             <div class="card-header"><h3 id="anual-title">Cobertura anual por biológico</h3><span class="card-marker">HISTÓRICO</span></div>
             <p class="sub">Distrito, años cerrados. Línea punteada: meta de referencia del 95 %.</p>

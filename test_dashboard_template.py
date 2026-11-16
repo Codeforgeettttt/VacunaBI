@@ -81,7 +81,7 @@ class TestDashboardV11(unittest.TestCase):
 
     def test_controles_de_exploracion_y_exportacion(self):
         controls = {
-            "fRegion", "fYear", "fLocal", "fBio", "fSector", "fMode", "fCompare",
+            "advanced-filters", "fYear", "fLocal", "fBio", "fSector", "fMode", "fCompare",
             "fMonthFrom", "fMonthTo", "fReset", "filters-status", "table-source",
             "table-search", "table-sort", "table-prev", "table-next",
             "selection-table", "export-csv", "export-xlsx", "chart-dialog",
