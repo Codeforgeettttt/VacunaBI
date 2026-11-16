@@ -12,6 +12,7 @@ import unicodedata
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import pandas as pd
 
@@ -207,7 +208,14 @@ def construir_dashboard(sec, anu, mens, kpis, logs):
     plantilla = (RECURSOS / "dashboard_template.html").read_text(encoding="utf-8")
     html = (plantilla.replace("/*__CHARTJS__*/", (RECURSOS / "chart.umd.min.js").read_text(encoding="utf-8"))
             .replace("/*__DATOS__*/null", json.dumps(datos, ensure_ascii=False, default=str).replace("<", "\\u003c")))
-    (OUT / "dashboard.html").write_text(html, encoding="utf-8")
+    with NamedTemporaryFile("w", dir=OUT, suffix=".tmp", encoding="utf-8", delete=False) as file:
+        temp_path = Path(file.name)
+        try:
+            file.write(html)
+            file.close()
+            temp_path.replace(OUT / "dashboard.html")
+        finally:
+            temp_path.unlink(missing_ok=True)
 
 
 def main():
