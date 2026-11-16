@@ -59,6 +59,23 @@ a:focus-visible,button:focus-visible { outline:3px solid var(--primary);
   font-weight:750;font-size:10px;margin:0 0 6px; }
 h1 { margin:0;font-size:clamp(23px,2.25vw,32px);line-height:1.2;letter-spacing:-.8px; }
 .topbar .meta { margin:12px 0 0;color:var(--ink2);font-size:12px;max-width:850px; }
+.explorer { margin:20px clamp(16px,3vw,42px) 0; }
+.controls { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px; }
+.controls label { display:grid;gap:4px;min-width:0;color:var(--ink2); }
+.explorer :is(input,select,button),.chart-dialog button,.chart-actions button {
+  min-width:0;min-height:38px;padding:6px 9px;border:1px solid var(--border);
+  border-radius:8px;background:var(--surface-raised);color:var(--ink);font:inherit;
+}
+.explorer :is(input,select):focus-visible { outline:3px solid var(--primary);outline-offset:2px; }
+button:disabled { opacity:.55; } button:not(:disabled) { cursor:pointer; }
+.control-actions,.filter-chips,.chart-actions { display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px; }
+.filter-chips span { color:var(--primary);background:var(--primary-soft);padding:3px 9px;border-radius:20px;overflow-wrap:anywhere; }
+.explorer p,.chart-status { color:var(--ink2);margin:9px 0; }
+.explorer details,.chart-actions { margin-top:12px; }
+.explorer summary { cursor:pointer;color:var(--primary); }
+.chart-dialog { width:min(94vw,1100px);max-height:88vh;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px; }
+.chart-dialog::backdrop { background:#000a; }
+.chart-dialog .chart { height:min(62vh,620px); }
 .version { border:1px solid rgba(25,200,193,.3);background:var(--primary-soft);
   color:var(--primary);padding:5px 11px;border-radius:999px;white-space:nowrap;
   font-weight:750;font-size:12px; }
@@ -159,11 +176,40 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <span class="version">V1.1 · UI/UX</span>
+        <span class="version">V1.2</span>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
     </header>
     <main id="main-content" tabindex="-1">
+      <section class="card explorer" aria-labelledby="filters-title">
+        <h2 id="filters-title">Explorar datos</h2>
+        <div class="controls">
+          <label>Región <select id="fRegion"><option>Bogotá D.C.</option></select></label>
+          <label>Año <select id="fYear"><option value="">Todos los años</option></select></label>
+          <label>Localidad <select id="fLocal"><option value="">Todas</option></select></label>
+          <label>Biológico <select id="fBio"><option value="">Todos</option></select></label>
+          <label>Sector <select id="fSector"><option value="">Todos</option></select></label>
+          <label>Modo <select id="fMode"><option value="">Todas las vistas</option><option value="historico">Histórico</option><option value="actual">Actual</option><option value="comparativo">Comparativo</option></select></label>
+          <label id="compare-label" hidden>Comparar con <select id="fCompare"></select></label>
+        </div>
+        <div class="filter-chips" id="filter-chips"></div>
+        <div class="control-actions"><button id="fReset" type="button">Restablecer filtros</button></div>
+        <p id="filters-status" role="status"></p>
+        <details>
+          <summary>Consultar datos de la selección</summary>
+          <div class="controls">
+            <label>Fuente <select id="table-source"><option value="sector">Seguimiento sectorial</option><option value="serie">Serie distrital</option></select></label>
+            <label>Buscar <input type="search" id="table-search" placeholder="Buscar en los resultados"></label>
+            <label>Orden <select id="table-sort"><option value="periodo">Periodo más reciente</option><option value="asc">Cobertura menor</option><option value="desc">Cobertura mayor</option></select></label>
+          </div>
+          <div class="scroll" id="selection-table" tabindex="0" role="region" aria-label="Resultados filtrados"></div>
+          <div class="control-actions">
+            <button id="table-prev" type="button">Anterior</button>
+            <button id="table-next" type="button">Siguiente</button>
+            <span id="table-page" role="status"></span>
+          </div>
+        </details>
+      </section>
       <section class="page" id="resumen" data-page="resumen" aria-labelledby="title-resumen">
         <div class="page-lead">
           <div><p class="eyebrow">Visión general</p><h2 id="title-resumen">Panorama de vacunación</h2>
@@ -263,6 +309,11 @@ tr:last-child td { border-bottom:0; }
         </div>
       </section>
     </main>
+    <dialog id="chart-dialog" class="chart-dialog" aria-labelledby="chart-dialog-title">
+      <form method="dialog"><button>Cerrar gráfico</button></form>
+      <h2 id="chart-dialog-title"></h2>
+      <div class="chart" id="expanded-chart"></div>
+    </dialog>
     <footer class="site-footer">Fuente: Datos Abiertos Bogotá · Secretaría Distrital de Salud / SaluData · API CKAN · Licencia CC BY 4.0. · VacunaBI.</footer>
   </div>
 </div>
@@ -323,16 +374,219 @@ hbar(cInst, D.institucion, 'institucion');
 hbar(cGrupo, D.grupo, 'grupo_biologico');
 
 // 6. Mapa de calor (también sirve de vista de tabla)
-const locs = D.loc_infancia.map(r => r.localidad).sort(), insts = [...new Set(D.heat.map(r => r.institucion))].sort();
 const ramp = ['#cde2fb','#9ec5f4','#6da7ec','#3987e5','#256abf','#184f95'];
 const cell = v => { if (v == null) return '<td style="color:var(--muted)">–</td>'; const i = Math.max(0, Math.min(5, Math.floor((v - 20) / 14)));
   return `<td style="background:${ramp[i]};color:${i > 2 ? '#fff' : '#0b0b0b'};font-weight:${v >= META ? 700 : 400}">${v}</td>`; };
-heat.innerHTML = '<table><tr><th>Localidad</th>' + insts.map(i => `<th>${i}</th>`).join('') + '</tr>' +
-  locs.map(l => '<tr><td>' + l + '</td>' + insts.map(i => cell((D.heat.find(r => r.localidad === l && r.institucion === i) || {}).cobertura)).join('') + '</tr>').join('') + '</table>';
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+function renderHeat(rows) {
+  const locs = [...new Set(rows.map(r => r.localidad))].sort();
+  const insts = [...new Set(rows.map(r => r.institucion))].sort();
+  const index = new Map(rows.map(r => [JSON.stringify([r.localidad, r.institucion]), r.cobertura]));
+  heat.innerHTML = rows.length ? '<table><tr><th>Localidad</th>' + insts.map(i => `<th>${esc(i)}</th>`).join('') + '</tr>' +
+    locs.map(l => '<tr><th scope="row">' + esc(l) + '</th>' + insts.map(i => cell(index.get(JSON.stringify([l, i])))).join('') + '</tr>').join('') + '</table>'
+    : '<p>Sin datos para esta selección.</p>';
+}
+renderHeat(D.heat);
 
 // 7. Log de limpieza
 log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th><th>Registros</th></tr>' +
   Object.entries(D.logs).flatMap(([f, o]) => Object.entries(o).map(([k, v]) => `<tr><td>${f}</td><td style="text-align:left">${k.replaceAll('_', ' ')}</td><td>${fmt(v)}</td></tr>`)).join('') + '</table>';
+</script>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const filters = ['fYear', 'fLocal', 'fBio', 'fSector', 'fMode', 'fCompare'];
+  const sector = D.sectoriales ?? [];
+  const monthly = D.mensual ?? [];
+  const available = (rows, key) => [...new Set(rows.map(row => row[key]))].sort((a,b) => String(a).localeCompare(String(b), 'es'));
+  const append = (select, values) => values.forEach(value => select.add(new Option(value, value)));
+  const historicalYears = available(cerr, 'anio').map(Number);
+  append($('fYear'), [...new Set([...available(D.anual, 'anio'), ...sector.map(r => +r.fecha_reporte.slice(0,4))])].sort((a,b) => b-a));
+  append($('fCompare'), historicalYears.slice().reverse());
+  append($('fLocal'), available(sector, 'localidad'));
+  append($('fSector'), available(sector, 'institucion'));
+  for (const [name, rows] of [['Serie distrital', D.anual], ['Seguimiento sectorial', sector]]) {
+    const group = document.createElement('optgroup');
+    group.label = name;
+    available(rows, 'biologico').forEach(value => group.append(new Option(value, JSON.stringify([name, value]))));
+    $('fBio').append(group);
+  }
+  const rate = (doses, target) => Math.round(doses / target * 1000) / 10;
+  function aggregate(rows, keys) {
+    const groups = new Map();
+    for (const row of rows) {
+      const id = JSON.stringify(keys.map(key => row[key]));
+      if (!groups.has(id)) groups.set(id, Object.assign(Object.fromEntries(keys.map(key => [key, row[key]])), {dosis_aplicada:0, denominador:0}));
+      const group = groups.get(id);
+      group.dosis_aplicada += row.dosis_aplicada;
+      group.denominador += row.denominador;
+    }
+    return [...groups.values()].map(r => ({...r, cobertura:rate(r.dosis_aplicada,r.denominador)}))
+      .sort((a,b) => a.cobertura - b.cobertura);
+  }
+  const charts = Object.fromEntries(['cAnual','cActual','cLoc','cInst','cGrupo'].map(id => [id, Chart.getChart(id)]));
+  const template = Object.fromEntries(Object.entries(charts).map(([id, chart]) => [id, chart.data.datasets.map(row => ({...row}))]));
+  const monthNames = charts.cActual.data.labels.slice();
+  const statusByChart = {};
+  for (const id of Object.keys(charts)) {
+    const status = document.createElement('p');
+    status.className = 'chart-status';
+    status.hidden = true;
+    charts[id].canvas.parentElement.before(status);
+    statusByChart[id] = status;
+    charts[id].options.scales[charts[id].config.type === 'bar' ? 'x' : 'y'].max = undefined;
+  }
+  function setChart(id, labels, datasets, message, source) {
+    const chart = charts[id];
+    chart.data.labels = labels;
+    chart.data.datasets = datasets;
+    chart.canvas.parentElement.hidden = Boolean(message);
+    statusByChart[id].hidden = !message;
+    statusByChart[id].textContent = message;
+    chart.options.plugins.tooltip.callbacks.footer = () => source;
+    chart.update('none');
+  }
+  function bar(id, rows, key, source) {
+    const dataset = {...template[id][0], data:rows.map(r => r.cobertura)};
+    charts[id].options.plugins.tooltip.callbacks.label = ({dataIndex}) => {
+      const row = rows[dataIndex];
+      return `${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} de ${fmt(row.denominador)}`;
+    };
+    setChart(id, rows.map(r => r[key]), [dataset], rows.length ? '' : 'Sin datos para esta selección.', source);
+  }
+  const color = name => S[(Math.max(0,bios.indexOf(name))) % S.length];
+  function series(rows, periods, key) {
+    return available(rows, 'biologico').map(name => ({
+      label:name, borderColor:color(name), backgroundColor:color(name), borderWidth:2, pointRadius:4,
+      data:periods.map(period => rows.find(r => r.biologico === name && r[key] === period)?.cobertura ?? null)
+    }));
+  }
+  const sectorSource = 'Seguimiento de cobertura por sectores · Datos Abiertos Bogotá';
+  const seriesSource = 'Cobertura mensual de vacunación · Datos Abiertos Bogotá';
+  let sectorRows = [];
+  let seriesRows = [];
+  let page = 0;
+  const pageSize = 15;
+  const tableFields = ['periodo','localidad','sector','biologico','dosis','denominador','cobertura'];
+  const tableNames = ['Periodo','Localidad','Sector','Biológico','Dosis','Denominador','Cobertura (%)'];
+  function tableRows() {
+    const rows = $('table-source').value === 'sector' ? sectorRows : seriesRows;
+    const query = $('table-search').value.trim().toLocaleLowerCase('es');
+    const sort = $('table-sort').value;
+    const filtered = rows.filter(row => tableFields.some(key => String(row[key] ?? '').toLocaleLowerCase('es').includes(query)));
+    return filtered.sort((a,b) => sort === 'asc' ? a.cobertura-b.cobertura :
+      sort === 'desc' ? b.cobertura-a.cobertura : b.periodo.localeCompare(a.periodo));
+  }
+  function renderTable() {
+    const rows = tableRows();
+    const pages = Math.ceil(rows.length / pageSize);
+    page = Math.max(0, Math.min(page, pages-1));
+    $('table-prev').disabled = page === 0;
+    $('table-next').disabled = page + 1 >= pages;
+    $('table-page').textContent = rows.length ? `Página ${page+1} de ${pages} · ${rows.length} resultados` : 'Sin resultados';
+    const format = (value, key) => value == null ? '—' : key === 'cobertura' ? `${fmt(value)} %` : typeof value === 'number' ? fmt(value) : value;
+    $('selection-table').innerHTML = rows.length ? '<table><thead><tr>' +
+      tableNames.map(name => `<th scope="col">${name}</th>`).join('') +
+      '</tr></thead><tbody>' + rows.slice(page*pageSize, (page+1)*pageSize).map(row =>
+        '<tr>' + tableFields.map(key => `<td>${esc(format(row[key], key))}</td>`).join('') + '</tr>').join('') +
+      '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
+  }
+  function render() {
+    const {fYear:year, fLocal:local, fBio:bio, fSector:inst, fMode:mode, fCompare:other} =
+      Object.fromEntries(filters.map(id => [id, $(id).value]));
+    const [bioSource, biological] = bio ? JSON.parse(bio) : [];
+    const sectorCompatible = bioSource !== 'Serie distrital';
+    const districtCompatible = !(local || inst || bioSource === 'Seguimiento sectorial');
+    const empty = 'Sin datos para esta selección.';
+    const disabledDistrict = 'La serie distrital no se desagrega por localidad, sector ni biológico sectorial.';
+    const disabledSector = 'El biológico seleccionado pertenece a la serie distrital.';
+    const selected = sectorCompatible ? sector.filter(r =>
+      (!year || r.fecha_reporte.startsWith(year)) && (!local || r.localidad === local) &&
+      (!inst || r.institucion === inst) && (!biological || r.biologico === biological)) : [];
+    // Cada corte es una foto de cobertura. Agregar solo el corte más reciente de la selección.
+    const cut = selected.reduce((date, r) => r.fecha_reporte > date ? r.fecha_reporte : date, '');
+    const rows = selected.filter(r => r.fecha_reporte === cut);
+    const source = cut ? `${sectorSource} · Corte ${cut}` : sectorSource;
+    const infancy = rows.filter(r => r.grupo_biologico === 'Primera infancia');
+    const locations = aggregate(infancy, ['localidad']);
+    const total = aggregate(infancy, [])[0];
+    if (year || local || inst || biological || mode) {
+      const lower = locations.filter(r => r.cobertura < META).length;
+      const gap = total ? Math.max(0, META-total.cobertura) : 0;
+      const extra = total ? Math.max(0, Math.trunc(total.denominador*META/100-total.dosis_aplicada)) : null;
+      set('k1',total ? `${fmt(total.cobertura)} %` : '—',total ? `${fmt(+gap.toFixed(1))} pp de brecha · ${cut}` : empty,gap === 0 && Boolean(total));
+      set('k3',locations.length ? `${lower} de ${locations.length}` : '—',locations.length ? `Menor: ${locations[0].localidad} (${fmt(locations[0].cobertura)} %)` : empty,locations.length > 0 && lower === 0);
+      set('k4',extra == null ? '—' : fmt(extra),extra == null ? empty : `Primera infancia · corte ${cut}`,extra === 0);
+    } else {
+      set('k1', K.cobertura_primera_infancia_sectores + ' %', `${(META-K.cobertura_primera_infancia_sectores).toFixed(1)} pts bajo la meta`, K.cobertura_primera_infancia_sectores >= META);
+      set('k3', `${K.localidades_bajo_meta_infancia} de ${locations.length}`, `Menor: ${K.localidad_menor_cobertura} (${K.localidad_menor_cobertura_valor} %)`, K.localidades_bajo_meta_infancia === 0);
+      set('k4', fmt(K.dosis_faltantes_meta_infancia), 'en primera infancia, población de los sectores', K.dosis_faltantes_meta_infancia === 0);
+    }
+    const primary = year ? +year : historicalYears.at(-1);
+    $('compare-label').hidden = mode !== 'comparativo';
+    $('fCompare').disabled = mode !== 'comparativo';
+    for (const option of $('fCompare').options) option.disabled = +option.value === primary;
+    if (+other === primary) $('fCompare').value = [...$('fCompare').options].find(option => !option.disabled)?.value ?? '';
+    const compare = +$('fCompare').value;
+    const annualRows = districtCompatible ? cerr.filter(r => (!biological || r.biologico === biological) &&
+      (mode === 'comparativo' ? [primary,compare].includes(r.anio) : !year || r.anio === +year)) : [];
+    const actualYear = mode === 'actual' || mode === '' ? +(year || D.anio_actual) : 0;
+    const monthRows = districtCompatible ? monthly.filter(r => r.anio === actualYear &&
+      (!biological || r.biologico === biological)).map(r => ({...r,cobertura:r.cobertura_acum})) : [];
+    const periods = available(annualRows, 'anio').map(Number);
+    const annualVisible = mode !== 'actual';
+    const monthlyVisible = mode !== 'historico' && mode !== 'comparativo';
+    charts.cAnual.canvas.closest('.card').hidden = !annualVisible;
+    charts.cActual.canvas.closest('.card').hidden = !monthlyVisible;
+    const pair = mode === 'comparativo' && periods.length !== 2;
+    const annualMessage = !districtCompatible ? disabledDistrict : pair ? 'Selecciona dos años cerrados con datos comparables.' : annualRows.length ? '' : empty;
+    setChart('cAnual', periods, series(annualRows,periods,'anio'), annualMessage, seriesSource);
+    $('tActual').textContent = `Avance ${actualYear || D.anio_actual}`;
+    setChart('cActual', monthNames, [...series(monthRows,meses,'mes_num'),template.cActual.at(-1)],
+      !districtCompatible ? disabledDistrict : monthRows.length ? '' : empty, `${seriesSource} · ${actualYear}`);
+    const tv1 = annualRows.find(r => r.anio === primary && r.biologico === 'Triple viral 1 año');
+    const tv5 = annualRows.find(r => r.anio === primary && r.biologico.startsWith('Triple viral R1 o DPT'));
+    const difference = tv1 && tv5 ? +(tv1.cobertura-tv5.cobertura).toFixed(1) : null;
+    set('k2',difference == null || !annualVisible ? '—' : `${fmt(difference)} pts`,
+      difference == null || !annualVisible ? 'Requiere las dos etapas para el mismo año cerrado.' : `${fmt(tv1.cobertura)} % → ${fmt(tv5.cobertura)} % (${primary})`,difference != null && difference <= 0);
+    bar('cLoc',locations,'localidad',source);
+    bar('cInst',aggregate(rows,['institucion']),'institucion',source);
+    bar('cGrupo',aggregate(rows,['grupo_biologico']),'grupo_biologico',source);
+    renderHeat(aggregate(rows,['localidad','institucion']));
+    sectorRows = rows.map(r => ({
+      periodo:r.fecha_reporte, localidad:r.localidad, sector:r.institucion, biologico:r.biologico,
+      dosis:r.dosis_aplicada, denominador:r.denominador, cobertura:rate(r.dosis_aplicada,r.denominador), fuente:sectorSource
+    }));
+    seriesRows = [
+      ...(annualVisible && !annualMessage ? annualRows.map(r => ({periodo:String(r.anio), biologico:r.biologico,
+        dosis:r.vacunados, denominador:r.poblacion_meta, cobertura:r.cobertura, fuente:seriesSource})) : []),
+      ...(monthlyVisible ? monthRows.map(r => ({periodo:`${r.anio}-${String(r.mes_num).padStart(2,'0')}`, biologico:r.biologico,
+        dosis:r.vacunados_acum, denominador:r.poblacion_meta, cobertura:r.cobertura, fuente:seriesSource})) : [])
+    ];
+    const chips = ['Bogotá D.C.',year,local,biological,inst,mode ? $('fMode').selectedOptions[0].textContent : '',
+      mode === 'comparativo' && compare ? `Comparar con ${compare}` : ''].filter(Boolean);
+    $('filter-chips').replaceChildren(...chips.map(name => {
+      const chip = document.createElement('span');
+      chip.textContent = name;
+      return chip;
+    }));
+    $('filters-status').textContent = [districtCompatible ? '' : disabledDistrict,
+      sectorCompatible ? (cut ? `Seguimiento sectorial · corte ${cut}.` : 'Sin registros sectoriales para esta selección.') : disabledSector].filter(Boolean).join(' ');
+    page = 0;
+    renderTable();
+  }
+  filters.forEach(id => $(id).addEventListener('change',render));
+  $('fReset').addEventListener('click',() => {
+    filters.forEach(id => $(id).selectedIndex = 0);
+    render();
+  });
+  ['table-source','table-search','table-sort'].forEach(id => $(id).addEventListener('input',() => { page=0; renderTable(); }));
+  $('table-prev').addEventListener('click',() => { page--; renderTable(); });
+  $('table-next').addEventListener('click',() => { page++; renderTable(); });
+  render();
+})();
 </script>
 
 <script>
