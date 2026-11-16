@@ -1,5 +1,13 @@
 # Registro de cambios — VacunaBI
 
+## [1.2.0] — 2026-11-16
+
+- Filtros compartidos por año, localidad, sector y biológico para las dimensiones disponibles en cada fuente.
+- Modos histórico, actual con rango mensual y comparativo entre dos años cerrados.
+- Actualización de indicadores, gráficos y tabla territorial con denominadores ponderados por dosis y población objetivo.
+- Leyendas accesibles, ampliación de gráficos y tabla de resultados con búsqueda, orden y paginación.
+- Descarga de la selección en CSV y XLSX con metadatos de fuente y periodo.
+
 ## [1.1.0] — En desarrollo (2026-11-16)
 
 ### Añadido
