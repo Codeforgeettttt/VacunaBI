@@ -10,6 +10,7 @@ COMPONENTS = (
     "frontend/data.js",
     "frontend/tables.js",
     "frontend/stages.js",
+    "frontend/availability.js",
 )
 ASSETS = (
     "dashboard_template.html",
