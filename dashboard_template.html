@@ -9,6 +9,7 @@
 <script>/*__CHARTJS__*/</script><!-- Chart.js local inyectado por etl.py; sin CDN -->
 <script>/*__DECISIONES__*/</script>
 <style>/*__ESTILOS__*/</style>
+<script>/*__COMPONENTES__*/</script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
@@ -480,7 +481,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     return [...preview.values()];
   }
   const monthly = D.mensual ?? [];
-  const available = (rows, key) => [...new Set(rows.map(row => row[key]))].sort((a,b) => String(a).localeCompare(String(b), 'es'));
+  const {available,rate,aggregate} = globalThis.VacunaDatos;
   const append = (select, values) => values.forEach(value => select.add(new Option(value, value)));
   const historicalYears = available(cerr, 'anio').map(Number);
   append($('fYear'), [...new Set([...available(D.anual, 'anio'), ...sector.map(r => +r.fecha_reporte.slice(0,4))])].sort((a,b) => b-a));
@@ -494,19 +495,6 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     group.label = name;
     available(rows, 'biologico').forEach(value => group.append(new Option(value, JSON.stringify([name, value]))));
     $('fBio').append(group);
-  }
-  const rate = (doses, target) => Math.round(doses / target * 1000) / 10;
-  function aggregate(rows, keys) {
-    const groups = new Map();
-    for (const row of rows) {
-      const id = JSON.stringify(keys.map(key => row[key]));
-      if (!groups.has(id)) groups.set(id, Object.assign(Object.fromEntries(keys.map(key => [key, row[key]])), {dosis_aplicada:0, denominador:0}));
-      const group = groups.get(id);
-      group.dosis_aplicada += row.dosis_aplicada;
-      group.denominador += row.denominador;
-    }
-    return [...groups.values()].map(r => ({...r, cobertura:rate(r.dosis_aplicada,r.denominador)}))
-      .sort((a,b) => a.cobertura - b.cobertura);
   }
   const charts = Object.fromEntries(['cAnual','cActual','cLoc','cInst','cGrupo'].map(id => [id, Chart.getChart(id)]));
   const template = Object.fromEntries(Object.entries(charts).map(([id, chart]) => [id, chart.data.datasets.map(row => ({...row}))]));
@@ -689,25 +677,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     statusByChart[id] = status;
     charts[id].options.scales[charts[id].config.type === 'bar' ? 'x' : 'y'].max = undefined;
   }
-  function renderChartValues(chart) {
-    const region = chart.values.lastElementChild;
-    const heading = chart.canvas.closest('.card').querySelector('h3').textContent;
-    chart.values.firstElementChild.setAttribute('aria-label','Consultar tabla del gráfico: ' + heading);
-    region.setAttribute('aria-label','Valores: ' + heading);
-    const columns = chart.data.datasets.map((dataset,index) => ({dataset,index})).filter(item => chart.isDatasetVisible(item.index));
-    if (!columns.length) {
-      region.innerHTML = '<p>Activa al menos una serie para consultar sus valores.</p>';
-      return;
-    }
-    const counts = chart.tableCounts;
-    const titles = counts ? ['Cobertura (%)','Dosis','Denominador'] : columns.map(({dataset}) => dataset.label ?? 'Cobertura (%)');
-    const table = chart.data.labels.map((label,index) => {
-      const result = columns.map(({dataset}) => dataset.data[index] == null ? 'Sin datos' : fmt(dataset.data[index]) + ' %');
-      if (counts) result.push(fmt(counts[index].dosis_aplicada),fmt(counts[index].denominador));
-      return `<tr><th scope="row">${esc(label)}</th>${result.map(value => `<td>${esc(value)}</td>`).join('')}</tr>`;
-    }).join('');
-    region.innerHTML = `<table><caption>${esc(chart.tableSource)}</caption><thead><tr><th scope="col">Categoría</th>${titles.map(title => `<th scope="col">${esc(title)}</th>`).join('')}</tr></thead><tbody>${table}</tbody></table>`;
-  }
+  const renderChartValues = chart => globalThis.VacunaTablas.chartValues(chart,fmt,esc);
   function setChart(id, labels, datasets, message, source, counts = null) {
     const chart = charts[id];
     const signature = JSON.stringify([labels,datasets,message,source,counts]);
@@ -800,24 +770,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
   }
   const model = globalThis.VacunaDecisiones;
-  const steps = [...document.querySelectorAll('[data-step]')];
-  function showStep(step, focus = false) {
-    for (const button of steps) {
-      if (button.dataset.step === step) button.setAttribute('aria-current','step');
-      else button.removeAttribute('aria-current');
-    }
-    for (const panel of document.querySelectorAll('[data-decision-panel]')) panel.hidden = panel.dataset.decisionPanel !== step;
-    $('decision-progress').value = Number(step);
-    $('decision-progress-label').textContent = `Etapa ${step} de 4 · ${steps.find(button => button.dataset.step === step).textContent.replace(/^\d+\.\s*/, '')}`;
-    if (focus) {
-      const heading = document.querySelector('[data-decision-panel]:not([hidden]) h3');
-      heading.tabIndex = -1;
-      heading.focus();
-    }
-  }
-  steps.forEach(button => button.addEventListener('click',() => showStep(button.dataset.step,true)));
-  document.querySelectorAll('[data-next-step]').forEach(button =>
-    button.addEventListener('click',() => showStep(button.dataset.nextStep,true)));
+  globalThis.VacunaEtapas.connect(document);
   let decisionContext = {filas:[],anual:[],corte:'',filtros:''};
   function refreshDecisions() {
     const ctx = decisionContext;
@@ -1075,15 +1028,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     if (example) lines.push(manualFields.map(key => '"' + String(example[key]).replaceAll('"','""') + '"').join(';'));
     download(['\uFEFF',lines.join('\r\n')],'text/csv;charset=utf-8','csv','VacunaBI-plantilla-manual.csv');
   });
-  function csv(rows) {
-    const csvCell = value => {
-      if (typeof value === 'number') return String(value).replace('.',',');
-      const text = String(value ?? '');
-      const safe = /^[\s]*[=+\-@]|^[\t\r\n]/.test(text) ? "'" + text : text;
-      return '"' + safe.replaceAll('"','""') + '"';
-    };
-    return ['\uFEFF',rows.map(row => row.map(csvCell).join(';')).join('\r\n')];
-  }
+  const {csv} = globalThis.VacunaTablas;
   $('export-csv').addEventListener('click',() => {
     download(csv(exportValues()),'text/csv;charset=utf-8','csv');
   });
