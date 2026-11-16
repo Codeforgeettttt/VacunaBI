@@ -1,11 +1,11 @@
 # Registro de cambios — VacunaBI
 
-## [2.2.1] — Estabilización en código; publicación pendiente
+## [2.2.1] — Estabilización Windows (publicación preliminar condicionada al CI)
 
 - Evita añadir parámetros a la URL local `file://` al actualizar datos en la ventana Windows.
 - Recarga el dashboard desde pywebview mediante `recargar_dashboard`, reutilizando la misma ruta local segura de inicio y recuperación sin conexión.
 - Muestra la confirmación de actualización desde el estado nativo del programa y añade pruebas de recarga, copia ausente y errores.
-- La versión no se considera distribuida hasta validar el ejecutable y publicar su release con el artefacto correspondiente.
+- La release se prepara con el ZIP del ejecutable generado en la misma ejecución de CI y se marca preliminar hasta validar Windows y accesibilidad de forma manual.
 
 ## [2.2.0]
 
