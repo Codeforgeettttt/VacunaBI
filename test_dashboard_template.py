@@ -96,6 +96,9 @@ class TestDashboardV11(unittest.TestCase):
         }
         self.assertTrue(controls.issubset(self.document.ids))
 
+    def test_vista_de_auditoria_y_fuentes(self):
+        self.assertTrue({"audit-sources", "audit-runs", "log"}.issubset(self.document.ids))
+
 
 if __name__ == "__main__":
     unittest.main()

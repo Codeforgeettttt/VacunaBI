@@ -197,7 +197,7 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <div class="topbar-actions"><span class="version">V1.3</span>
+        <div class="topbar-actions"><span class="version">V1.4</span>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
@@ -342,6 +342,14 @@ tr:last-child td { border-bottom:0; }
           <p>Registros afectados durante el último proceso de extracción y transformación.</p></div>
         </div>
         <div class="dashboard-grid">
+          <section class="card w12"><h3>Fuentes del tablero actual</h3>
+            <p class="sub">Los registros observados se conservan para revisión. No se suman a los descartes.</p>
+            <div class="scroll" id="audit-sources" role="region" aria-label="Fuentes y registros" tabindex="0"></div>
+          </section>
+          <section class="card w12"><h3>Historial de actualizaciones</h3>
+            <p class="sub">Ejecuciones guardadas en esta instalación. Horarios de Bogotá.</p>
+            <div class="scroll" id="audit-runs" role="region" aria-label="Historial de actualizaciones" tabindex="0"></div>
+          </section>
           <section class="card w12"><h3>Registro de limpieza</h3>
             <p class="sub">Las cantidades corresponden a diferentes etapas y no deben sumarse entre sí.</p>
             <div class="scroll" id="log" role="region" aria-label="Tabla de trazabilidad de limpieza" tabindex="0"></div>
@@ -461,14 +469,48 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   const $ = id => document.getElementById(id);
   const refresh = $('refresh-data');
   const refreshStatus = $('refresh-status');
+  const auditTime = new Intl.DateTimeFormat('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});
+  const auditCount = value => value == null ? '—' : fmt(value);
+  function auditTable(target, headings, rows) {
+    $(target).innerHTML = rows.length ? '<table><thead><tr>' + headings.map(value => `<th scope="col">${esc(value)}</th>`).join('') +
+      '</tr></thead><tbody>' + rows.map(row => '<tr><th scope="row">' + esc(row[0]) + '</th>' +
+      row.slice(1).map(value => `<td>${esc(value)}</td>`).join('') + '</tr>').join('') +
+      '</tbody></table>' : '<p>Todavía no hay ejecuciones registradas para este tablero.</p>';
+  }
+  function mostrarAuditoria(runs) {
+    const published = (D.auditoria ?? []).findLast(run => run.estado === 'Correcta');
+    const sources = Object.entries(published?.fuentes ?? {}).map(([key,value]) => [
+      key === 'sectores' ? 'Seguimiento sectorial' : 'Cobertura mensual',value.recurso,value.corte,
+      auditCount(value.originales),auditCount(value.aceptados),auditCount(value.descartados),auditCount(value.observados)
+    ]);
+    auditTable('audit-sources',['Fuente','Recurso CKAN','Corte','Originales','Aceptados','Descartados','Observados'],sources);
+    const time = value => {
+      const date = new Date(value);
+      return value && Number.isFinite(date.getTime()) ? auditTime.format(date) : '—';
+    };
+    auditTable('audit-runs',['Inicio','Fin','Estado','Fase','Detalle'],runs.slice().reverse().map(run =>
+      [time(run.inicio),time(run.fin),run.estado,run.fase,run.detalle ?? '—']));
+  }
+  mostrarAuditoria(D.auditoria ?? []);
   function reportRefresh(message) {
     refreshStatus.textContent = message;
     refreshStatus.hidden = false;
   }
   if (new URLSearchParams(location.search).has('sin-conexion')) {
-    reportRefresh('La API no respondió. Estás viendo el último tablero guardado.');
+    reportRefresh('La actualización no se completó. Estás viendo el último tablero guardado.');
   }
-  function enableRefresh() { refresh.hidden = !window.pywebview?.api?.refresh_data; }
+  async function syncAudit() {
+    try {
+      const runs = await window.pywebview?.api?.get_audit?.();
+      if (Array.isArray(runs)) mostrarAuditoria(runs);
+    } catch {
+      // Se conserva la auditoría publicada en el HTML.
+    }
+  }
+  function enableRefresh() {
+    refresh.hidden = !window.pywebview?.api?.refresh_data;
+    if (!refresh.hidden) syncAudit();
+  }
   window.addEventListener('pywebviewready',enableRefresh);
   enableRefresh();
   refresh.addEventListener('click',async () => {
@@ -480,7 +522,10 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
         const url = new URL(location.href);
         url.search = '?actualizado=' + Date.now();
         location.replace(url.href);
-      } else reportRefresh(result.message);
+      } else {
+        reportRefresh(result.message);
+        await syncAudit();
+      }
     } catch {
       reportRefresh('Falló la consulta. Se conserva el tablero anterior.');
     } finally {

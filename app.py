@@ -37,9 +37,12 @@ class Actualizacion:
             return {"ok": True}
         except Exception:
             traceback.print_exc()
-            return {"ok": False, "message": "No se pudo consultar la API. Se conserva el tablero anterior."}
+            return {"ok": False, "message": "No se completó la actualización. Se conserva el tablero anterior."}
         finally:
             self._lock.release()
+
+    def get_audit(self):
+        return etl.historial_auditoria()
 
 
 def cargar(ventana, actualizacion):

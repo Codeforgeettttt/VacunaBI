@@ -1,5 +1,12 @@
 # Registro de cambios — VacunaBI
 
+## [1.4.0]
+
+- Validación de esquema y paginación de los recursos CKAN.
+- Detección de registros inválidos, extracción incompleta y observaciones de calidad.
+- Historial de ejecuciones y resumen de fuentes en el tablero.
+- Preparación de las exportaciones antes de reemplazar el tablero válido.
+
 ## [1.3.0]
 
 - Mapa de las 20 localidades con límites oficiales, filtros compartidos y ficha territorial.

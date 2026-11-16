@@ -3,15 +3,67 @@
 Ejecutar: python -m unittest -v test_etl_regression
 """
 import math
+import io
+import json
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pandas as pd
 
+import etl
 from etl import anual, cobertura, limpiar_mensual, limpiar_sectores, num_es
 
 
 class TestETLRegression(unittest.TestCase):
     """Comprueba limpieza, agregación y manejo de periodos parciales."""
+
+    def test_api_rechaza_una_pagina_incompleta(self):
+        def respuesta(rows):
+            return io.BytesIO(json.dumps({"success": True, "result": {"total": 2, "records": rows}}).encode())
+        with patch.object(etl.urllib.request, "urlopen", side_effect=[respuesta([{"_id": 1}]), respuesta([])]):
+            with self.assertRaisesRegex(ValueError, "Descarga incompleta"):
+                etl.consultar_api(etl.RES_SECTORES)
+
+    def test_fallo_de_segunda_fuente_preserva_tablero_y_registra_fase(self):
+        with TemporaryDirectory() as directorio:
+            salida = Path(directorio)
+            tablero = salida / "dashboard.html"
+            tablero.write_bytes(b"tablero previo")
+            crudo = salida / "crudo_sectores.csv"
+            crudo.write_bytes(b"extraccion previa")
+            with patch.object(etl, "OUT", salida), patch.object(
+                etl, "consultar_api", side_effect=[self.datos_sectores(), TimeoutError("sin respuesta")]
+            ):
+                with self.assertRaises(TimeoutError):
+                    etl.main()
+            auditoria = json.loads((salida / "auditoria.json").read_text(encoding="utf-8"))[-1]
+            self.assertEqual(auditoria["estado"], "Fallida")
+            self.assertEqual(auditoria["fase"], "Descarga mensual")
+            self.assertEqual(tablero.read_bytes(), b"tablero previo")
+            self.assertEqual(crudo.read_bytes(), b"extraccion previa")
+
+    def test_archivo_bloqueado_revierte_publicacion_parcial(self):
+        with TemporaryDirectory() as directorio:
+            salida = Path(directorio)
+            temporal = salida / "temporal"
+            temporal.mkdir()
+            nuevos = ["a.csv", "dashboard.html"]
+            for nombre in nuevos:
+                (salida / nombre).write_text("anterior", encoding="utf-8")
+                (temporal / nombre).write_text("nuevo", encoding="utf-8")
+            reemplazar = Path.replace
+
+            def simular_bloqueo(origen, destino):
+                if origen == temporal / "dashboard.html":
+                    raise PermissionError("archivo bloqueado")
+                return reemplazar(origen, destino)
+
+            with patch.object(etl, "OUT", salida), patch.object(Path, "replace", simular_bloqueo):
+                with self.assertRaises(PermissionError):
+                    etl.publicar_salidas(temporal)
+            self.assertEqual([(salida / nombre).read_text() for nombre in nuevos], ["anterior", "anterior"])
 
     @staticmethod
     def datos_sectores():
