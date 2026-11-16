@@ -6,5 +6,10 @@ globalThis.VacunaDecisiones = (() => {
     return {dosis, denominador, cobertura, brecha:Math.max(0,meta-cobertura),
       faltantes:Math.max(0,Math.ceil(meta*denominador/100)-dosis)};
   }
-  return {medicion};
+  function escenario(dato, adicionales, meta) {
+    if (!dato || !Number.isSafeInteger(adicionales) || adicionales < 0) return null;
+    const resultado = medicion(dato.dosis + adicionales,dato.denominador,meta);
+    return resultado && {...resultado, mejora:resultado.cobertura-dato.cobertura};
+  }
+  return {medicion, escenario};
 })();
