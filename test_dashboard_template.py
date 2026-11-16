@@ -76,8 +76,14 @@ class TestDashboardV11(unittest.TestCase):
         self.assertIn("aria-label", self.content)
 
     def test_graficos_se_redimensionan_al_cambiar_de_vista(self):
-        self.assertIn("hashchange", self.content)
-        self.assertRegex(self.content, r"chart\.resize\(\)")
+        navigation = (TEMPLATE.parent / "frontend" / "navigation.js").read_text(encoding="utf-8")
+        self.assertIn("hashchange", navigation)
+        self.assertRegex(navigation, r"chart\.resize\(\)")
+
+    def test_recursos_y_controles_de_experiencia(self):
+        self.assertIn("/*__ESTILOS__*/", self.content)
+        self.assertIn("/*__NAVEGACION__*/", self.content)
+        self.assertTrue({"module-title", "summary-finding", "kGap", "scenario-status", "priority-weights"}.issubset(self.document.ids))
 
     def test_controles_de_exploracion_y_exportacion(self):
         controls = {

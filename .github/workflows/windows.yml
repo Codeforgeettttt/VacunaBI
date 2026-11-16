@@ -9,6 +9,7 @@ on:
       - 'app.py'
       - 'etl.py'
       - 'dashboard_template.html'
+      - 'frontend/**'
       - 'localidades.json'
       - 'decisiones.js'
       - 'chart.umd.min.js'
@@ -41,6 +42,7 @@ jobs:
         run: >-
           python -m PyInstaller --onefile --windowed --name VacunaBI
           --add-data "dashboard_template.html:."
+          --add-data "frontend:frontend"
           --add-data "localidades.json:."
           --add-data "decisiones.js:."
           --add-data "chart.umd.min.js:."
