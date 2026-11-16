@@ -16,7 +16,7 @@ El análisis responde tres preguntas: qué tan lejos está la cobertura de la me
 2. En **Artifacts**, descarga **VacunaBI-Windows** y extrae el ZIP.
 3. Ejecuta `VacunaBI.exe` desde una carpeta donde puedas escribir. La aplicación consulta las fuentes al abrir y utiliza Microsoft Edge WebView2 para mostrar el tablero.
 
-La primera ejecución requiere conexión a Internet. **Actualizar datos** vuelve a consultar la API; desde la estabilización V2.2.1 la ventana reabre la copia HTML mediante pywebview sin parámetros en la ruta local. Si falla la actualización y existe un tablero válido guardado, la aplicación muestra esa copia. El ejecutable de estabilización se publica como versión preliminar hasta verificar el recorrido real de Windows.
+La **primera ejecución** necesita Internet para descargar ambas fuentes y preparar el tablero. En aperturas posteriores de la **misma versión**, VacunaBI abre de inmediato el tablero guardado **sin repetir la descarga**. El botón **Actualizar datos** es la acción explícita para volver a consultar las dos fuentes y generar cifras nuevas; puede tardar según la API. Si cambias de versión, el programa necesita generar una copia compatible una vez. Si falla la consulta y existe un tablero válido, conserva esa copia. Desde V2.2.1, la recarga utiliza pywebview sin parámetros en la ruta local.
 
 ### Generar el tablero desde el código fuente
 
