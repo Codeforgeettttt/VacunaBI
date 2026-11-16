@@ -197,7 +197,7 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <div class="topbar-actions"><span class="version">V1.3 · vista previa</span>
+        <div class="topbar-actions"><span class="version">V1.3</span>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
@@ -298,6 +298,7 @@ tr:last-child td { border-bottom:0; }
                   </select>
                 </label>
                 <p id="territory-comparison" role="status"></p>
+                <div class="chart-actions"><button id="territory-export" type="button" disabled>Descargar ficha territorial CSV</button></div>
                 <details id="territory-history" hidden>
                   <summary>Evolución por corte</summary>
                   <div class="scroll" id="territory-periods" tabindex="0" role="region" aria-label="Cobertura histórica de la localidad"></div>
@@ -579,7 +580,8 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       svg.append(path);
     }
   }
-  function renderTerritory(rows, selected, cut, candidates, district, history) {
+  let fichaTerritorial = [];
+  function renderTerritory(rows, selected, cut, candidates, district, history, context) {
     const lookup = new Map(rows.map(row => [row.localidad,row]));
     for (const [name,{path,title}] of mapPaths) {
       const row = lookup.get(name);
@@ -606,12 +608,18 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     picker.disabled = !selected;
     for (const option of picker.options) option.disabled = option.value !== '' && option.value === selected;
     if (!selected || picker.value === selected) picker.value = '';
+    const other = candidates.find(candidate => candidate.localidad === picker.value);
+    fichaTerritorial = row ? [
+      ['Localidad seleccionada',selected,row],
+      ...(district ? [['Referencia distrital','Bogotá D.C.',district]] : []),
+      ...(other ? [['Localidad de comparación',other.localidad,other]] : [])
+    ].map(([tipo,nombre,dato]) => [tipo,nombre,cut,context.biological,context.inst,dato.dosis_aplicada,dato.denominador,dato.cobertura,context.source]) : [];
+    $('territory-export').disabled = !fichaTerritorial.length;
     const comparison = $('territory-comparison');
     if (!picker.value) {
       comparison.textContent = selected ? '' : 'Selecciona primero una localidad en el mapa o en el filtro.';
       return;
     }
-    const other = candidates.find(candidate => candidate.localidad === picker.value);
     if (!row || !other) {
       comparison.textContent = `${picker.value} · sin datos comparables para el mismo corte y filtros.`;
       return;
@@ -800,7 +808,9 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const comparisonRows = local ? comparable.filter(r => r.fecha_reporte === cut && r.grupo_biologico === 'Primera infancia') : [];
     const history = local ? aggregate(selected.filter(r => r.grupo_biologico === 'Primera infancia'),['fecha_reporte'])
       .sort((a,b) => a.fecha_reporte.localeCompare(b.fecha_reporte)) : [];
-    renderTerritory(locations,local,cut,aggregate(comparisonRows,['localidad']),aggregate(comparisonRows,[])[0],history);
+    const territorySource = sectorSource + (comparisonRows.some(r => r.manual) ? ' · incluye vista previa manual' : '');
+    renderTerritory(locations,local,cut,aggregate(comparisonRows,['localidad']),aggregate(comparisonRows,[])[0],history,
+      {biological:biological || 'Primera infancia',inst:inst || 'Todos los sectores',source:territorySource});
     bar('cInst',aggregate(rows,['institucion']),'institucion',source);
     bar('cGrupo',aggregate(rows,['grupo_biologico']),'grupo_biologico',source);
     renderHeat(aggregate(rows,['localidad','institucion']));
@@ -928,14 +938,21 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     if (example) lines.push(manualFields.map(key => '"' + String(example[key]).replaceAll('"','""') + '"').join(';'));
     download(['\uFEFF',lines.join('\r\n')],'text/csv;charset=utf-8','csv','VacunaBI-plantilla-manual.csv');
   });
-  $('export-csv').addEventListener('click',() => {
+  function csv(rows) {
     const csvCell = value => {
       if (typeof value === 'number') return String(value).replace('.',',');
       const text = String(value ?? '');
       const safe = /^[\s]*[=+\-@]|^[\t\r\n]/.test(text) ? "'" + text : text;
       return '"' + safe.replaceAll('"','""') + '"';
     };
-    download(['\uFEFF',exportValues().map(row => row.map(csvCell).join(';')).join('\r\n')], 'text/csv;charset=utf-8','csv');
+    return ['\uFEFF',rows.map(row => row.map(csvCell).join(';')).join('\r\n')];
+  }
+  $('export-csv').addEventListener('click',() => {
+    download(csv(exportValues()),'text/csv;charset=utf-8','csv');
+  });
+  $('territory-export').addEventListener('click',() => {
+    const headings = ['Tipo','Territorio','Corte','Biológico','Sector','Dosis','Denominador','Cobertura (%)','Fuente'];
+    download(csv([headings,...fichaTerritorial]),'text/csv;charset=utf-8','csv','VacunaBI-ficha-territorial.csv');
   });
   // Open XML necesita un contenedor ZIP. Las cinco entradas se guardan sin compresión.
   function zipXml(parts) {
