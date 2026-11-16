@@ -1,6 +1,8 @@
 # VacunaBI — Validación de salida y aceptación en Windows
 
-**Alcance:** aplicación V2.2 y cambios de estabilización posteriores.
+**Alcance:** aplicación V2.2 y estabilización V2.2.1.
+
+La corrección de recarga en V2.2.1 usa la API de pywebview para abrir `salidas/dashboard.html` sin añadir parámetros a la dirección `file://`. Comprobar especialmente WIN-09 y WIN-10 en un equipo real; las regresiones automatizadas no sustituyen esta prueba.
 
 ## Qué está comprobado automáticamente
 
@@ -25,7 +27,7 @@ Registrar para cada prueba: **Pass/Fail/No ejecutada**, captura o vídeo breve, 
 | WIN-07 | Exportar CSV, XLSX, ficha territorial y reporte ejecutivo. | El diálogo nativo permite guardar, cancelar y abrir archivos válidos. | No ejecutada |
 | WIN-08 | Cambiar tema claro/oscuro y reducir la ventana a 800 × 600. | Contenido legible, sin cortes críticos ni scroll horizontal general. | No ejecutada |
 | WIN-09 | Simular indisponibilidad de Internet después de una carga exitosa, cerrar y reabrir. | Aparece la última copia válida sin presentar datos desactualizados como recién extraídos. | No ejecutada |
-| WIN-10 | Recuperar conexión y pulsar Actualizar datos. | Informa estado, conserva datos previos si falla y muestra nuevo corte cuando corresponde. | No ejecutada |
+| WIN-10 | Recuperar conexión y pulsar Actualizar datos. | Vuelve a abrir el HTML local sin parámetros `?actualizado=`, informa éxito y muestra la extracción reciente sin `File not found` de WebView2. | No ejecutada |
 | WIN-11 | Navegar con Tab, Shift+Tab, Enter, Espacio y Esc en mapa, tablas y diálogos. | Foco visible, orden lógico y posibilidad de operar sin ratón. | No ejecutada |
 
 ## Validación de accesibilidad pendiente
