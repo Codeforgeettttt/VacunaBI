@@ -222,7 +222,7 @@ tr:last-child td { border-bottom:0; }
       <p class="meta" id="refresh-status" role="status" hidden></p>
     </header>
     <main id="main-content" tabindex="-1">
-      <section class="card explorer" aria-labelledby="filters-title">
+      <section class="card explorer" id="global-filters" aria-labelledby="filters-title">
         <div class="explorer-heading"><h2 id="filters-title">Explorar datos</h2>
           <button id="fReset" type="button">Restablecer filtros</button></div>
         <div class="controls">
@@ -408,31 +408,47 @@ tr:last-child td { border-bottom:0; }
       <section class="page" id="decisiones" data-page="decisiones" aria-labelledby="title-decisiones" hidden>
         <div class="page-lead"><div><h2 id="title-decisiones">Apoyo a decisiones</h2>
           <p>Seguimiento sectorial oficial de primera infancia. Las cargas manuales quedan fuera del análisis.</p></div></div>
+        <nav class="decision-steps" aria-label="Etapas del análisis">
+          <button type="button" data-step="1" aria-current="step">1. Selección</button>
+          <button type="button" data-step="2">2. Priorización</button>
+          <button type="button" data-step="3">3. Simulación</button>
+          <button type="button" data-step="4">4. Resultados</button>
+        </nav>
         <div class="dashboard-grid" id="decision-panels">
-          <section class="card w12"><h3>Resumen ejecutivo</h3><p id="decision-summary" role="status"></p>
+          <section class="card w12" data-decision-panel="1"><h3>Selección oficial</h3><p id="decision-summary" role="status"></p>
+            <p>Indicador: cobertura de primera infancia. Fuente: seguimiento sectorial de Datos Abiertos Bogotá.</p>
+            <label>Territorio del escenario <select id="scenario-local"><option value="">Total de la selección</option></select></label>
+            <p class="sub">Puedes ajustar año, localidad, sector y biológico en los filtros de la parte superior.</p>
+            <button type="button" data-next-step="2">Continuar a priorización</button>
+          </section>
+          <section class="card w12" data-decision-panel="4" hidden><h3>Resumen ejecutivo</h3>
             <p id="decision-finding"></p>
             <a class="link-action" href="#localidades">Ver evidencia territorial</a></section>
-          <section class="card w12"><h3>Prioridades territoriales</h3>
-            <label>Peso de la brecha (%) <input id="priority-weight" type="number" min="0" max="100" value="60" step="1"></label>
+          <section class="card w12" data-decision-panel="2" hidden><h3>Prioridades territoriales</h3>
+            <label>Peso de la brecha <input id="priority-weight" type="range" min="0" max="100" value="60" step="1"></label>
+            <output id="priority-weights" for="priority-weight"></output>
             <p class="sub">El peso restante se asigna a las dosis faltantes. Las dos medidas se normalizan antes de sumarlas.</p>
             <div class="scroll" id="priority-table" tabindex="0" role="region" aria-label="Ranking de prioridades"></div>
+            <button type="button" data-next-step="3">Continuar a simulación</button>
           </section>
-          <section class="card w12"><h3>Escenarios de dosis</h3>
+          <section class="card w12" data-decision-panel="3" hidden><h3>Escenarios de dosis</h3>
             <div class="controls">
-              <label>Localidad <select id="scenario-local"><option value="">Total de la selección</option></select></label>
-              <label>Dosis adicionales A <input id="scenario-a" type="number" value="0" min="0" step="1"></label>
-              <label>Dosis adicionales B <input id="scenario-b" type="number" value="100" min="0" step="1"></label>
+              <label>Dosis adicionales A <input id="scenario-a" type="number" value="0" min="0" step="1" aria-describedby="scenario-status"></label>
+              <label>Dosis adicionales B <input id="scenario-b" type="number" value="100" min="0" step="1" aria-describedby="scenario-status"></label>
             </div>
+            <p id="scenario-status" role="status"></p>
             <p class="sub">Simulación con población objetivo fija y dosis adicionales atribuidas al mismo indicador.</p>
             <div class="scroll" id="scenario-table" tabindex="0" role="region" aria-label="Comparación de escenarios"></div>
+            <button type="button" data-next-step="4">Continuar a resultados</button>
           </section>
-          <section class="card w12"><h3>Alertas</h3>
+          <section class="card w12" data-decision-panel="4" hidden><h3>Alertas</h3>
             <p class="sub">Los descensos se calculan entre años consecutivos cerrados del mismo biológico distrital.</p>
             <div class="scroll" id="decision-alerts" tabindex="0" role="region" aria-label="Alertas de cobertura"></div>
             <a class="link-action" href="#calidad">Consultar calidad de las fuentes</a>
           </section>
-          <section class="card w12"><h3>Reporte ejecutivo</h3>
+          <section class="card w12" data-decision-panel="4" hidden><h3>Reporte ejecutivo</h3>
             <p class="sub">Incluye filtros, pesos, fuente, corte y supuestos de simulación.</p>
+            <p>Las simulaciones mantienen fijo el denominador y no incluyen cambios de población ni respuestas futuras a una intervención.</p>
             <div class="chart-actions"><button id="decision-export" type="button" disabled>Descargar reporte CSV</button></div>
           </section>
         </div>
@@ -916,6 +932,22 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       '</tbody></table>' : '<p>Sin datos para esta selección.</p>';
   }
   const model = globalThis.VacunaDecisiones;
+  const steps = [...document.querySelectorAll('[data-step]')];
+  function showStep(step, focus = false) {
+    for (const button of steps) {
+      if (button.dataset.step === step) button.setAttribute('aria-current','step');
+      else button.removeAttribute('aria-current');
+    }
+    for (const panel of document.querySelectorAll('[data-decision-panel]')) panel.hidden = panel.dataset.decisionPanel !== step;
+    if (focus) {
+      const heading = document.querySelector('[data-decision-panel]:not([hidden]) h3');
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+  }
+  steps.forEach(button => button.addEventListener('click',() => showStep(button.dataset.step,true)));
+  document.querySelectorAll('[data-next-step]').forEach(button =>
+    button.addEventListener('click',() => showStep(button.dataset.nextStep,true)));
   let decisionContext = {filas:[],anual:[],corte:'',filtros:''};
   function refreshDecisions() {
     const ctx = decisionContext;
@@ -925,6 +957,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
       ? `Corte ${ctx.corte} · ${ctx.filas.length} localidades · cobertura ${fmt(+data.cobertura.toFixed(1))} % · ${fmt(data.faltantes)} dosis para la meta de ${META} % con el denominador actual.`
       : 'No hay registros sectoriales oficiales compatibles con los filtros.';
     const weight = $('priority-weight').valueAsNumber;
+    $('priority-weights').textContent = `Brecha: ${weight} % · dosis faltantes: ${100-weight} %`;
     ctx.prioridades = model.priorizar(ctx.filas,META,weight);
     const first = ctx.prioridades[0];
     $('decision-finding').textContent = first?.dato.faltantes
@@ -938,11 +971,14 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     if ([...picker.options].some(option => option.value === local)) picker.value = local;
     const territorial = ctx.filas.find(row => row.localidad === picker.value);
     const baseline = territorial ? model.medicion(territorial.dosis_aplicada,territorial.denominador,META) : data;
-    const a = model.escenario(baseline,$('scenario-a').valueAsNumber,META);
-    const b = model.escenario(baseline,$('scenario-b').valueAsNumber,META);
+    const inputs = ['scenario-a','scenario-b'].map(id => $(id));
+    const valid = inputs.map(input => Number.isSafeInteger(input.valueAsNumber) && input.valueAsNumber >= 0);
+    inputs.forEach((input,index) => input.setAttribute('aria-invalid',String(!valid[index])));
+    $('scenario-status').textContent = valid.every(Boolean) ? 'A y B son simulaciones. El dato observado permanece fijo.' : 'Ingresa una cantidad entera de dosis igual o mayor que cero.';
+    const [a,b] = inputs.map((input,index) => valid[index] ? model.escenario(baseline,input.valueAsNumber,META) : null);
     ctx.escenarios = baseline ? [['Dato observado',baseline],['Escenario A',a],['Escenario B',b]] : [];
-    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Dosis para la meta'],
-      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(row.faltantes)] : [label,'Ingresa dosis enteras no negativas','—','—','—']));
+    auditTable('scenario-table',['Caso','Dosis','Denominador','Cobertura (%)','Cambio (pp)','Dosis para la meta'],
+      ctx.escenarios.map(([label,row]) => row ? [label,fmt(row.dosis),fmt(row.denominador),fmt(+row.cobertura.toFixed(1)),fmt(+(row.mejora ?? 0).toFixed(1)),fmt(row.faltantes)] : [label,'Entrada inválida','—','—','—','—']));
     const alertRows = ctx.filas.map(row => ({...row,dato:model.medicion(row.dosis_aplicada,row.denominador,META)}));
     ctx.alertas = model.alertas(alertRows,ctx.anual,META,D.logs);
     if (ctx.alertas.length) auditTable('decision-alerts',['Regla','Evidencia','Valor'],ctx.alertas.map(row => [
