@@ -11,5 +11,12 @@ globalThis.VacunaDecisiones = (() => {
     const resultado = medicion(dato.dosis + adicionales,dato.denominador,meta);
     return resultado && {...resultado, mejora:resultado.cobertura-dato.cobertura};
   }
-  return {medicion, escenario};
+  function priorizar(filas, meta, peso) {
+    if (!Number.isFinite(peso) || peso < 0 || peso > 100) return [];
+    const datos = filas.map(fila => ({...fila,dato:medicion(fila.dosis_aplicada,fila.denominador,meta)})).filter(fila => fila.dato);
+    const maximo = Math.max(1,...datos.map(fila => fila.dato.faltantes));
+    return datos.map(fila => ({...fila,puntaje:peso*fila.dato.brecha/meta+(100-peso)*fila.dato.faltantes/maximo}))
+      .sort((a,b) => b.puntaje-a.puntaje || a.localidad.localeCompare(b.localidad,'es'));
+  }
+  return {medicion, escenario, priorizar};
 })();
