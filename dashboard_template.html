@@ -19,6 +19,15 @@
   --radius:14px;--shadow:0 12px 30px rgba(0,0,0,.12);
 }
 * { box-sizing:border-box; }
+:root[data-theme="light"] {
+  color-scheme:light;--page:#f2f7fb;--surface:#fff;--surface-raised:#edf4fa;--sidebar:#e7f0f8;
+  --ink:#10243b;--ink2:#28435d;--muted:#405c74;--grid:#c9d7e3;--axis:#7990a6;
+  --border:#afc3d5;--primary:#006b68;--primary-soft:#daf0ee;--goodtxt:#126040;--crit:#a52a3a;
+  --s1:#1768ba;--s2:#a64515;--s3:#087867;--s4:#846300;--s5:#a13066;
+}
+[data-theme="light"] .topbar { background:var(--sidebar); }
+[data-theme="light"] .territory-map svg { background:#dde9f2; }
+[data-theme="light"] .territory-map path:is(:focus-visible,[aria-pressed="true"]) { stroke:#152b41; }
 html { scroll-behavior:smooth; }
 body { margin:0;background:var(--page);color:var(--ink);
   font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
@@ -202,7 +211,8 @@ tr:last-child td { border-bottom:0; }
       <div class="topbar-row">
         <div><p class="eyebrow">Observatorio de cobertura · Bogotá D.C.</p>
           <h1>Cobertura de vacunación</h1></div>
-        <div class="topbar-actions"><span class="version">V1.4</span>
+        <div class="topbar-actions"><span class="version">V1.5</span>
+          <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
           <button id="refresh-data" type="button" hidden>Actualizar datos</button></div>
       </div>
       <p class="meta" id="meta-info">Preparando indicadores…</p>
@@ -580,6 +590,27 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
   }
   const charts = Object.fromEntries(['cAnual','cActual','cLoc','cInst','cGrupo'].map(id => [id, Chart.getChart(id)]));
   const template = Object.fromEntries(Object.entries(charts).map(([id, chart]) => [id, chart.data.datasets.map(row => ({...row}))]));
+  const theme = $('theme-toggle');
+  function themeMode(light) {
+    document.documentElement.dataset.theme = light ? 'light' : 'dark';
+    theme.setAttribute('aria-pressed',String(light));
+    document.querySelector('meta[name="theme-color"]').content = css('--page');
+    S.splice(0,S.length,...['--s1','--s2','--s3','--s4','--s5'].map(css));
+    Chart.defaults.color = css('--ink2');
+    Chart.defaults.borderColor = css('--grid');
+    for (const chart of Object.values(charts)) {
+      chart.options.color = Chart.defaults.color;
+      chart.options.borderColor = Chart.defaults.borderColor;
+      chart.dataSignature = '';
+    }
+  }
+  try { themeMode(localStorage.getItem('vacunabi-tema') === 'claro'); } catch { themeMode(false); }
+  theme.addEventListener('click',() => {
+    const light = theme.getAttribute('aria-pressed') !== 'true';
+    themeMode(light);
+    try { localStorage.setItem('vacunabi-tema',light ? 'claro' : 'oscuro'); } catch {}
+    render();
+  });
   const monthNames = charts.cActual.data.labels.slice();
   ['fMonthFrom','fMonthTo'].forEach(id => meses.forEach((month, index) => $(id).add(new Option(
     new Intl.DateTimeFormat('es-CO', {month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2000,index,1))),month))));
@@ -787,7 +818,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     });
   }
   function bar(id, rows, key, source) {
-    const dataset = {...template[id][0], data:rows.map(r => r.cobertura)};
+    const dataset = {...template[id][0], backgroundColor:S[0], data:rows.map(r => r.cobertura)};
     charts[id].options.plugins.tooltip.callbacks.label = ({dataIndex}) => {
       const row = rows[dataIndex];
       return `${fmt(row.cobertura)} % · ${fmt(row.dosis_aplicada)} de ${fmt(row.denominador)}`;
@@ -897,7 +928,7 @@ log.innerHTML = '<table><tr><th>Fuente</th><th style="text-align:left">Paso</th>
     const annualMessage = !districtCompatible ? disabledDistrict : pair ? 'Selecciona dos años cerrados con datos comparables.' : annualRows.length ? '' : empty;
     setChart('cAnual', periods, series(annualRows,periods,'anio'), annualMessage, seriesSource);
     $('tActual').textContent = `Avance ${actualYear || D.anio_actual}`;
-    const pace = {...template.cActual.at(-1),data:selectedMonths.map(month => template.cActual.at(-1).data[month-1])};
+    const pace = {...template.cActual.at(-1),borderColor:css('--muted'),data:selectedMonths.map(month => template.cActual.at(-1).data[month-1])};
     setChart('cActual', selectedMonths.map(month => monthNames[month-1]), [...series(monthRows,selectedMonths,'mes_num'),pace],
       !districtCompatible ? disabledDistrict : low > high ? 'El mes inicial debe ser anterior o igual al mes final.' : monthRows.length ? '' : empty, `${seriesSource} · ${actualYear}`);
     const tv1 = annualRows.find(r => r.anio === primary && r.biologico === 'Triple viral 1 año');
