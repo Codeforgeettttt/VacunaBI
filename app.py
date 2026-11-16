@@ -29,6 +29,17 @@ def abrir_dashboard(ventana):
     ventana.load_url((etl.OUT / "dashboard.html").resolve().as_uri())
 
 
+def hay_tablero_compatible():
+    """Un tablero previo solo se abre directamente si usa la interfaz de este ejecutable."""
+    ruta = etl.OUT / "dashboard.html"
+    try:
+        with ruta.open("r", encoding="utf-8") as archivo:
+            encabezado = archivo.read(2048)
+    except (OSError, UnicodeError):
+        return False
+    return f'name="vacunabi-version" content="{etl.VERSION_TABLERO}"' in encabezado
+
+
 class Actualizacion:
     def __init__(self):
         self._lock = Lock()
@@ -36,6 +47,7 @@ class Actualizacion:
         self._ventana = None
         self._copia_local = False
         self._aviso_recarga = False
+        self._inicio_guardado = False
 
     def refresh_data(self):
         if not self._lock.acquire(blocking=False):
@@ -43,6 +55,7 @@ class Actualizacion:
         try:
             etl.main()
             self._copia_local = False
+            self._inicio_guardado = False
             return {"ok": True}
         except Exception:
             traceback.print_exc()
@@ -55,6 +68,10 @@ class Actualizacion:
 
     def usa_copia_local(self):
         return self._copia_local
+
+    def inicio_con_copia_guardada(self):
+        """Informa que se abrió una copia vigente sin repetir el ETL al iniciar."""
+        return self._inicio_guardado
 
     def recargar_dashboard(self):
         """Vuelve a abrir el archivo local sin parámetros que WebView2 no resuelve."""
@@ -107,6 +124,12 @@ class Actualizacion:
 
 def cargar(ventana, actualizacion):
     try:
+        if hay_tablero_compatible():
+            # En aperturas posteriores el ETL solo se ejecuta al pulsar «Actualizar datos».
+            actualizacion._inicio_guardado = True
+            abrir_dashboard(ventana)
+            return
+        # Primera carga o copia creada por otra versión: obtener un tablero compatible.
         result = actualizacion.refresh_data()
         if result["ok"]:
             abrir_dashboard(ventana)
