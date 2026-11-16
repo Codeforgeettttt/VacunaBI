@@ -19,6 +19,11 @@ import pandas as pd
 API = "https://datosabiertos.bogota.gov.co/api/3/action/datastore_search"
 RES_SECTORES = "e519cce2-9951-41de-afbc-005d1e1d24dd"  # Seguimiento cobertura vacunación - sectores
 RES_MENSUAL = "1910589c-2836-41d3-aba4-00488bb5e5f3"   # Cobertura vacunación en Bogotá D.C. (mensual)
+ESCHEMAS = {
+    RES_SECTORES: {"fecha_reporte", "nombre_localidad", "biologico_edad", "institucion",
+                   "dosis_aplicada", "denominador", "cobertura"},
+    RES_MENSUAL: {"biologico", "ano", "orden mes", "mes", "meta", "vacunados", "cobertura", "column7"},
+}
 META = 95.0  # meta PAI - Ministerio de Salud
 EXE = getattr(sys, "frozen", False)  # True cuando corre como .exe (PyInstaller)
 RECURSOS = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))  # plantilla y Chart.js empaquetados
@@ -51,17 +56,34 @@ def limites_localidades():
 def consultar_api(resource_id):
     """Trae todos los registros de un recurso CKAN, paginando."""
     filas, offset = [], 0
+    total = None
+    identificadores = set()
     while True:
         url = f"{API}?resource_id={resource_id}&limit=1000&offset={offset}"
         with urllib.request.urlopen(url, timeout=60) as r:
             res = json.load(r)
         if not res.get("success"):
             raise RuntimeError(f"API respondió error para {resource_id}: {res.get('error')}")
-        lote = res["result"]["records"]
+        resultado = res["result"]
+        lote = resultado["records"]
+        total_pagina = resultado["total"]
+        if not isinstance(total_pagina, int) or total_pagina <= 0:
+            raise ValueError(f"El recurso {resource_id} no contiene registros.")
+        if total is None:
+            total = total_pagina
+        ids = {fila.get("_id") for fila in lote}
+        if (total_pagina != total or not lote or offset + len(lote) > total
+                or None in ids or len(ids) != len(lote) or identificadores.intersection(ids)):
+            raise ValueError(f"Descarga incompleta o inconsistente para {resource_id}.")
+        identificadores.update(ids)
         filas += lote
         offset += len(lote)
-        if not lote or offset >= res["result"]["total"]:
-            return pd.DataFrame(filas).drop(columns="_id")
+        if offset == total:
+            df = pd.DataFrame(filas).drop(columns="_id")
+            faltantes = ESCHEMAS[resource_id] - {nombre.lower() for nombre in df.columns}
+            if faltantes:
+                raise ValueError(f"Faltan columnas en {resource_id}: {', '.join(sorted(faltantes))}.")
+            return df
 
 
 def num_es(valor):
