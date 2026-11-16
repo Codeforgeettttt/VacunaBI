@@ -50,7 +50,7 @@ Abre `salidas/dashboard.html` en el navegador. El archivo incluye los gráficos 
 
 Para una demostración, abre **Localidades**, selecciona una zona en el mapa y compárala con otra bajo el mismo corte. La ficha indica las dosis, el denominador y si hay observaciones de calidad. Luego pasa a **Decisiones**, cambia el peso de la brecha y compara un escenario de cero dosis adicionales con uno que represente una meta operativa. Puedes regresar a un paso anterior sin perder los valores. El CSV ejecutivo conserva el contexto de esa selección.
 
-Selecciona año y localidad en la barra principal. **Más filtros** reúne biológico y sector. Las opciones Histórico, Actual y Comparativo están en **Evolución de cobertura**, dentro de Resumen. **Consultar datos de la selección** permite buscar, ordenar y exportar filas en CSV o Excel. **Consultar tabla del gráfico** permite leer los valores con teclado.
+Selecciona **Fuente**, año y localidad en la barra principal. El año indica si hay registros distritales, sectoriales o de ambos orígenes. **Más filtros** reúne biológico y sector. Si una combinación no está publicada, VacunaBI lo explica y propone ajustar la consulta: **sin registros no significa cobertura del 0 %**. [Guía de compatibilidad de fuentes y filtros](docs/FILTROS_FUENTES.md). Las opciones Histórico, Actual y Comparativo están en **Evolución de cobertura**, dentro de Resumen. **Consultar datos de la selección** permite buscar, ordenar y exportar filas en CSV o Excel. **Consultar tabla del gráfico** permite leer los valores con teclado.
 
 ## Fuentes, indicadores y alcance
 
